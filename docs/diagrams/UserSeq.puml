@@ -1,0 +1,24 @@
+@startuml
+
+partition User {
+  (*) --> "Use Adaptor SDK to write the adaptor"
+  --> Generate JAR
+  --> Prepare configurate (urls, tokens, rates, etc)
+  -->  === APIInteract ===
+}
+
+partition APIServer  {
+  === APIInteract === --> [Submit Jar File and Config] Http Server 
+  --> Validate Configuration (rates, resources, urls)
+  --> Validate JAR / Dry Run
+  --> === Launch ===
+}
+
+partition FlinkCluster {
+  === Launch === --> [Submit JAR] Cluster Manager
+  --> Provision Resources (Workers, RAM, etc)
+  --> Attach supervisors (Log manager, process monitors, etc) and Run
+  --> (*)
+}
+
+@enduml

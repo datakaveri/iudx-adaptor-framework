@@ -1,0 +1,10 @@
+@startuml
+Interface Transformer   {
+  -- public --
+  JsonObject in
+  JsonObject out
+  -- public --
+  JsonObject transform(JsonObject in)
+}
+@enduml
+

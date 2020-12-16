@@ -1,0 +1,11 @@
+@startuml
+
+[*] --> Init : open() read state 
+
+Init --> Process : on message at invoke()
+Process --> Publish : to sink (RMQ/Elastic)
+Publish --> Clean : close()
+Clean --> Init
+
+
+@enduml

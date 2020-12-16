@@ -1,0 +1,19 @@
+@startuml
+
+[*] --> HTTPSourceFunction: From DataSource
+HTTPSourceFunction: Load state (connection/auth info, etc)
+HTTPSourceFunction: Watermark with timestamp
+
+HTTPSourceFunction --> GenericProcessFunction
+GenericProcessFunction: Load state (last processed packetInfo, etc)
+GenericProcessFunction: De-Deduplicate
+GenericProcessFunction: Transform
+GenericProcessFunction: Process
+GenericProcessFunction: Aggregate
+
+
+GenericProcessFunction --> GenericSinkFunction
+GenericSinkFunction: Load state (connection/auth info, etc)
+GenericSinkFunction: Publish to sink
+
+@enduml

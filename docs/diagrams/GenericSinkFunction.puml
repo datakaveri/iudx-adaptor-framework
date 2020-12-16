@@ -1,0 +1,14 @@
+@startuml
+class GenericSinkFunction  {
+    <extends SinkFunction>
+  -- public (stateful) --
+  Config sinkConfig
+  -- private (stateful) --
+  State sinkState
+  -- public --
+  void invoke()
+  void open()
+  void close()
+}
+@enduml
+
