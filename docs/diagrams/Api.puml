@@ -1,0 +1,15 @@
+@startuml
+class Api  {
+  -- public (stateful) --
+  okhttp3.Headers headers
+  okhttp3.RequestBody body
+  okhttp3.HttpUrl url
+  String requestType // get,post
+  -- public --
+  Object getMessage()
+  void setApi(String api)
+  void setBody(String body)
+  void setHeaders(Multimap headers)
+}
+@enduml
+

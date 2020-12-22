@@ -1,0 +1,11 @@
+@startuml
+class GenericJsonMessage  {
+  -- public (stateful) --
+  String body
+  String key
+  Instance timestamp
+  -- public --
+  String toString()
+}
+@enduml
+

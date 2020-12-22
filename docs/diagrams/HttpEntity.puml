@@ -1,0 +1,15 @@
+@startuml
+class HttpEntity  {
+    <implements Serializable>
+  -- public (stateful) --
+  okhttp3.Response response
+  -- private --
+  Api api
+  -- public --
+  okhttp3.Response getSerializedMessage()
+  GenericJsonResponse getResponse()
+  HttpEntity setApi(Api api)
+  Api getApi(Api api)
+}
+@enduml
+

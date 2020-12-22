@@ -1,11 +1,12 @@
 @startuml
 left to right direction
 actor "Ingestor" as ing
-actor "Flink APIs" as fl
 rectangle APIServer {
   usecase "Submit/Modify JAR and Config" as UC1
   usecase "Monitor and control adaptor status" as UC2
+  circle "Flink APIs" as fl
 }
+
 rectangle FlinkCluster {
   usecase "Dry run JAR" as UC3
   usecase "Provision Resources (RAM/Workers)" as UC4
