@@ -1,3 +1,11 @@
+#
+# Your excludes here
+#
+notes.md
+docs/diagrams/*.png
+
+
+
 /target/
 ./dependency-reduced-pom.xml
 !.mvn/wrapper/maven-wrapper.jar

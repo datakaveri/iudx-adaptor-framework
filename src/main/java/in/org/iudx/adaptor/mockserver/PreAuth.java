@@ -13,6 +13,11 @@ import java.util.Random;
 
 
 
+/**
+ * Flows requiring authentication information
+ * TODO: 
+ *  - Everything
+ */
 public class PreAuth {
 
   private static String HEADER_CONTENT_TYPE = "content-type";

@@ -1,14 +1,16 @@
 @startuml
-class Api  {
+class ApiConfig  {
   -- public (stateful) --
-  okhttp3.Headers headers
-  okhttp3.RequestBody body
-  okhttp3.HttpUrl url
+  Map headers
+  String body
+  String url
   String requestType // get,post
+  String headerString
   -- public --
   Object getMessage()
   void setApi(String api)
   void setBody(String body)
+  void setHeader(String key, String value)
   void setHeaders(Multimap headers)
 }
 @enduml

@@ -1,11 +1,24 @@
 @startuml
 class GenericJsonMessage  {
+    <implements Serializable>
   -- public (stateful) --
   String body
+  optional JSONObject jsonBody
+  optional JSONArray jsonBody
   String key
+  String responseHeaders
   Instance timestamp
+  int statusCode
   -- public --
-  String toString()
+  long getEventTime()
+  GenericJsonMessage setEventTime()
+  GenericJsonMessage setKeyingProperty()
+  GenericJsonMessage setResponseBody()
+  GenericJsonMessage setResponseStatusCode()
+  int getResponseHeaders()
+  Object getResponseBody()
+  HashMap<String,String> getResponseHeaders()
+
 }
 @enduml
 

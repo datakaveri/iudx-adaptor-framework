@@ -11,11 +11,24 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.core.http.HttpServerResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
+/**
+ * Mock server base
+ * TODO: 
+ *  - This is only a template server. 
+ *  - Implement functionalities in classes. For e.g Simple.java
+ *  - Use those methods as callbacks here
+ */
 public class Server extends AbstractVerticle {
 
   private HttpServer server;
 
   private Simple simple;
+
+  private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
   @SuppressWarnings("unused")
   private Router router;
@@ -33,6 +46,7 @@ public class Server extends AbstractVerticle {
     simple = new Simple();
 
 
+    LOGGER.debug("Info: Starting server");
     HttpServerOptions serverOptions = new HttpServerOptions();
     serverOptions.setSsl(false);
 
@@ -44,6 +58,7 @@ public class Server extends AbstractVerticle {
 
     router.get("/simpleA")
       .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
         simple.getSimplePacketA(routingContext);
     });
 

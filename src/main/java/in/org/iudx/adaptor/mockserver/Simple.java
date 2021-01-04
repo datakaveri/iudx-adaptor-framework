@@ -13,6 +13,11 @@ import java.util.Random;
 
 
 
+/**
+ * Simple Flows
+ * TODO: 
+ *  - Simple http requests involving simple http responses.
+ */
 public class Simple {
 
   private static String HEADER_CONTENT_TYPE = "content-type";

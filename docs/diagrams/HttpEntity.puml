@@ -2,11 +2,12 @@
 class HttpEntity  {
     <implements Serializable>
   -- public (stateful) --
-  okhttp3.Response response
   -- private --
-  Api api
+  ApiConfig apiConfig
+  HttpClient httpClient
+  HttpRequest httpRequest
   -- public --
-  okhttp3.Response getSerializedMessage()
+  String getSerializedMessage()
   GenericJsonResponse getResponse()
   HttpEntity setApi(Api api)
   Api getApi(Api api)

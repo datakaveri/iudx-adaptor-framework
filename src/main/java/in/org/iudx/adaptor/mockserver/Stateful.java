@@ -13,6 +13,11 @@ import java.util.Random;
 
 
 
+/**
+ * Flows with memory
+ * TODO: 
+ *  - Everything
+ */
 public class Stateful {
 
   private static String HEADER_CONTENT_TYPE = "content-type";
