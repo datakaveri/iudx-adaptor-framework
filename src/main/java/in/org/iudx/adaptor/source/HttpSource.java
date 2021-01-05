@@ -56,13 +56,13 @@ public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
    * 
    * @param SourceContext ?Context
    *
-   * Todos:
+   * TODOS:
    *  - Is thread.sleep the best way?
    *
    */
   @Override
   public void run(SourceContext<GenericJsonMessage> ctx) throws Exception {
-    /** Todo:
+    /** TODO:
      *    - Configure delays
      **/
     while (running) {

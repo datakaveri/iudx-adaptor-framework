@@ -6,12 +6,19 @@ class ApiConfig  {
   String url
   String requestType // get,post
   String headerString
+  String keyingProperty
+  String timeIndexingProperty
   -- public --
   Object getMessage()
-  void setApi(String api)
-  void setBody(String body)
-  void setHeader(String key, String value)
-  void setHeaders(Multimap headers)
+  ApiConfig setApi(String api)
+  ApiConfig setBody(String body)
+  ApiConfig setHeader(String key, String value)
+  ApiConfig setHeaders(Multimap headers)
+  ApiConfig setKeyingProperty(String keyingProperty)
+  ApiConfig setTimeIndexingProperty(String timeIndexingProperty)
+  String getKeyingProperty()
+  String getTimeIndexingProperty()
+
 }
 @enduml
 

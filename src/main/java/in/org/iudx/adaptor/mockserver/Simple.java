@@ -23,6 +23,7 @@ public class Simple {
   private static String HEADER_CONTENT_TYPE = "content-type";
   private static String MIME_APPLICATION_JSON = "application/json";
 
+  private int count = 1;
 
   private Random rand = new Random(); 
 
@@ -58,6 +59,13 @@ public class Simple {
 
     simpleA.put("time", timeNow);
     simpleA.put("k1", rand.nextInt(1000));
+    if (count > 0) {
+      simpleA.put("deviceId", "abc-123");
+    } else {
+      simpleA.put("deviceId", "abc-456");
+    }
+
+    count *= -1;
 
     response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
     response.setStatusCode(200).end(simpleA.toString());

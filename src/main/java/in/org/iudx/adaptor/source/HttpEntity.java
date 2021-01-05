@@ -45,7 +45,7 @@ public class HttpEntity {
    * 
    * Note: This is called from context open() methods of the Source Function
    *
-   * Todos: 
+   * TODO: 
    *  - Manage post 
    *  - Modularize/cleanup
    *  - Handle timeouts from ApiConfig
@@ -95,15 +95,24 @@ public class HttpEntity {
   /**
    * Get the response message parsed into {@link GenericJsonMessage}
    * 
-   * Todos:
+   * TODO:
    *  - Parse propertly
    *  - Parsing logic goes here. It's a complex bit of code to write.
    */
   public GenericJsonMessage getMessage() {
     GenericJsonMessage msg = new GenericJsonMessage();
     String resp = getSerializedMessage();
-    msg.key = "test1";
-    msg.body = resp;
+
+    /* TODO: 
+     *  - Key extraction functionality. It's not going to be this easy.
+     *  - Json exception handling
+     **/
+    JSONObject obj = new JSONObject(resp);
+    msg.setKey(obj.getString(apiConfig.getKeyingProperty()));
+    msg.setEventTimestamp(Instant.parse(
+                            obj.getString(
+                                apiConfig.getTimeIndexingProperty())));
+    msg.setResponseBody(resp);
     return msg;
   }
 

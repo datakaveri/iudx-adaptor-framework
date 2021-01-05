@@ -36,7 +36,7 @@ under the License.
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
 		<log4j.version>2.12.1</log4j.version>
         <exec.mainClass>in.org.iudx.adaptor.Adaptor</exec.mainClass>
-        <vertx.version>3.9.0</vertx.version>
+        <vertx.version>4.0.0</vertx.version>
         <mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
 	</properties>
 

@@ -23,12 +23,19 @@ public class HttpEntityTest {
   @Test
   void simpleGet() throws InterruptedException {
 
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA");
+    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+                                          .setRequestType("GET")
+                                          .setKeyingProperty("deviceId")
+                                          .setTimeIndexingProperty("time");
 
     HttpEntity httpEntity = new HttpEntity(apiConfig);
     GenericJsonMessage msg = httpEntity.getMessage();
     System.out.println("Result");
     System.out.println(msg);
+    System.out.println("Keying Property");
+    System.out.println(msg.key);
+    System.out.println("Time");
+    System.out.println(msg.getEventTime());
 
   }
 }

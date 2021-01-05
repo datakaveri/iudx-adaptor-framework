@@ -12,8 +12,8 @@ class GenericJsonMessage  {
   -- public --
   long getEventTime()
   GenericJsonMessage setEventTime()
-  GenericJsonMessage setKeyingProperty()
-  GenericJsonMessage setResponseBody()
+  GenericJsonMessage setKey(String key)
+  GenericJsonMessage setResponseBody(String body)
   GenericJsonMessage setResponseStatusCode()
   int getResponseHeaders()
   Object getResponseBody()

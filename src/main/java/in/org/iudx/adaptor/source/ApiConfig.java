@@ -14,7 +14,7 @@ import java.lang.StringBuilder;
  * Note: This must be serializable since flink passes
  * this accross its instances.
  *
- * Todos: 
+ * TODO: 
  *  - Extend as needed
  *
  */
@@ -22,6 +22,9 @@ public class ApiConfig implements Serializable {
   public String url;
   public String body;
   public String requestType = "GET";
+  public String keyingProperty;
+  public String timeIndexingProperty;
+
 
   public Map<String,String> headers = new HashMap<String,String>();
   private String headerString = "";
@@ -58,6 +61,23 @@ public class ApiConfig implements Serializable {
     return this;
   }
 
+
+  /** TODO: This is where the keying field is described.
+   *        We need to work out a mechanism to describe it through ApiConfig.
+   *        For now we are just assuming a flat Json and describing the keying field
+   *        as a simple string.
+   **/
+  public ApiConfig setKeyingProperty(String keyingProperty) {
+    this.keyingProperty = keyingProperty;
+    return this;
+  }
+
+  public ApiConfig setTimeIndexingProperty(String timeIndexingProperty) {
+    this.timeIndexingProperty = timeIndexingProperty;
+    return this;
+  }
+
+
   /* type is get or post */
   public ApiConfig setRequestType(String requestType) {
     this.requestType = requestType;
@@ -66,6 +86,14 @@ public class ApiConfig implements Serializable {
 
   public String getHeaderString() {
     return headerString;
+  }
+
+  public String getKeyingProperty() {
+    return keyingProperty;
+  }
+
+  public String getTimeIndexingProperty() {
+    return timeIndexingProperty;
   }
 
 }

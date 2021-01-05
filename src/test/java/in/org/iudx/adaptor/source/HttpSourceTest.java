@@ -21,6 +21,8 @@ import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbObjectSink;
+import in.org.iudx.adaptor.process.GenericProcessFunction;
 
 public class HttpSourceTest {
 
@@ -48,9 +50,18 @@ public class HttpSourceTest {
     CheckpointConfig config = env.getCheckpointConfig();
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA").setRequestType("GET");
+    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+                                          .setRequestType("GET")
+                                          .setKeyingProperty("deviceId")
+                                          .setTimeIndexingProperty("time");
 
-    env.addSource(new HttpSource(apiConfig)).addSink(new DumbSink());
+    // env.addSource(new HttpSource(apiConfig))
+    //     .keyBy((GenericJsonMessage msg) -> msg.key)
+    //     .process(new GenericProcessFunction())
+    //     .addSink(new DumbSink());
+
+    env.addSource(new HttpSource(apiConfig))
+        .addSink(new DumbObjectSink());
     try {
       env.execute("Simple Get");
     } catch (Exception e) {

@@ -66,6 +66,25 @@ public class GenericJsonMessage implements Serializable {
     return 0;
   }
 
+
+  public GenericJsonMessage setResponseBody(String body) {
+    this.body = body;
+    return this;
+  }
+
+  public GenericJsonMessage setKey(String key) {
+    this.key = key;
+    return this;
+  }
+
+  public GenericJsonMessage setEventTimestamp(Instant timestamp) {
+    /** Todo:
+     *    - Return Instance time
+     **/
+    this.timestamp = timestamp;
+    return this;
+  }
+
    /**
    * Hash for this object
    * TODO: Some validations?

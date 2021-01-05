@@ -11,12 +11,12 @@ import org.apache.logging.log4j.Logger;
 /** DumbSink
  *  A dumb sink which prints the DataStream
  **/
-public class DumbSink implements SinkFunction<String> {
+public class DumbObjectSink implements SinkFunction<GenericJsonMessage> {
 
 
-  private static final Logger LOGGER = LogManager.getLogger(DumbSink.class);
+  private static final Logger LOGGER = LogManager.getLogger(DumbObjectSink.class);
 
-  public DumbSink() {
+  public DumbObjectSink() {
   }
 
   /** Statefulness for dumb things */
@@ -28,8 +28,8 @@ public class DumbSink implements SinkFunction<String> {
    * Called for every message the incoming data
    */
   @Override
-  public void invoke(String value) {
-    System.out.println(value);
+  public void invoke(GenericJsonMessage value) {
+    System.out.println(value.toString());
   }
 
 }
