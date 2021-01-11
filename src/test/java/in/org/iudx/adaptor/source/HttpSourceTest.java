@@ -55,13 +55,18 @@ public class HttpSourceTest {
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time");
 
-    // env.addSource(new HttpSource(apiConfig))
-    //     .keyBy((GenericJsonMessage msg) -> msg.key)
-    //     .process(new GenericProcessFunction())
-    //     .addSink(new DumbSink());
+    /* Include process */
+    env.addSource(new HttpSource(apiConfig))
+        .keyBy((GenericJsonMessage msg) -> msg.key)
+        .process(new GenericProcessFunction())
+        .addSink(new DumbSink());
 
+    /* Passthrough
+     *
     env.addSource(new HttpSource(apiConfig))
         .addSink(new DumbObjectSink());
+     **/
+
     try {
       env.execute("Simple Get");
     } catch (Exception e) {
