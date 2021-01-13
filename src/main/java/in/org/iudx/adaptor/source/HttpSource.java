@@ -5,6 +5,8 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Transformer;
 
 
 /**
@@ -15,7 +17,7 @@ import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
  *
  * Notes: 
  *  - ?This is serializable from flink examples
- *  - The constructor can only take a serializable object, {@link ApiConfig}
+ *  - The constructor can only take a serializable object, {@link ApiConfig<Tagger,Transformer>}
  *
  */
 public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
@@ -23,17 +25,17 @@ public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
   private static final long serialVersionUID = 1L;
   private volatile boolean running = true;
   private HttpEntity httpEntity;
-  private ApiConfig apiConfig;
+  private ApiConfig<Tagger,Transformer> apiConfig;
 
   /**
    * {@link HttpEntity} Constructor
    * 
-   * @param ApiConfig Api configuration object
+   * @param ApiConfig<Tagger,Transformer> Api configuration object
    *
    * Note: 
    *   - Only set configuration here. Don't initialize {@link HttpEntity}.
    */
-  public HttpSource(ApiConfig apiConfig) {
+  public HttpSource(ApiConfig<Tagger,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
   }
 
@@ -71,7 +73,7 @@ public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
       ctx.collectWithTimestamp(msg, msg.getEventTime());
       ctx.emitWatermark(new Watermark(msg.getEventTime()));
 
-      Thread.sleep(1000);
+      Thread.sleep(apiConfig.pollingInterval);
     }
   }
 

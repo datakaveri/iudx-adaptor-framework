@@ -13,6 +13,8 @@ import java.time.Duration;
 import java.net.URI;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Transformer;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -31,7 +33,7 @@ import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
  */
 public class HttpEntity {
 
-  public ApiConfig apiConfig;
+  public ApiConfig<Tagger,Transformer> apiConfig;
 
   private HttpClient httpClient;
   private HttpRequest httpRequest;
@@ -48,9 +50,9 @@ public class HttpEntity {
    * TODO: 
    *  - Manage post 
    *  - Modularize/cleanup
-   *  - Handle timeouts from ApiConfig
+   *  - Handle timeouts from ApiConfig<Tagger,Transformer>
    */
-  public HttpEntity(ApiConfig apiConfig) {
+  public HttpEntity(ApiConfig<Tagger,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
     if (this.apiConfig.requestType.equals("GET")) {
       httpRequest = HttpRequest.newBuilder().uri(URI.create(apiConfig.url))
@@ -63,12 +65,12 @@ public class HttpEntity {
     }
   }
 
-  public HttpEntity setApi(ApiConfig api) {
-    this.apiConfig = api;
+  public HttpEntity setApi(ApiConfig<Tagger,Transformer> apiConfig) {
+    this.apiConfig = apiConfig;
     return this;
   }
 
-  public ApiConfig getApiConfig() {
+  public ApiConfig<Tagger,Transformer> getApiConfig() {
     return this.apiConfig;
   }
 
@@ -103,15 +105,9 @@ public class HttpEntity {
     GenericJsonMessage msg = new GenericJsonMessage();
     String resp = getSerializedMessage();
 
-    /* TODO: 
-     *  - Key extraction functionality. It's not going to be this easy.
-     *  - Json exception handling
-     **/
     JSONObject obj = new JSONObject(resp);
-    msg.setKey(obj.getString(apiConfig.getKeyingProperty()));
-    msg.setEventTimestamp(Instant.parse(
-                            obj.getString(
-                                apiConfig.getTimeIndexingProperty())));
+    msg.setKey(apiConfig.tagger.getKey(obj));
+    msg.setEventTimestamp(apiConfig.tagger.getTimeIndex(obj));
     msg.setResponseBody(resp);
     return msg;
   }

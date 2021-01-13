@@ -10,6 +10,9 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.source.ApiConfig;
 
 public class GenericProcessFunction 
   extends KeyedProcessFunction<String,GenericJsonMessage,String> {
@@ -18,6 +21,12 @@ public class GenericProcessFunction
   private String STATE_NAME = "api state";
 
   private ValueState<GenericJsonMessage> streamState;
+
+  private ApiConfig<Tagger,Transformer> apiConfig;
+
+  public GenericProcessFunction(ApiConfig<Tagger,Transformer> apiConfig) {
+    this.apiConfig = apiConfig;
+  }
 
   @Override
   public void open(Configuration config) {
@@ -34,8 +43,9 @@ public class GenericProcessFunction
     if (previousMessage == null) {
       streamState.update(msg);
     } else {
+      /* Tranformer logic in transform function applied here */
       /* Add deduplication logic here */
-      out.collect(msg.toString());
+      out.collect(apiConfig.transformer.transform(msg.body));
       streamState.clear();
     }
   }

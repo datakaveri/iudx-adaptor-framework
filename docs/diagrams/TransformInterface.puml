@@ -1,10 +1,10 @@
 @startuml
 Interface Transformer   {
   -- public --
-  JsonObject in
-  JsonObject out
+  String inputDoc
+  String outputDoc
   -- public --
-  JsonObject transform(JsonObject in)
+  String transform(String inputDoc)
 }
 @enduml
 

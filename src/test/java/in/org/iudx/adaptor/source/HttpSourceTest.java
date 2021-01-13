@@ -24,6 +24,13 @@ import in.org.iudx.adaptor.sink.DumbSink;
 import in.org.iudx.adaptor.sink.DumbObjectSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
 
+
+import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
+import in.org.iudx.adaptor.codegen.SimpleTestTagger;
+
+
 public class HttpSourceTest {
 
   public static MiniClusterWithClientResource flinkCluster;
@@ -50,15 +57,25 @@ public class HttpSourceTest {
     CheckpointConfig config = env.getCheckpointConfig();
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+
+    SimpleTestTransformer trans = new SimpleTestTransformer();
+    SimpleTestTagger tagger = new SimpleTestTagger();
+
+
+    ApiConfig<Tagger,Transformer> apiConfig = 
+      new ApiConfig<Tagger,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
-                                          .setTimeIndexingProperty("time");
+                                          .setTimeIndexingProperty("time")
+                                          .setPollingInterval(1000L)
+                                          .setTagger(tagger)
+                                          .setTransformer(trans);
+
 
     /* Include process */
     env.addSource(new HttpSource(apiConfig))
         .keyBy((GenericJsonMessage msg) -> msg.key)
-        .process(new GenericProcessFunction())
+        .process(new GenericProcessFunction(apiConfig))
         .addSink(new DumbSink());
 
     /* Passthrough

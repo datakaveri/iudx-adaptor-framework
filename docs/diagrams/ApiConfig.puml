@@ -8,6 +8,9 @@ class ApiConfig  {
   String headerString
   String keyingProperty
   String timeIndexingProperty
+  long pollingInterval
+  Tagger tagger
+  Transformer transformer
   -- public --
   Object getMessage()
   ApiConfig setApi(String api)
@@ -16,9 +19,11 @@ class ApiConfig  {
   ApiConfig setHeaders(Multimap headers)
   ApiConfig setKeyingProperty(String keyingProperty)
   ApiConfig setTimeIndexingProperty(String timeIndexingProperty)
+  ApiConfig setPollingInterval(long pollingInterval)
+  ApiConfig setTagger(Tagger tagger)
+  ApiConfig setTransformer(Transformer transformer)
   String getKeyingProperty()
   String getTimeIndexingProperty()
 
 }
 @enduml
-

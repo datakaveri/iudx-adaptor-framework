@@ -1,0 +1,7 @@
+@startuml
+interface Tagger  {
+    <implements Serializable>
+  String getKeyingProperty(JSONObject data)
+  String getTimeIndexingProperty(JSONObject data)
+}
+@enduml

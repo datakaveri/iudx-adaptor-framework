@@ -18,12 +18,15 @@ import java.lang.StringBuilder;
  *  - Extend as needed
  *
  */
-public class ApiConfig implements Serializable {
+public class ApiConfig<Tagger,Transformer> implements Serializable {
   public String url;
   public String body;
   public String requestType = "GET";
   public String keyingProperty;
   public String timeIndexingProperty;
+  public long pollingInterval;
+  public Tagger tagger;
+  public Transformer transformer;
 
 
   public Map<String,String> headers = new HashMap<String,String>();
@@ -33,17 +36,17 @@ public class ApiConfig implements Serializable {
   public ApiConfig(){
   }
 
-  public ApiConfig setUrl(String url) {
+  public ApiConfig<Tagger,Transformer> setUrl(String url) {
     this.url = url;
     return this;
   }
 
-  public ApiConfig setBody(String body) {
+  public ApiConfig<Tagger,Transformer> setBody(String body) {
     this.body = body;
     return this;
   }
 
-  public ApiConfig setHeader(String key, String value) {
+  public ApiConfig<Tagger,Transformer> setHeader(String key, String value) {
     StringBuilder sb = new StringBuilder();
     sb.append(headers);
     sb.append(key).append(" ").append(value);
@@ -51,7 +54,7 @@ public class ApiConfig implements Serializable {
     return this;
   }
 
-  public ApiConfig setHeaders(Map<String,String> headers) {
+  public ApiConfig<Tagger,Transformer> setHeaders(Map<String,String> headers) {
     this.headers = headers;
     StringBuilder sb = new StringBuilder();
     headers.forEach((k,v) -> {
@@ -67,19 +70,34 @@ public class ApiConfig implements Serializable {
    *        For now we are just assuming a flat Json and describing the keying field
    *        as a simple string.
    **/
-  public ApiConfig setKeyingProperty(String keyingProperty) {
+  public ApiConfig<Tagger,Transformer> setKeyingProperty(String keyingProperty) {
     this.keyingProperty = keyingProperty;
     return this;
   }
 
-  public ApiConfig setTimeIndexingProperty(String timeIndexingProperty) {
+  public ApiConfig<Tagger,Transformer> setTimeIndexingProperty(String timeIndexingProperty) {
     this.timeIndexingProperty = timeIndexingProperty;
+    return this;
+  }
+
+  public ApiConfig<Tagger,Transformer> setPollingInterval(long pollingInterval) {
+    this.pollingInterval = pollingInterval;
+    return this;
+  }
+
+  public ApiConfig<Tagger,Transformer> setTagger(Tagger tagger) {
+    this.tagger = tagger;
+    return this;
+  }
+
+  public ApiConfig<Tagger,Transformer> setTransformer(Transformer transformer) {
+    this.transformer = transformer;
     return this;
   }
 
 
   /* type is get or post */
-  public ApiConfig setRequestType(String requestType) {
+  public ApiConfig<Tagger,Transformer> setRequestType(String requestType) {
     this.requestType = requestType;
     return this;
   }

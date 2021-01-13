@@ -17,16 +17,28 @@ import java.util.Map;
 import java.util.HashMap;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
+import in.org.iudx.adaptor.codegen.SimpleTestTagger;
 
 public class HttpEntityTest {
 
   @Test
   void simpleGet() throws InterruptedException {
 
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+    
+    SimpleTestTransformer trans = new SimpleTestTransformer();
+    SimpleTestTagger tagger = new SimpleTestTagger();
+
+    ApiConfig<Tagger,Transformer> apiConfig = 
+      new ApiConfig<Tagger,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
-                                          .setTimeIndexingProperty("time");
+                                          .setTimeIndexingProperty("time")
+                                          .setPollingInterval(1000L)
+                                          .setTagger(tagger)
+                                          .setTransformer(trans);
 
     HttpEntity httpEntity = new HttpEntity(apiConfig);
     GenericJsonMessage msg = httpEntity.getMessage();
