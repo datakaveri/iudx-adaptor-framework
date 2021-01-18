@@ -10,9 +10,9 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
-import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.source.ApiConfig;
+import in.org.iudx.adaptor.codegen.ApiConfig;
 
 public class GenericProcessFunction 
   extends KeyedProcessFunction<String,GenericJsonMessage,String> {
@@ -22,9 +22,9 @@ public class GenericProcessFunction
 
   private ValueState<GenericJsonMessage> streamState;
 
-  private ApiConfig<Tagger,Transformer> apiConfig;
+  private ApiConfig<Parser,Transformer> apiConfig;
 
-  public GenericProcessFunction(ApiConfig<Tagger,Transformer> apiConfig) {
+  public GenericProcessFunction(ApiConfig<Parser,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
   }
 

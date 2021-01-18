@@ -13,8 +13,9 @@ import java.time.Duration;
 import java.net.URI;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
-import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.ApiConfig;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -33,7 +34,7 @@ import in.org.iudx.adaptor.codegen.Transformer;
  */
 public class HttpEntity {
 
-  public ApiConfig<Tagger,Transformer> apiConfig;
+  public ApiConfig<Parser,Transformer> apiConfig;
 
   private HttpClient httpClient;
   private HttpRequest httpRequest;
@@ -50,9 +51,9 @@ public class HttpEntity {
    * TODO: 
    *  - Manage post 
    *  - Modularize/cleanup
-   *  - Handle timeouts from ApiConfig<Tagger,Transformer>
+   *  - Handle timeouts from ApiConfig<Parser,Transformer>
    */
-  public HttpEntity(ApiConfig<Tagger,Transformer> apiConfig) {
+  public HttpEntity(ApiConfig<Parser,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
     if (this.apiConfig.requestType.equals("GET")) {
       httpRequest = HttpRequest.newBuilder().uri(URI.create(apiConfig.url))
@@ -65,12 +66,12 @@ public class HttpEntity {
     }
   }
 
-  public HttpEntity setApi(ApiConfig<Tagger,Transformer> apiConfig) {
+  public HttpEntity setApi(ApiConfig<Parser,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
     return this;
   }
 
-  public ApiConfig<Tagger,Transformer> getApiConfig() {
+  public ApiConfig<Parser,Transformer> getApiConfig() {
     return this.apiConfig;
   }
 
@@ -106,8 +107,8 @@ public class HttpEntity {
     String resp = getSerializedMessage();
 
     JSONObject obj = new JSONObject(resp);
-    msg.setKey(apiConfig.tagger.getKey(obj));
-    msg.setEventTimestamp(apiConfig.tagger.getTimeIndex(obj));
+    msg.setKey(apiConfig.parser.getKey(obj));
+    msg.setEventTimestamp(apiConfig.parser.getTimeIndex(obj));
     msg.setResponseBody(resp);
     return msg;
   }

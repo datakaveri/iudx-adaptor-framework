@@ -9,7 +9,7 @@ class ApiConfig  {
   String keyingProperty
   String timeIndexingProperty
   long pollingInterval
-  Tagger tagger
+  Parser parser
   Transformer transformer
   -- public --
   Object getMessage()
@@ -20,7 +20,7 @@ class ApiConfig  {
   ApiConfig setKeyingProperty(String keyingProperty)
   ApiConfig setTimeIndexingProperty(String timeIndexingProperty)
   ApiConfig setPollingInterval(long pollingInterval)
-  ApiConfig setTagger(Tagger tagger)
+  ApiConfig setParser(Parser parser)
   ApiConfig setTransformer(Transformer transformer)
   String getKeyingProperty()
   String getTimeIndexingProperty()

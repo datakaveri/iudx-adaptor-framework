@@ -3,9 +3,9 @@ package in.org.iudx.adaptor.codegen;
 import org.json.JSONObject;
 import java.time.Instant;
 
-public class SimpleTestTagger implements Tagger {
+public class SimpleTestParser implements Parser {
 
-  public SimpleTestTagger() {
+  public SimpleTestParser() {
   }
 
   public String getKey(JSONObject data) {

@@ -18,9 +18,10 @@ import java.util.HashMap;
 
 import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
 import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.codegen.Tagger;
+import in.org.iudx.adaptor.codegen.Parser;
+import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
-import in.org.iudx.adaptor.codegen.SimpleTestTagger;
+import in.org.iudx.adaptor.codegen.SimpleTestParser;
 
 public class HttpEntityTest {
 
@@ -29,15 +30,15 @@ public class HttpEntityTest {
 
     
     SimpleTestTransformer trans = new SimpleTestTransformer();
-    SimpleTestTagger tagger = new SimpleTestTagger();
+    SimpleTestParser parser = new SimpleTestParser();
 
-    ApiConfig<Tagger,Transformer> apiConfig = 
-      new ApiConfig<Tagger,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
+    ApiConfig<Parser,Transformer> apiConfig = 
+      new ApiConfig<Parser,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time")
                                           .setPollingInterval(1000L)
-                                          .setTagger(tagger)
+                                          .setParser(parser)
                                           .setTransformer(trans);
 
     HttpEntity httpEntity = new HttpEntity(apiConfig);

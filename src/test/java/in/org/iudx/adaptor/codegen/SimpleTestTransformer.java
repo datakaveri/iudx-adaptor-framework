@@ -1,5 +1,7 @@
 package in.org.iudx.adaptor.codegen;
 
+import org.json.JSONObject;
+
 
 public class SimpleTestTransformer implements Transformer {
 
@@ -7,7 +9,8 @@ public class SimpleTestTransformer implements Transformer {
   }
 
   public String transform(String inDoc) {
-    return inDoc;
+    JSONObject obj = new JSONObject(inDoc);
+    return obj.toString();
   }
 
 }
