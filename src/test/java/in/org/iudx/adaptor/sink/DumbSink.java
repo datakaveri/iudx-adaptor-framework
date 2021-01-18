@@ -1,7 +1,7 @@
 package in.org.iudx.adaptor.sink;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import org.apache.flink.configuration.Configuration;
 
 

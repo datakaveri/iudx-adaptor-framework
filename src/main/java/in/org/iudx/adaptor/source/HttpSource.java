@@ -4,7 +4,7 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -14,14 +14,14 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  * {@link HttpSource} - The HttpSource Class
  *
  * This extends {@link RichSourceFunction} which implements stateful functionalities.
- * This generic function exchanges meesages as {@link GenericJsonMessage} objects.
+ * This generic function exchanges meesages as {@link Message} objects.
  *
  * Notes: 
  *  - ?This is serializable from flink examples
  *  - The constructor can only take a serializable object, {@link ApiConfig<Parser,Transformer>}
  *
  */
-public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
+public class HttpSource extends RichSourceFunction <Message>{
 
   private static final long serialVersionUID = 1L;
   private volatile boolean running = true;
@@ -64,13 +64,13 @@ public class HttpSource extends RichSourceFunction <GenericJsonMessage>{
    *
    */
   @Override
-  public void run(SourceContext<GenericJsonMessage> ctx) throws Exception {
+  public void run(SourceContext<Message> ctx) throws Exception {
     /** TODO:
      *    - Configure delays
      **/
     while (running) {
 
-      GenericJsonMessage msg = httpEntity.getMessage();
+      Message msg = httpEntity.getMessage();
       ctx.collectWithTimestamp(msg, msg.getEventTime());
       ctx.emitWatermark(new Watermark(msg.getEventTime()));
 

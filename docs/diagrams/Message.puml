@@ -1,5 +1,5 @@
 @startuml
-class GenericJsonMessage  {
+class Message  {
     <implements Serializable>
   -- public (stateful) --
   String body
@@ -11,10 +11,10 @@ class GenericJsonMessage  {
   int statusCode
   -- public --
   long getEventTime()
-  GenericJsonMessage setEventTime()
-  GenericJsonMessage setKey(String key)
-  GenericJsonMessage setResponseBody(String body)
-  GenericJsonMessage setResponseStatusCode()
+  Message setEventTime()
+  Message setKey(String key)
+  Message setResponseBody(String body)
+  Message setResponseStatusCode()
   int getResponseHeaders()
   Object getResponseBody()
   HashMap<String,String> getResponseHeaders()

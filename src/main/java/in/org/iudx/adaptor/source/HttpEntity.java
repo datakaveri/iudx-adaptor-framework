@@ -3,7 +3,6 @@ package in.org.iudx.adaptor.source;
 
 import java.time.Instant;
 import java.io.IOException;
-import org.json.JSONObject;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
@@ -12,7 +11,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.net.URI;
 
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -95,22 +94,8 @@ public class HttpEntity {
   }
 
 
-  /**
-   * Get the response message parsed into {@link GenericJsonMessage}
-   * 
-   * TODO:
-   *  - Parse propertly
-   *  - Parsing logic goes here. It's a complex bit of code to write.
-   */
-  public GenericJsonMessage getMessage() {
-    GenericJsonMessage msg = new GenericJsonMessage();
-    String resp = getSerializedMessage();
-
-    JSONObject obj = new JSONObject(resp);
-    msg.setKey(apiConfig.parser.getKey(obj));
-    msg.setEventTimestamp(apiConfig.parser.getTimeIndex(obj));
-    msg.setResponseBody(resp);
+  public Message getMessage() {
+    Message msg = apiConfig.parser.parse(getSerializedMessage());
     return msg;
   }
-
 }

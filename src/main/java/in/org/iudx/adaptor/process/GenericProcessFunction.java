@@ -9,18 +9,18 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 public class GenericProcessFunction 
-  extends KeyedProcessFunction<String,GenericJsonMessage,String> {
+  extends KeyedProcessFunction<String,Message,String> {
 
   /* Something temporary for now */
   private String STATE_NAME = "api state";
 
-  private ValueState<GenericJsonMessage> streamState;
+  private ValueState<Message> streamState;
 
   private ApiConfig<Parser,Transformer> apiConfig;
 
@@ -30,15 +30,15 @@ public class GenericProcessFunction
 
   @Override
   public void open(Configuration config) {
-    ValueStateDescriptor<GenericJsonMessage> stateDescriptor =
-      new ValueStateDescriptor<>(STATE_NAME, GenericJsonMessage.class);
+    ValueStateDescriptor<Message> stateDescriptor =
+      new ValueStateDescriptor<>(STATE_NAME, Message.class);
     streamState = getRuntimeContext().getState(stateDescriptor);
   }
 
   @Override
-  public void processElement(GenericJsonMessage msg,
+  public void processElement(Message msg,
                               Context context, Collector<String> out) throws Exception {
-    GenericJsonMessage previousMessage = streamState.value();
+    Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {
       streamState.update(msg);

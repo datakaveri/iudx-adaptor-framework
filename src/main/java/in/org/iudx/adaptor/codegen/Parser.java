@@ -1,10 +1,11 @@
 package in.org.iudx.adaptor.codegen;
 
 import java.io.Serializable;
-import org.json.JSONObject;
 import java.time.Instant;
+import in.org.iudx.adaptor.datatypes.Message;
 
 public interface Parser extends Serializable {
-  public String getKey(JSONObject data);
-  public Instant getTimeIndex(JSONObject data);
+  public String getKey();
+  public Instant getTimeIndex();
+  public Message parse(String data);
 }

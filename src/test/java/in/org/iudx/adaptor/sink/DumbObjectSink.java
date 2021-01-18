@@ -1,7 +1,7 @@
 package in.org.iudx.adaptor.sink;
 
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import org.apache.flink.configuration.Configuration;
 
 
@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 /** DumbSink
  *  A dumb sink which prints the DataStream
  **/
-public class DumbObjectSink implements SinkFunction<GenericJsonMessage> {
+public class DumbObjectSink implements SinkFunction<Message> {
 
 
   private static final Logger LOGGER = LogManager.getLogger(DumbObjectSink.class);
@@ -28,7 +28,7 @@ public class DumbObjectSink implements SinkFunction<GenericJsonMessage> {
    * Called for every message the incoming data
    */
   @Override
-  public void invoke(GenericJsonMessage value) {
+  public void invoke(Message value) {
     System.out.println(value.toString());
   }
 

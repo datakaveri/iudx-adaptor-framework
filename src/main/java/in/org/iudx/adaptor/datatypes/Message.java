@@ -1,5 +1,5 @@
 /**
- * <h1>GenericJsonMessage.java</h1>
+ * <h1>Message.java</h1>
  * Generic http response message wrapper
  */
 
@@ -14,7 +14,7 @@ import java.io.Serializable;
  *  - Getters and setters according to specification
  *  - Validations
  */
-public class GenericJsonMessage implements Serializable {
+public class Message implements Serializable {
 
   public String body;
   public String key;
@@ -23,9 +23,9 @@ public class GenericJsonMessage implements Serializable {
   private static final long serialVersionUID = 11L;
 
   /**
-   * {@link GenericJsonMessage} Creates an empty wrapper
+   * {@link Message} Creates an empty wrapper
    */
-  public GenericJsonMessage(){
+  public Message(){
   }
 
    /**
@@ -67,17 +67,17 @@ public class GenericJsonMessage implements Serializable {
   }
 
 
-  public GenericJsonMessage setResponseBody(String body) {
+  public Message setResponseBody(String body) {
     this.body = body;
     return this;
   }
 
-  public GenericJsonMessage setKey(String key) {
+  public Message setKey(String key) {
     this.key = key;
     return this;
   }
 
-  public GenericJsonMessage setEventTimestamp(Instant timestamp) {
+  public Message setEventTimestamp(Instant timestamp) {
     /** Todo:
      *    - Return Instance time
      **/

@@ -19,7 +19,7 @@ import java.util.HashMap;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
 import in.org.iudx.adaptor.sink.DumbObjectSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
@@ -75,7 +75,7 @@ public class HttpSourceTest {
 
     /* Include process */
     env.addSource(new HttpSource(apiConfig))
-        .keyBy((GenericJsonMessage msg) -> msg.key)
+        .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(apiConfig))
         .addSink(new DumbSink());
 

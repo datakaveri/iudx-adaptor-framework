@@ -16,7 +16,7 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import java.util.Map;
 import java.util.HashMap;
 
-import in.org.iudx.adaptor.datatypes.GenericJsonMessage;
+import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -42,7 +42,7 @@ public class HttpEntityTest {
                                           .setTransformer(trans);
 
     HttpEntity httpEntity = new HttpEntity(apiConfig);
-    GenericJsonMessage msg = httpEntity.getMessage();
+    Message msg = httpEntity.getMessage();
     System.out.println("Result");
     System.out.println(msg);
     System.out.println("Keying Property");

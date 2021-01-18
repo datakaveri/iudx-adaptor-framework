@@ -1,7 +1,8 @@
 @startuml
 interface Parser  {
     <implements Serializable>
-  String getKeyingProperty(JSONObject data)
-  String getTimeIndexingProperty(JSONObject data)
+  String getKeyingProperty()
+  String getTimeIndexingProperty()
+  Message parse(String message)
 }
 @enduml
