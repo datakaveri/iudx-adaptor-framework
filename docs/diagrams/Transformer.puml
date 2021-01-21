@@ -1,0 +1,7 @@
+@startuml
+interface Transformer   {
+    <implements Serializable>
+  Message transform(Message inMessage)
+}
+@enduml
+

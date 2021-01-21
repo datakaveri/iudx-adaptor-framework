@@ -1,0 +1,5 @@
+@startuml
+Interface Deduplicator   {
+  boolean isDuplicate(Message inMessage)
+}
+@enduml
