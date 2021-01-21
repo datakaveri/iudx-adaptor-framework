@@ -12,19 +12,20 @@ import org.apache.flink.util.Collector;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 public class GenericProcessFunction 
-  extends KeyedProcessFunction<String,Message,String> {
+  extends KeyedProcessFunction<String,Message,Message> {
 
   /* Something temporary for now */
   private String STATE_NAME = "api state";
 
   private ValueState<Message> streamState;
 
-  private ApiConfig<Parser,Transformer> apiConfig;
+  private ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
 
-  public GenericProcessFunction(ApiConfig<Parser,Transformer> apiConfig) {
+  public GenericProcessFunction(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
   }
 
@@ -37,7 +38,7 @@ public class GenericProcessFunction
 
   @Override
   public void processElement(Message msg,
-                              Context context, Collector<String> out) throws Exception {
+                              Context context, Collector<Message> out) throws Exception {
     Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {
@@ -45,8 +46,10 @@ public class GenericProcessFunction
     } else {
       /* Tranformer logic in transform function applied here */
       /* Add deduplication logic here */
-      out.collect(apiConfig.transformer.transform(msg.body));
-      streamState.clear();
+      if(apiConfig.deduplicator.isDuplicate(msg) == false) {
+        out.collect(apiConfig.transformer.transform(msg));
+        streamState.update(msg);
+      }
     }
   }
 

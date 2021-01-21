@@ -19,6 +19,7 @@ import java.util.HashMap;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
+import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleTestParser;
@@ -32,8 +33,8 @@ public class HttpEntityTest {
     SimpleTestTransformer trans = new SimpleTestTransformer();
     SimpleTestParser parser = new SimpleTestParser();
 
-    ApiConfig<Parser,Transformer> apiConfig = 
-      new ApiConfig<Parser,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
+    ApiConfig<Parser,Deduplicator,Transformer> apiConfig = 
+      new ApiConfig<Parser,Deduplicator,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time")

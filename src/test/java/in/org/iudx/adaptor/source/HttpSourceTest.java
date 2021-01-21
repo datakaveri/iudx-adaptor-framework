@@ -28,8 +28,10 @@ import in.org.iudx.adaptor.process.GenericProcessFunction;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
+import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleTestParser;
+import in.org.iudx.adaptor.codegen.SimpleDeduplicator;
 
 
 public class HttpSourceTest {
@@ -61,15 +63,17 @@ public class HttpSourceTest {
 
     SimpleTestTransformer trans = new SimpleTestTransformer();
     SimpleTestParser parser = new SimpleTestParser();
+    SimpleDeduplicator dedup = new SimpleDeduplicator();
 
 
-    ApiConfig<Parser,Transformer> apiConfig = 
-      new ApiConfig<Parser,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
+    ApiConfig<Parser,Deduplicator,Transformer> apiConfig = 
+      new ApiConfig<Parser,Deduplicator,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time")
                                           .setPollingInterval(1000L)
                                           .setParser(parser)
+                                          .setDeduplicator(dedup)
                                           .setTransformer(trans);
 
 

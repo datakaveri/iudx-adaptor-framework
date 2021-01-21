@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 /** DumbSink
  *  A dumb sink which prints the DataStream
  **/
-public class DumbSink implements SinkFunction<String> {
+public class DumbSink implements SinkFunction<Message> {
 
 
   private static final Logger LOGGER = LogManager.getLogger(DumbSink.class);
@@ -28,8 +28,8 @@ public class DumbSink implements SinkFunction<String> {
    * Called for every message the incoming data
    */
   @Override
-  public void invoke(String value) {
-    System.out.println(value);
+  public void invoke(Message msg) {
+    System.out.println(msg.toString());
   }
 
 }

@@ -14,6 +14,7 @@ import java.net.URI;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 /**
@@ -33,7 +34,7 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  */
 public class HttpEntity {
 
-  public ApiConfig<Parser,Transformer> apiConfig;
+  public ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
 
   private HttpClient httpClient;
   private HttpRequest httpRequest;
@@ -50,9 +51,9 @@ public class HttpEntity {
    * TODO: 
    *  - Manage post 
    *  - Modularize/cleanup
-   *  - Handle timeouts from ApiConfig<Parser,Transformer>
+   *  - Handle timeouts from ApiConfig<Parser,Deduplicator,Transformer>
    */
-  public HttpEntity(ApiConfig<Parser,Transformer> apiConfig) {
+  public HttpEntity(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
     if (this.apiConfig.requestType.equals("GET")) {
       httpRequest = HttpRequest.newBuilder().uri(URI.create(apiConfig.url))
@@ -65,12 +66,12 @@ public class HttpEntity {
     }
   }
 
-  public HttpEntity setApi(ApiConfig<Parser,Transformer> apiConfig) {
+  public HttpEntity setApi(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
     this.apiConfig = apiConfig;
     return this;
   }
 
-  public ApiConfig<Parser,Transformer> getApiConfig() {
+  public ApiConfig<Parser,Deduplicator,Transformer> getApiConfig() {
     return this.apiConfig;
   }
 
