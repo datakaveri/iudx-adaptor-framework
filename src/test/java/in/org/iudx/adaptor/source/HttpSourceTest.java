@@ -81,7 +81,7 @@ public class HttpSourceTest {
     env.addSource(new HttpSource(apiConfig))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(apiConfig))
-        .addSink(new DumbSink());
+        .addSink(new DumbSink(apiConfig.parser));
 
     /* Passthrough
      *

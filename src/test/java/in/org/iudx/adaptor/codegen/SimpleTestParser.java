@@ -33,5 +33,9 @@ public class SimpleTestParser implements Parser {
     return msg;
   }
 
+  public byte[] serialize(Message obj) {
+    return obj.toString().getBytes();
+  }
+
 
 }

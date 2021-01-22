@@ -1,6 +1,9 @@
 @startuml
 interface Parser  {
     <implements Serializable>
+  -- public variables --
+  SerializationSchema<Message> serializer
+  -- public methods --
   String getKeyingProperty()
   String getTimeIndexingProperty()
   Message parse(String message)

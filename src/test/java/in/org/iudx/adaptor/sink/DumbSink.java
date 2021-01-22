@@ -8,6 +8,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import in.org.iudx.adaptor.codegen.Parser;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+
 /** DumbSink
  *  A dumb sink which prints the DataStream
  **/
@@ -16,7 +19,10 @@ public class DumbSink implements SinkFunction<Message> {
 
   private static final Logger LOGGER = LogManager.getLogger(DumbSink.class);
 
-  public DumbSink() {
+  private Parser parser;
+
+  public DumbSink(Parser parser) {
+    this.parser = parser;
   }
 
   /** Statefulness for dumb things */
@@ -29,7 +35,7 @@ public class DumbSink implements SinkFunction<Message> {
    */
   @Override
   public void invoke(Message msg) {
-    System.out.println(msg.toString());
+    System.out.println(new String(parser.serialize(msg)));
   }
 
 }
