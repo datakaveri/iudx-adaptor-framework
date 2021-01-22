@@ -3,17 +3,20 @@ package in.org.iudx.adaptor.server;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.net.JksOptions;
+import io.vertx.ext.web.FileUpload;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static in.org.iudx.adaptor.server.Constants.*;
+import in.org.iudx.adaptor.server.util.Constants;
+import in.org.iudx.adaptor.server.util.Validator;
+import static in.org.iudx.adaptor.server.util.Constants.*;
+import java.util.Set;
 
 /**
  * The Adaptor API Server API Verticle.
@@ -25,15 +28,17 @@ import static in.org.iudx.adaptor.server.Constants.*;
 public class Server extends AbstractVerticle {
 
   private HttpServer server;
+  private FlinkClient flinkClient;
 
   @SuppressWarnings("unused")
   private Router router;
 
-  private String catAdmin;
   private String keystore;
   private String keystorePassword;
   private boolean isSsl;
   private int port;
+  private JsonObject flinkOptions = new JsonObject();
+  private Validator validator;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -45,14 +50,13 @@ public class Server extends AbstractVerticle {
     keystorePassword = config().getString(KEYSTORE_PASSWORD);
     isSsl = config().getBoolean(IS_SSL);
     port = config().getInteger(PORT);
+    flinkOptions = config().getJsonObject(FLINKOPTIONS);
 
     HttpServerOptions serverOptions = new HttpServerOptions();
 
     if (isSsl) {
       serverOptions.setSsl(true)
-                    .setKeyStoreOptions(new JksOptions()
-                                          .setPath(keystore)
-                                          .setPassword(keystorePassword));
+          .setKeyStoreOptions(new JksOptions().setPath(keystore).setPassword(keystorePassword));
     } else {
       serverOptions.setSsl(false);
     }
@@ -60,22 +64,270 @@ public class Server extends AbstractVerticle {
     /** Instantiate this server */
     server = vertx.createHttpServer(serverOptions);
 
-
-
     /**
-     *
-     * API Routes and Callbacks
-     *
-     */
-
-    /** 
      * Routes - Defines the routes and callbacks
      */
     Router router = Router.router(vertx);
-    router.route().handler(BodyHandler.create());
-    router.route().handler(CorsHandler.create("*").allowedHeaders(ALLOWED_HEADERS));
+    
+    /* Route for enabling file upload with dir */
+    router.route().handler(
+        BodyHandler.create()
+                   .setUploadsDirectory(UPLOAD_DIR)
+                   .setDeleteUploadedFilesOnEnd(true));
+    
+    router.route().handler(
+        CorsHandler.create("*")
+                   .allowedHeaders(ALLOWED_HEADERS));
 
+    /* Sumbit Jar Route */
+    router.post(JAR_ROUTE)
+          .consumes(Constants.MULTIPART_FORM_DATA)
+          .handler(routingContext -> {
+            submitJarHandler(routingContext);
+    });
+
+    /* Get all the Jar */
+    router.get(JAR_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getJarsHandler(routingContext);
+    });
+
+    /* Get a Single Jar plan */
+    router.get(GET_JAR_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getJarsHandler(routingContext);
+    });
+
+    /* Delete all the submitted Jar */
+    router.delete(JAR_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            deleteJarsHandler(routingContext);
+    });
+
+    /* Delete a single jar */
+    router.delete(GET_JAR_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            deleteJarsHandler(routingContext);
+    });
+
+    /* Route for running a Jar */
+    router.post(JOB_RUN_ROUTE)
+          .consumes(MIME_APPLICATION_JSON)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            runJobHandler(routingContext);
+        });
+
+    /* Get the all running/completed jobs */
+    router.get(JOBS_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getJobsHandler(routingContext);
+        });
+    
+    /* Get the details of single job */
+    router.get(JOB_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getJobsHandler(routingContext);
+    });
+
+
+    /* Start server */
+    server.requestHandler(router).listen(port);
+
+    /* Initialize support services */
+    flinkClient = new FlinkClient(vertx, flinkOptions);
+    validator = new Validator("./src/main/resources/jobSchema.json");
+    LOGGER.debug("Server Initialized");
   }
 
+  /**
+   * Submit Flink application Jar.
+   * 
+   * @param routingContext
+   */
+  private void submitJarHandler(RoutingContext routingContext) {
 
+    LOGGER.debug("Info: Submitting jar to Flink cluster");
+    
+    Set<FileUpload> uploads = routingContext.fileUploads();
+    HttpServerResponse response = routingContext.response();
+    JsonObject request = new JsonObject();
+
+    if (uploads.isEmpty()) {
+      routingContext.response().end("empty");
+    } else {
+      uploads.forEach(file -> {
+        request.put(NAME, file.fileName())
+               .put(PATH, file.uploadedFileName())
+               .put(URI, JAR_UPLOAD_API);
+        
+        flinkClient.submitJar(request, responseHandler -> {
+          if (responseHandler.succeeded()) {
+            LOGGER.info("Info: Jar submitted successfully");
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .end(responseHandler.result().toString());
+          } else {
+            LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(responseHandler.cause().getMessage());
+          }
+        });
+      });
+    }
+  }
+
+  /**
+   * Get the details related to submitted Jar(s).
+   * 
+   * @param routingContext
+   */
+  private void getJarsHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Getting Jar details from Flink cluster");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String jarId = routingContext.pathParam(ID);
+
+    if (jarId != null && jarId.endsWith(".jar")) {
+      requestBody.put(URI, JAR_PLAN_API.replace("$1", jarId));
+      requestBody.put(ID, jarId);
+    } else {
+      requestBody.put(URI, JARS);
+      requestBody.put(ID, "");
+    }
+
+    flinkClient.getJarDetails(requestBody, responseHandler -> {
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Success: search query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(responseHandler.result().toString());
+      } else if (responseHandler.failed()) {
+        LOGGER.error("Error: Error in getting jar details; " + responseHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(responseHandler.cause().getMessage());
+      }
+    });
+  }
+
+  /**
+   * Delete the submitted jar(s) from Flink cluster.
+   * 
+   * @param routingContext
+   */
+  private void deleteJarsHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Deleting Jar details from Flink cluster");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String jarId = routingContext.pathParam(ID);
+
+    if (jarId != null && jarId.endsWith(".jar")) {
+      requestBody.put(ID, jarId);
+      requestBody.put(URI, JARS + "/" + jarId);
+    } else {
+      requestBody.put(ID, "");
+      requestBody.put(URI, JARS);
+    }
+
+    flinkClient.deleteItems(requestBody, responseHandler -> {
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Success: delete query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(responseHandler.result().toString());
+      } else if (responseHandler.failed()) {
+        LOGGER.error("Error: Error in deleting jar items; " + responseHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(responseHandler.cause().getMessage());
+      }
+    });
+  }
+  
+  /**
+   * Run the already submitted Jar.
+   * 
+   * @param routingContext
+   */
+  public void runJobHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Starting a Job");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject payloadBody = routingContext.getBodyAsJson();
+    JsonObject requestBody = new JsonObject();
+    String jarId = routingContext.pathParam(ID);
+
+    if (jarId != null) {
+      Boolean isValid = validator.validate(payloadBody.encode());
+      if (isValid == Boolean.TRUE) {
+        LOGGER.debug("Success: schema validated");
+        requestBody.put(ID, jarId);
+        requestBody.put(DATA, payloadBody);
+        requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+        flinkClient.submitJob(requestBody, resHandler -> {
+          if (resHandler.succeeded()) {
+            LOGGER.info("Success: Job submitted");
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .end(resHandler.result().toString());
+          } else {
+            LOGGER.error("Error: Jar submission failed; " + resHandler.cause().getMessage());
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(resHandler.cause().getMessage());
+          }
+        });
+      } else {
+        LOGGER.error("Error: Schema validation failed");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end("Schema validation failed");
+      }
+    }
+  }
+  
+  /**
+   * Get the details related to Job(s).
+   * 
+   * @param routingContext
+   */
+  private void getJobsHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Getting job details from Flink cluster");
+    
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String jobId = routingContext.pathParam(ID);
+
+    if (jobId != null && !jobId.isEmpty()) {
+      requestBody.put(URI, JOBS_API + jobId);
+      requestBody.put(ID, jobId);
+    } else {
+      requestBody.put(URI, JOBS_API);
+      requestBody.put(ID, "");
+    }
+
+    flinkClient.getJobDetails(requestBody, responseHandler -> {
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Success: search query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(responseHandler.result().toString());
+      } else if (responseHandler.failed()) {
+        LOGGER.error("Error: Error in getting job details; " + 
+               responseHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(responseHandler.cause().getMessage());
+      }
+    });
+  }
 }
