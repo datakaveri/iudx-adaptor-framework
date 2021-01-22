@@ -1,0 +1,30 @@
+	{
+	"$schema": "http://json-schema.org/draft-04/schema#",
+	"type": "object",
+	"additionalProperties": false,
+	"properties": {
+		"programArgsList": {
+			"type": "array",
+			"optional": true,
+			"items": {
+				
+			}
+		},
+		"parallelism": {
+			"type": "integer",
+			"optional": true
+		},
+		"allowNonRestoredState ": {
+			"type": "boolean",
+			"optional": true
+		},
+		"savepointPath": {
+			"type": "string",
+			"optional": true
+		},
+		"entryClass": {
+			"type": "string",
+			"optional": true
+		}
+	}
+}
