@@ -1,10 +1,8 @@
-package in.org.iudx.adaptor.source;
+package in.org.iudx.adaptor.sink;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeAll;
+
 
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -21,7 +19,9 @@ import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbStringSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
+import in.org.iudx.adaptor.process.DumbProcess;
 
 
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -31,34 +31,60 @@ import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleTestParser;
 import in.org.iudx.adaptor.codegen.SimpleDeduplicator;
+import in.org.iudx.adaptor.codegen.SimplePublisher;
+import in.org.iudx.adaptor.source.HttpSource;
+import in.org.iudx.adaptor.sink.AMQPSink;
+import in.org.iudx.adaptor.codegen.RMQConfig;
 
 
-public class HttpSourceTest {
+import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSinkPublishOptions;
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AMQP.BasicProperties;
+import java.util.Collections;
+
+
+
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+
+public class RMQSinkTest {
+
+  private AMQPSink amqpSink;
   public static MiniClusterWithClientResource flinkCluster;
-  private static final Logger LOGGER = LogManager.getLogger(HttpSourceTest.class);
+
+  private static AMQP.BasicProperties props =
+    new AMQP.BasicProperties.Builder()
+    .headers(Collections.singletonMap("Test", "My Value"))
+    .expiration("10000")
+    .build();
+
+
+
 
   @BeforeAll
   public static void initialize() {
-    LOGGER.debug("Info: Testing");
     flinkCluster =
       new MiniClusterWithClientResource(
           new MiniClusterResourceConfiguration.Builder()
           .setNumberSlotsPerTaskManager(2)
           .setNumberTaskManagers(1)
           .build());
+
+
+
   }
 
   @Test
-  void simpleGet() throws InterruptedException {
-
+  void simpleSink() throws InterruptedException {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
     env.setParallelism(1);
 
     env.enableCheckpointing(10000L);
     CheckpointConfig config = env.getCheckpointConfig();
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
-
 
     SimpleTestTransformer trans = new SimpleTestTransformer();
     SimpleTestParser parser = new SimpleTestParser();
@@ -75,24 +101,36 @@ public class HttpSourceTest {
                                           .setDeduplicator(dedup)
                                           .setTransformer(trans);
 
+    RMQConnectionConfig rmqConfig = new RMQConnectionConfig.Builder().setUri("amqp://localhost")
+                                        .setPort(5672)
+                                        .setVirtualHost("/")
+                                        .setUserName("guest")
+                                        .setPassword("guest").build();
 
-    /* Include process */
+   RMQConfig amqconfig = new RMQConfig(); 
+   amqconfig.setPublisher(new SimplePublisher());
+   amqconfig.builder.setUri("amqp://localhost")
+                    .setPort(5672)
+                    .setUserName("guest")
+                    .setPassword("guest");
+   amqconfig.getConfig();
+                      
+
+
     env.addSource(new HttpSource(apiConfig))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(apiConfig))
-        .addSink(new DumbSink(apiConfig.parser));
-
-    /* Passthrough
-     *
-    env.addSource(new HttpSource(apiConfig))
-        .addSink(new DumbStringSink());
-     **/
+        //.process(new DumbProcess(apiConfig))
+        //.addSink(new DumbStringSink());
+        //.addSink(new RMQSink<String>(rmqConfig, new SimpleStringSchema(), publishOptions));
+        .addSink(new AMQPSink(amqconfig, apiConfig.parser));
 
     try {
       env.execute("Simple Get");
     } catch (Exception e) {
       System.out.println(e);
     }
-  }
-}
 
+  }
+
+}

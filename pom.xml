@@ -141,8 +141,8 @@ under the License.
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-rabbitmq_2.10</artifactId>
-            <version>1.2.1</version>
+            <artifactId>flink-connector-rabbitmq_2.11</artifactId>
+            <version>1.12.0</version>
         </dependency>
 
 
@@ -180,6 +180,7 @@ under the License.
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
+                        <id>rmq</id>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
