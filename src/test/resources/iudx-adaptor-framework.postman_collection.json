@@ -131,14 +131,20 @@
 							}
 						},
 						"url": {
-							"raw": "{{host}}:{{port}}{{base}}/job/b6f6b420-5526-4d4c-94c6-a2f0f8c7b963_my-flink-project-0.1.jar",
+							"raw": "{{host}}:{{port}}{{base}}/job/299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar?mode=start",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}{{base}}",
 							"path": [
 								"job",
-								"b6f6b420-5526-4d4c-94c6-a2f0f8c7b963_my-flink-project-0.1.jar"
+								"299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "start"
+								}
 							]
 						}
 					},
@@ -168,14 +174,126 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{host}}:{{port}}{{base}}/job/402538901b69bbab25e5f5fbff84026b",
+							"raw": "{{host}}:{{port}}{{base}}/job/909069ad460ace339c1f28c661beb6fe",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}{{base}}",
 							"path": [
 								"job",
-								"402538901b69bbab25e5f5fbff84026b"
+								"909069ad460ace339c1f28c661beb6fe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stop a Job with Savepoint",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"cancel-job\": true,\r\n    \"target-directory\": \"/tmp/savepoints/\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/c78599d4c3c3359faf11b2afed201162?mode=stop",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"c78599d4c3c3359faf11b2afed201162"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "stop"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restart a Job with existing savepoint",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"programArgsList\": [\r\n        \"--port\",\r\n        \"9000\",\r\n        \"--ip\",\r\n        \"localhost\"\r\n    ],\r\n    \"parallelism\": 1,\r\n    \"savepointPath\" :\"/tmp/savepoints/savepoint-c78599-9d7f7fa6a057\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar?mode=start",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "start"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "log",
+			"item": [
+				{
+					"name": "Get All Log FIle and taskManagers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/log/",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"log",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get the Log of specific file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/log/af10e5ca28eb12196017644f98e8858d/flink-root-standalonesession-1-elk-db-test.out",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"log",
+								"af10e5ca28eb12196017644f98e8858d",
+								"flink-root-standalonesession-1-elk-db-test.out"
 							]
 						}
 					},

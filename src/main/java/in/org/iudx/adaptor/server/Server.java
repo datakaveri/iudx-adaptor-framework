@@ -135,6 +135,20 @@ public class Server extends AbstractVerticle {
           .handler(routingContext -> {
             getJobsHandler(routingContext);
     });
+    
+    /* Get the all logs file */
+    router.get(LOGS_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getLogsHandler(routingContext);
+        });
+    
+    /* Get the single log file*/
+    router.get(LOG_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            getLogsHandler(routingContext);
+    });
 
 
     /* Start server */
@@ -266,16 +280,27 @@ public class Server extends AbstractVerticle {
     JsonObject payloadBody = routingContext.getBodyAsJson();
     JsonObject requestBody = new JsonObject();
     String jarId = routingContext.pathParam(ID);
+    String mode = routingContext.queryParams().get(MODE);
+    
 
     if (jarId != null) {
       Boolean isValid = validator.validate(payloadBody.encode());
       if (isValid == Boolean.TRUE) {
         LOGGER.debug("Success: schema validated");
-        requestBody.put(ID, jarId);
-        requestBody.put(DATA, payloadBody);
-        requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
-        flinkClient.submitJob(requestBody, resHandler -> {
-          if (resHandler.succeeded()) {
+        
+        if (MODES.contains(mode)) {
+          if (mode.equals(START)) {
+            requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+          } else if (mode.equals(STOP)) {
+            requestBody.put(URI, JOBS_API + jarId + SAVEPOINT);
+          }
+
+          requestBody.put(DATA, payloadBody);
+          requestBody.put(ID, jarId);
+          requestBody.put(MODE, mode);
+
+          flinkClient.handleJob(requestBody, resHandler -> {
+            if (resHandler.succeeded()) {
             LOGGER.info("Success: Job submitted");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                     .end(resHandler.result().toString());
@@ -287,13 +312,19 @@ public class Server extends AbstractVerticle {
           }
         });
       } else {
-        LOGGER.error("Error: Schema validation failed");
+        LOGGER.error("Error: Invalid request mode");
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                 .setStatusCode(400)
-                .end("Schema validation failed");
+                .end("Invalid request mode");
       }
+    } else {
+      LOGGER.error("Error: Schema validation failed");
+      response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .setStatusCode(400)
+              .end("Schema validation failed");
     }
   }
+}
   
   /**
    * Get the details related to Job(s).
@@ -324,6 +355,42 @@ public class Server extends AbstractVerticle {
       } else if (responseHandler.failed()) {
         LOGGER.error("Error: Error in getting job details; " + 
                responseHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(responseHandler.cause().getMessage());
+      }
+    });
+  }
+  
+  /**
+   * Get the log(s) files.
+   * 
+   * @param routingContext
+   */
+  private void getLogsHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Getting log details from Flink cluster");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String logId = routingContext.pathParam(L_ID);
+    String taskManagerId = routingContext.pathParam(TM_ID);
+
+    if (logId != null) {
+      requestBody.put(URI, TASKMANAGER_LOGS_API.replace("$1",taskManagerId) + logId);
+      requestBody.put(ID, logId);
+    } else {
+      requestBody.put(URI, TASKMANAGER_API);
+      requestBody.put(ID, "");
+    }
+
+    flinkClient.getLogFiles(requestBody, responseHandler -> {
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Success: search query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(responseHandler.result().toString());
+      } else if (responseHandler.failed()) {
+        LOGGER.error("Error: Error in getting log details; " + responseHandler.cause().getMessage());
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                 .setStatusCode(400)
                 .end(responseHandler.cause().getMessage());

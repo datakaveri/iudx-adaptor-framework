@@ -14,6 +14,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.multipart.MultipartForm;
 import static in.org.iudx.adaptor.server.util.Constants.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FlinkClient {
 
@@ -48,16 +51,47 @@ public class FlinkClient {
    * @param handler
    * @return jsonObject response
    */
-  public FlinkClient submitJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public FlinkClient handleJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     Future<JsonObject> future = httpPostAsync(request, HttpMethod.POST);
     future.onComplete(resHandler -> {
       String jarId = request.getString(ID, "");
       if (resHandler.succeeded()) {
-        handler.handle(Future.succeededFuture(
-            response.withStatus(SUCCESS)
-                    .withResult(jarId, POST, SUCCESS, resHandler.result().getString("jobid"))
-                    .getJsonResponse()));
+        if (request.getString(MODE).equals(STOP)) {
+          request.put(URI,
+              request.getString(URI) + "/" + resHandler.result().getString("request-id"));
+          httpGenAsync(request, HttpMethod.GET).onComplete(getHandler -> {
+            if (getHandler.succeeded()) {
+              JsonObject result = getHandler.result();
+              if(result.containsKey(OPERATION) && !result.getJsonObject(OPERATION).containsKey("failure-cause")) {
+              handler.handle(Future.succeededFuture(
+                  response.withStatus(SUCCESS)
+                          .withResult(jarId,POST, SUCCESS, 
+                              getHandler.result()
+                                        .getJsonObject(OPERATION).getString("location"))
+                          .getJsonResponse()));
+              } else {
+                LOGGER.error("Error: Job operation failed; " + getHandler.result());
+                handler.handle(Future.failedFuture(
+                    response.withStatus(ERROR)
+                            .withResult(jarId,POST, ERROR, "Job operation failed.")
+                            .getResponse()));
+              }
+            }else {
+              handler.handle(Future.failedFuture(
+                  response.withStatus(ERROR)
+                          .withResult(jarId,POST,FAILED,
+                              getHandler.cause()
+                                        .getMessage())
+                          .getResponse()));
+            }
+          });
+        } else {
+          handler.handle(Future.succeededFuture(
+              response.withStatus(SUCCESS)
+                      .withResult(jarId, POST, SUCCESS, resHandler.result().getString("jobid"))
+                      .getJsonResponse()));
+        }
       } else if (resHandler.failed()) {
         handler.handle(Future.failedFuture(
             response.withStatus(ERROR)
@@ -195,6 +229,50 @@ public class FlinkClient {
     });
     return this;
   }
+    
+  /**
+   * Handle Log file operations.
+   * 
+   * @param request
+   * @param handler
+   * @return jsonObject response
+   */
+  public FlinkClient getLogFiles(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+
+    JsonObject result = new JsonObject();
+    Future<JsonObject> future = httpGenAsync(request, HttpMethod.GET);
+    future.onComplete(resHandler -> {
+      if (resHandler.succeeded()) {
+        if (!request.getString(ID).isEmpty()) {
+          handler.handle(Future.succeededFuture(
+              response.withStatus(SUCCESS)
+                      .withResult(new JsonArray().add(resHandler.result().getString(DATA)))
+                      .getJsonResponse()));
+          return;
+        } else {
+          JsonArray taskManagers = resHandler.result().getJsonArray("taskmanagers");
+          taskManagers.forEach(entry -> {
+            JsonObject key = (JsonObject) entry;
+            String tId = key.getString(ID);
+            String uri = TASKMANAGER_LOGS_API.replace("$1", tId);
+            httpGenAsync(new JsonObject().put(URI, uri), HttpMethod.GET).onComplete(logsHandler -> {
+              if (logsHandler.succeeded()) {
+                List<String> list = logsHandler.result()
+                                                .getJsonArray("logs")
+                                                .stream()
+                                                .flatMap(o -> Stream.of((String) ((JsonObject) o).getString("name")))
+                                                .collect(Collectors.toList());
+                result.put(tId, new JsonArray(list));
+                handler.handle(Future.succeededFuture(result));
+                return;
+              }
+            });
+          });
+        }
+      }
+    });
+    return this;
+  }
 
   /**
    * Performs POST Multipart/Form request to Flink Cluster.
@@ -240,7 +318,7 @@ public class FlinkClient {
 
     client.request(method, options).sendJsonObject(requestBody.getJsonObject(DATA), reqHandler -> {
       if (reqHandler.succeeded()) {
-        if (reqHandler.result().statusCode() == 200) {
+        if (reqHandler.result().statusCode() == 200 || reqHandler.result().statusCode() == 202) {
           LOGGER.debug("Info: Flink request completed");
           promise.complete(reqHandler.result().bodyAsJsonObject());
           return;
@@ -273,9 +351,14 @@ public class FlinkClient {
 
     client.request(method, options).send(reqHandler -> {
       if (reqHandler.succeeded()) {
-        if (reqHandler.result().statusCode() == 200) {
+        String contentType = reqHandler.result().getHeader(HEADER_CONTENT_TYPE);
+        if (reqHandler.result().statusCode() == 200 && !contentType.equals("text/plain")) {
           LOGGER.debug("Info: Flink request completed");
           promise.complete(reqHandler.result().bodyAsJsonObject());
+          return;
+        } else if(contentType.equals("text/plain")){
+          LOGGER.debug("Info: Flink request completed");
+          promise.complete(new JsonObject().put(DATA, reqHandler.result().bodyAsString()));
           return;
         } else {
           LOGGER.error("Error: Flink request failed; " + reqHandler.result().bodyAsString());

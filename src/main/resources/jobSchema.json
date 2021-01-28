@@ -25,6 +25,14 @@
 		"entryClass": {
 			"type": "string",
 			"optional": true
+		},
+		"cancel-job": {
+			"type": "boolean",
+			"optional": true
+		},
+		"target-directory": {
+			"type": "string",
+			"optional": true
 		}
 	}
 }

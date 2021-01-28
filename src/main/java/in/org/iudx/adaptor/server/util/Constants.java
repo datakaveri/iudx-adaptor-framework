@@ -44,6 +44,8 @@ public class Constants {
   public static final String JOBS_ROUTE = basePath + "/job";
   public static final String JOB_RUN_ROUTE = basePath + "/job/:id";
   public static final String JOB_ROUTE = basePath + "/job/:id";
+  public static final String LOGS_ROUTE = basePath + "/log";
+  public static final String LOG_ROUTE = basePath + "/log/:tId/:lId";
 
   /** Response messages */
   public static final String MESSAGE = "message";
@@ -58,6 +60,7 @@ public class Constants {
   public static final String POST = "post";
   public static final String DESC = "description";
   public static final String ID = "id";
+  public static final String MODE = "mode";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";
@@ -67,6 +70,9 @@ public class Constants {
   public static final String JAR_PLAN_API = JARS+"/$1/plan";
   public static final String JOB_SUBMIT_API = JARS+"/$1/run";
   public static final String JOBS_API = "/jobs/";
+  public static final String SAVEPOINT = "/savepoints";
+  public static final String TASKMANAGER_API ="/taskmanagers";
+  public static final String TASKMANAGER_LOGS_API = TASKMANAGER_API+"/$1/logs/";
 
 
   /** Others */
@@ -78,6 +84,16 @@ public class Constants {
   public static final String PLAN = "plan";
   public static final String DATA = "data";
   public static final String JOBS = "jobs";
+  public static final String OPERATION = "operation";
+  public static final String TM_ID = "tId";
+  public static final String L_ID = "lId";
+  
+  /* Modes */
+  public static final String START = "start";
+  public static final String STOP = "stop";
+  public static final String RESUME = "resume";
+  public static final ArrayList<String> MODES 
+  = new ArrayList<String>(Arrays.asList(START,STOP,RESUME));
 
 
 }
