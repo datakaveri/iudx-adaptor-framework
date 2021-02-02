@@ -1,14 +1,13 @@
 @startuml
 
 [*] --> Init
-Init: Get API and Schedule Information
-Init: Init HttpClient
-Init: schedule()
+Init: Get APIConfig
+Init: Init HttpEntity
 
 Init --> Sleep
 
 Sleep --> Process : timerEvent
-Process : onEvent()
+Process : onEvent(), \n annotate time, add watermark
 
 Process --> Emit
 Emit : collectWithTimestamp()

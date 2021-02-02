@@ -23,9 +23,9 @@ public class DumbProcess
 
   private ValueState<Message> streamState;
 
-  private ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
+  private ApiConfig apiConfig;
 
-  public DumbProcess(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
+  public DumbProcess(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
   }
 

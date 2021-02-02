@@ -5,9 +5,6 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.codegen.Parser;
-import in.org.iudx.adaptor.codegen.Deduplicator;
-import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 
@@ -19,7 +16,7 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  *
  * Notes: 
  *  - ?This is serializable from flink examples
- *  - The constructor can only take a serializable object, {@link ApiConfig<Parser,Deduplicator,Transformer>}
+ *  - The constructor can only take a serializable object, {@link ApiConfig}
  *
  */
 public class HttpSource extends RichSourceFunction <Message>{
@@ -27,17 +24,17 @@ public class HttpSource extends RichSourceFunction <Message>{
   private static final long serialVersionUID = 1L;
   private volatile boolean running = true;
   private HttpEntity httpEntity;
-  private ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
+  private ApiConfig apiConfig;
 
   /**
    * {@link HttpEntity} Constructor
    * 
-   * @param ApiConfig<Parser,Deduplicator,Transformer> Api configuration object
+   * @param ApiConfig Api configuration object
    *
    * Note: 
    *   - Only set configuration here. Don't initialize {@link HttpEntity}.
    */
-  public HttpSource(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
+  public HttpSource(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
   }
 

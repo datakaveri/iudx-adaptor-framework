@@ -34,7 +34,7 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  */
 public class HttpEntity {
 
-  public ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
+  public ApiConfig apiConfig;
 
   private HttpClient httpClient;
   private HttpRequest httpRequest;
@@ -51,9 +51,9 @@ public class HttpEntity {
    * TODO: 
    *  - Manage post 
    *  - Modularize/cleanup
-   *  - Handle timeouts from ApiConfig<Parser,Deduplicator,Transformer>
+   *  - Handle timeouts from ApiConfig
    */
-  public HttpEntity(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
+  public HttpEntity(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
     if (this.apiConfig.requestType.equals("GET")) {
       httpRequest = HttpRequest.newBuilder().uri(URI.create(apiConfig.url))
@@ -66,12 +66,12 @@ public class HttpEntity {
     }
   }
 
-  public HttpEntity setApi(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
+  public HttpEntity setApi(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> getApiConfig() {
+  public ApiConfig getApiConfig() {
     return this.apiConfig;
   }
 

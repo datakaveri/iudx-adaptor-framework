@@ -18,7 +18,7 @@ import java.lang.StringBuilder;
  *  - Extend as needed
  *
  */
-public class ApiConfig<Parser,Deduplicator,Transformer> implements Serializable {
+public class ApiConfig implements Serializable {
   public String url;
   public String body;
   public String requestType = "GET";
@@ -37,17 +37,17 @@ public class ApiConfig<Parser,Deduplicator,Transformer> implements Serializable 
   public ApiConfig(){
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setUrl(String url) {
+  public ApiConfig setUrl(String url) {
     this.url = url;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setBody(String body) {
+  public ApiConfig setBody(String body) {
     this.body = body;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setHeader(String key, String value) {
+  public ApiConfig setHeader(String key, String value) {
     StringBuilder sb = new StringBuilder();
     sb.append(headers);
     sb.append(key).append(" ").append(value);
@@ -55,7 +55,7 @@ public class ApiConfig<Parser,Deduplicator,Transformer> implements Serializable 
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setHeaders(Map<String,String> headers) {
+  public ApiConfig setHeaders(Map<String,String> headers) {
     this.headers = headers;
     StringBuilder sb = new StringBuilder();
     headers.forEach((k,v) -> {
@@ -71,39 +71,39 @@ public class ApiConfig<Parser,Deduplicator,Transformer> implements Serializable 
    *        For now we are just assuming a flat Json and describing the keying field
    *        as a simple string.
    **/
-  public ApiConfig<Parser,Deduplicator,Transformer> setKeyingProperty(String keyingProperty) {
+  public ApiConfig setKeyingProperty(String keyingProperty) {
     this.keyingProperty = keyingProperty;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setTimeIndexingProperty(String timeIndexingProperty) {
+  public ApiConfig setTimeIndexingProperty(String timeIndexingProperty) {
     this.timeIndexingProperty = timeIndexingProperty;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setPollingInterval(long pollingInterval) {
+  public ApiConfig setPollingInterval(long pollingInterval) {
     this.pollingInterval = pollingInterval;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setParser(Parser parser) {
+  public ApiConfig setParser(Parser parser) {
     this.parser = parser;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setTransformer(Transformer transformer) {
+  public ApiConfig setTransformer(Transformer transformer) {
     this.transformer = transformer;
     return this;
   }
 
-  public ApiConfig<Parser,Deduplicator,Transformer> setDeduplicator(Deduplicator deduplicator) {
+  public ApiConfig setDeduplicator(Deduplicator deduplicator) {
     this.deduplicator = deduplicator;
     return this;
   }
 
 
   /* type is get or post */
-  public ApiConfig<Parser,Deduplicator,Transformer> setRequestType(String requestType) {
+  public ApiConfig setRequestType(String requestType) {
     this.requestType = requestType;
     return this;
   }

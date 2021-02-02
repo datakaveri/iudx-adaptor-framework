@@ -91,8 +91,8 @@ public class RMQSinkTest {
     SimpleDeduplicator dedup = new SimpleDeduplicator();
 
 
-    ApiConfig<Parser,Deduplicator,Transformer> apiConfig = 
-      new ApiConfig<Parser,Deduplicator,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time")
@@ -101,11 +101,6 @@ public class RMQSinkTest {
                                           .setDeduplicator(dedup)
                                           .setTransformer(trans);
 
-    RMQConnectionConfig rmqConfig = new RMQConnectionConfig.Builder().setUri("amqp://localhost")
-                                        .setPort(5672)
-                                        .setVirtualHost("/")
-                                        .setUserName("guest")
-                                        .setPassword("guest").build();
 
    RMQConfig amqconfig = new RMQConfig(); 
    amqconfig.setPublisher(new SimplePublisher());

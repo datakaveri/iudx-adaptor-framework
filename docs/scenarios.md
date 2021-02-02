@@ -7,8 +7,8 @@ This describes all the flow scenarios which might occur with the downstream app 
 ## Simple
 
 1. simpleA
-   - *key* in downstream -forms--> id in iudx
    - Single api
+   - *key* in downstream -forms--> id in iudx
    - Simple uname/passwd based auth
 2. simpleB 
    - Just like simpleA

@@ -1,10 +1,10 @@
 @startuml
 
-[*] --> HTTPSourceFunction: From DataSource
-HTTPSourceFunction: Load state (connection/auth info, etc)
-HTTPSourceFunction: Watermark with timestamp
+[*] --> GenericSourceFunction: From DataSource
+GenericSourceFunction: Load state (connection/auth info, etc)
+GenericSourceFunction: Watermark with timestamp
 
-HTTPSourceFunction --> GenericProcessFunction
+GenericSourceFunction --> GenericProcessFunction
 GenericProcessFunction: Load state (last processed packetInfo, etc)
 GenericProcessFunction: De-Deduplicate
 GenericProcessFunction: Transform

@@ -1,11 +1,10 @@
 @startuml
 interface Parser  {
-    <implements Serializable>
-  -- public variables --
-  SerializationSchema<Message> serializer
+    <extends SerializationSchema>
   -- public methods --
-  String getKeyingProperty()
-  String getTimeIndexingProperty()
+  String getKey()
+  String getTimeIndex()
   Message parse(String message)
+  byte[] serialize(Message body)
 }
 @enduml

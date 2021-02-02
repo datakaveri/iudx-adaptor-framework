@@ -1,5 +1,6 @@
 @startuml
-class ApiConfig  {
+class ApiConfig {
+    <implements SourceConfig>
   -- public (stateful) --
   Map headers
   String body

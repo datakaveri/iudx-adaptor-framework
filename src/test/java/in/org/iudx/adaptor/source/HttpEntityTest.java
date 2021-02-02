@@ -26,8 +26,8 @@ public class HttpEntityTest {
     SimpleTestTransformer trans = new SimpleTestTransformer();
     SimpleTestParser parser = new SimpleTestParser();
 
-    ApiConfig<Parser,Deduplicator,Transformer> apiConfig = 
-      new ApiConfig<Parser,Deduplicator,Transformer>().setUrl("http://127.0.0.1:8080/simpleA")
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
                                           .setKeyingProperty("deviceId")
                                           .setTimeIndexingProperty("time")

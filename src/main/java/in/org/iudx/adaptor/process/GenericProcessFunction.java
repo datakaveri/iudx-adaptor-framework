@@ -10,9 +10,6 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.codegen.Parser;
-import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 public class GenericProcessFunction 
@@ -23,9 +20,11 @@ public class GenericProcessFunction
 
   private ValueState<Message> streamState;
 
-  private ApiConfig<Parser,Deduplicator,Transformer> apiConfig;
+  private ApiConfig apiConfig;
 
-  public GenericProcessFunction(ApiConfig<Parser,Deduplicator,Transformer> apiConfig) {
+  private static final long serialVersionUID = 43L;
+
+  public GenericProcessFunction(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
   }
 

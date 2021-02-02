@@ -8,9 +8,9 @@ import java.io.Serializable;
  * Specifies a method to get the specific config for a particular sink
  *
  * TODO: 
- *  - Extend as needed
+ *  - Use this
  *
  */
-public interface SinkConfig<SinkConfigurationType> extends Serializable {
-  SinkConfigurationType getConfig();
+public interface SourceConfig<SourceConfigurationType> extends Serializable {
+  SourceConfigurationType getConfig();
 }

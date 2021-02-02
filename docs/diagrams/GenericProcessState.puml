@@ -6,11 +6,10 @@ State --> Init : Retreive stored state
 
 Init --> Deduplicate : Includes late arrival filter
 
-Deduplicate --> ProcessElement
+Deduplicate --> ProcessElement : Transform
 
 ProcessElement --> State : Update state
 ProcessElement --> Schedule : Optional for batching
-ProcessElement --> SinkFunction : Without batching
-Schedule --> SinkFunction
+ProcessElement --> Emit : to next stage without batching
 
 @enduml

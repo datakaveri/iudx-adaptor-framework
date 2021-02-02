@@ -2,18 +2,16 @@
 class GenericProcessFunction  {
     <extends KeyedProcessFunction>
   -- public --
+  ApiConfig apiconfig
   Transformer transform // Json-to-json
+  Deduplicator deduplicate
   Aggregater aggregate
   -- private (stateful) --
   State state
   -- public --
   void open()
   void onTimer()
-  <T> processElement(<T>)
-  -- private --
-  void deduplicate()
-  void transform()
-  void aggregate()
+  processElement(Message msg, ...)
 }
 @enduml
 

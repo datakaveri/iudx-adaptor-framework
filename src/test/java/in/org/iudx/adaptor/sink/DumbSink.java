@@ -35,7 +35,7 @@ public class DumbSink implements SinkFunction<Message> {
    */
   @Override
   public void invoke(Message msg) {
-    System.out.println(new String(parser.serialize(msg)));
+    LOGGER.info(new String(parser.serialize(msg)));
   }
 
 }
