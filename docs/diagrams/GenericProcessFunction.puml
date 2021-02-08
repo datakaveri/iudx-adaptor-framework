@@ -2,7 +2,6 @@
 class GenericProcessFunction  {
     <extends KeyedProcessFunction>
   -- public --
-  ApiConfig apiconfig
   Transformer transform // Json-to-json
   Deduplicator deduplicate
   Aggregater aggregate

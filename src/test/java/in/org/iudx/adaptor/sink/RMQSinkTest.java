@@ -28,9 +28,9 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Deduplicator;
-import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
-import in.org.iudx.adaptor.codegen.SimpleTestParser;
-import in.org.iudx.adaptor.codegen.SimpleDeduplicator;
+import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
+import in.org.iudx.adaptor.codegen.SimpleATestParser;
+import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
 import in.org.iudx.adaptor.codegen.SimplePublisher;
 import in.org.iudx.adaptor.source.HttpSource;
 import in.org.iudx.adaptor.sink.AMQPSink;
@@ -86,20 +86,15 @@ public class RMQSinkTest {
     CheckpointConfig config = env.getCheckpointConfig();
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
-    SimpleTestTransformer trans = new SimpleTestTransformer();
-    SimpleTestParser parser = new SimpleTestParser();
-    SimpleDeduplicator dedup = new SimpleDeduplicator();
+    SimpleATestTransformer trans = new SimpleATestTransformer();
+    SimpleATestParser parser = new SimpleATestParser();
+    SimpleADeduplicator dedup = new SimpleADeduplicator();
 
 
     ApiConfig apiConfig = 
       new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
-                                          .setKeyingProperty("deviceId")
-                                          .setTimeIndexingProperty("time")
-                                          .setPollingInterval(1000L)
-                                          .setParser(parser)
-                                          .setDeduplicator(dedup)
-                                          .setTransformer(trans);
+                                          .setPollingInterval(1000L);
 
 
    RMQConfig amqconfig = new RMQConfig(); 
@@ -112,13 +107,13 @@ public class RMQSinkTest {
                       
 
 
-    env.addSource(new HttpSource(apiConfig))
+    env.addSource(new HttpSource<Message>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(apiConfig))
-        //.process(new DumbProcess(apiConfig))
+        .process(new GenericProcessFunction(trans, dedup))
+        //.process(new DumbProcess())
         //.addSink(new DumbStringSink());
         //.addSink(new RMQSink<String>(rmqConfig, new SimpleStringSchema(), publishOptions));
-        .addSink(new AMQPSink(amqconfig, apiConfig.parser));
+        .addSink(new AMQPSink(amqconfig, parser));
 
     try {
       env.execute("Simple Get");

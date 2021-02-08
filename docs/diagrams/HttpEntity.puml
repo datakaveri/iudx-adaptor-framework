@@ -4,13 +4,16 @@ class HttpEntity  {
   -- public (stateful) --
   -- private --
   ApiConfig apiConfig
+  Parser<PO> parser
   HttpClient httpClient
   HttpRequest httpRequest
   -- public --
   String getSerializedMessage()
   Message getMessage()
-  HttpEntity setApi(Api api)
-  Api getApi(Api api)
+  HttpEntity setParser(Parser<PO> parser)
+  HttpEntity setApiConfig(ApiConfig api)
+  ApiConfig getApiConfig()
+  
 }
 @enduml
 

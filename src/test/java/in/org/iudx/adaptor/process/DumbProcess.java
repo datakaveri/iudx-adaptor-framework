@@ -23,10 +23,8 @@ public class DumbProcess
 
   private ValueState<Message> streamState;
 
-  private ApiConfig apiConfig;
 
-  public DumbProcess(ApiConfig apiConfig) {
-    this.apiConfig = apiConfig;
+  public DumbProcess() {
   }
 
   @Override
@@ -44,12 +42,8 @@ public class DumbProcess
     if (previousMessage == null) {
       streamState.update(msg);
     } else {
-      /* Tranformer logic in transform function applied here */
-      /* Add deduplication logic here */
-      if(apiConfig.deduplicator.isDuplicate(msg) == false) {
-        out.collect(msg.body);
-        streamState.update(msg);
-      }
+      out.collect(msg.body);
+      streamState.update(msg);
     }
   }
 

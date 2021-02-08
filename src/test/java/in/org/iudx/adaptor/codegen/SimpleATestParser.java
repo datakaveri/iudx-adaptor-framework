@@ -4,13 +4,16 @@ import org.json.JSONObject;
 import java.time.Instant;
 import in.org.iudx.adaptor.datatypes.Message;
 
-public class SimpleTestParser implements Parser {
+/* 
+ * PO - Parser Output
+ **/
+public class SimpleATestParser implements Parser<Message> {
 
   private String key;
   private Instant time;
   private JSONObject data;
 
-  public SimpleTestParser() {
+  public SimpleATestParser() {
   }
 
   public String getKey() {

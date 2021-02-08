@@ -4,9 +4,9 @@ import org.json.JSONObject;
 import in.org.iudx.adaptor.datatypes.Message;
 
 
-public class SimpleTestTransformer implements Transformer {
+public class SimpleATestTransformer implements Transformer {
 
-  public SimpleTestTransformer() {
+  public SimpleATestTransformer() {
   }
 
   public Message transform(Message inMessage) {

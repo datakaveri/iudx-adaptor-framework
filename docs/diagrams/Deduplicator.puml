@@ -1,5 +1,5 @@
 @startuml
 Interface Deduplicator   {
-  boolean isDuplicate(Message inMessage)
+    boolean isDuplicate(Message state, Message newMessage)
 }
 @enduml

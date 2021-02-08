@@ -3,6 +3,9 @@ package in.org.iudx.adaptor.codegen;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
+
 import org.json.JSONObject;
 import java.lang.StringBuilder;
 
@@ -25,13 +28,11 @@ public class ApiConfig implements Serializable {
   public String keyingProperty;
   public String timeIndexingProperty;
   public long pollingInterval;
-  public Parser parser;
-  public Transformer transformer;
-  public Deduplicator deduplicator;
+  public String[] headersArray;
 
 
   public Map<String,String> headers = new HashMap<String,String>();
-  private String headerString = "";
+
   private static final long serialVersionUID = 2L;
 
   public ApiConfig(){
@@ -48,36 +49,7 @@ public class ApiConfig implements Serializable {
   }
 
   public ApiConfig setHeader(String key, String value) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(headers);
-    sb.append(key).append(" ").append(value);
-    headerString = sb.toString();
-    return this;
-  }
-
-  public ApiConfig setHeaders(Map<String,String> headers) {
-    this.headers = headers;
-    StringBuilder sb = new StringBuilder();
-    headers.forEach((k,v) -> {
-      sb.append(k).append(" ").append(v);
-    });
-    headerString = sb.toString();
-    return this;
-  }
-
-
-  /** TODO: This is where the keying field is described.
-   *        We need to work out a mechanism to describe it through ApiConfig.
-   *        For now we are just assuming a flat Json and describing the keying field
-   *        as a simple string.
-   **/
-  public ApiConfig setKeyingProperty(String keyingProperty) {
-    this.keyingProperty = keyingProperty;
-    return this;
-  }
-
-  public ApiConfig setTimeIndexingProperty(String timeIndexingProperty) {
-    this.timeIndexingProperty = timeIndexingProperty;
+    headers.put(key, value);
     return this;
   }
 
@@ -86,38 +58,24 @@ public class ApiConfig implements Serializable {
     return this;
   }
 
-  public ApiConfig setParser(Parser parser) {
-    this.parser = parser;
-    return this;
-  }
-
-  public ApiConfig setTransformer(Transformer transformer) {
-    this.transformer = transformer;
-    return this;
-  }
-
-  public ApiConfig setDeduplicator(Deduplicator deduplicator) {
-    this.deduplicator = deduplicator;
-    return this;
-  }
-
-
   /* type is get or post */
   public ApiConfig setRequestType(String requestType) {
     this.requestType = requestType;
     return this;
   }
 
-  public String getHeaderString() {
-    return headerString;
+  public String[] getHeaderString() {
+    List<String> headerList = new ArrayList<String>();
+    headers.forEach((k,v) -> {
+      headerList.add(k);
+      headerList.add(v);
+    });
+    headersArray = headerList.toArray(new String[0]);
+    return headersArray;
   }
 
-  public String getKeyingProperty() {
-    return keyingProperty;
-  }
-
-  public String getTimeIndexingProperty() {
-    return timeIndexingProperty;
+  public ApiConfig buildConfig() {
+    return this;
   }
 
 }

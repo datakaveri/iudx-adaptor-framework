@@ -6,6 +6,7 @@ import org.apache.flink.configuration.Configuration;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
+import in.org.iudx.adaptor.codegen.Parser;
 
 
 /**
@@ -14,17 +15,20 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  * This extends {@link RichSourceFunction} which implements stateful functionalities.
  * This generic function exchanges meesages as {@link Message} objects.
  *
+ * PO - Parser Output
+ *
  * Notes: 
  *  - ?This is serializable from flink examples
  *  - The constructor can only take a serializable object, {@link ApiConfig}
  *
  */
-public class HttpSource extends RichSourceFunction <Message>{
+public class HttpSource<PO> extends RichSourceFunction <Message>{
 
   private static final long serialVersionUID = 1L;
   private volatile boolean running = true;
-  private HttpEntity httpEntity;
+  private HttpEntity<PO> httpEntity;
   private ApiConfig apiConfig;
+  private Parser<PO> parser;
 
   /**
    * {@link HttpEntity} Constructor
@@ -34,8 +38,9 @@ public class HttpSource extends RichSourceFunction <Message>{
    * Note: 
    *   - Only set configuration here. Don't initialize {@link HttpEntity}.
    */
-  public HttpSource(ApiConfig apiConfig) {
+  public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
     this.apiConfig = apiConfig;
+    this.parser = parser;
   }
 
   /**
@@ -49,7 +54,7 @@ public class HttpSource extends RichSourceFunction <Message>{
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
-    httpEntity = new HttpEntity(apiConfig);
+    httpEntity = new HttpEntity<PO>(apiConfig, parser);
   }
 
   /**
@@ -68,9 +73,23 @@ public class HttpSource extends RichSourceFunction <Message>{
      **/
     while (running) {
 
-      Message msg = httpEntity.getMessage();
-      ctx.collectWithTimestamp(msg, msg.getEventTime());
-      ctx.emitWatermark(new Watermark(msg.getEventTime()));
+      PO msg = httpEntity.getMessage();
+
+      /* Message array */
+      if (msg instanceof Message[]) {
+        Message[] m = (Message[]) msg;
+        for (int i=0; i<m.length; i++) {
+          ctx.collectWithTimestamp(m[i], m[i].getEventTime());
+          ctx.emitWatermark(new Watermark(m[i].getEventTime()));
+        }
+      } 
+
+      /* Single object */
+      if (msg instanceof Message) {
+        Message m = (Message) msg;
+        ctx.collectWithTimestamp(m, m.getEventTime());
+        ctx.emitWatermark(new Watermark(m.getEventTime()));
+      }
 
       Thread.sleep(apiConfig.pollingInterval);
     }

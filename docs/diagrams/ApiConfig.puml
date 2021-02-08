@@ -7,24 +7,13 @@ class ApiConfig {
   String url
   String requestType // get,post
   String headerString
-  String keyingProperty
-  String timeIndexingProperty
   long pollingInterval
-  Parser parser
   Transformer transformer
   -- public --
   Object getMessage()
-  ApiConfig setApi(String api)
   ApiConfig setBody(String body)
   ApiConfig setHeader(String key, String value)
   ApiConfig setHeaders(Multimap headers)
-  ApiConfig setKeyingProperty(String keyingProperty)
-  ApiConfig setTimeIndexingProperty(String timeIndexingProperty)
   ApiConfig setPollingInterval(long pollingInterval)
-  ApiConfig setParser(Parser parser)
-  ApiConfig setTransformer(Transformer transformer)
-  String getKeyingProperty()
-  String getTimeIndexingProperty()
-
 }
 @enduml

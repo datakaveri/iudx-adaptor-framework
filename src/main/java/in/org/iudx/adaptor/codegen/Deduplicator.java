@@ -4,5 +4,8 @@ import java.io.Serializable;
 import in.org.iudx.adaptor.datatypes.Message;
 
 public interface Deduplicator extends Serializable {
-  public boolean isDuplicate(Message inMessage);
+  /* TODO: Think of a better state management
+   * than simply inferring from last packet
+  */
+  public boolean isDuplicate(Message state, Message inMessage);
 }

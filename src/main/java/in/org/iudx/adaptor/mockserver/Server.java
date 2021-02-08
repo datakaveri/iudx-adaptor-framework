@@ -62,6 +62,12 @@ public class Server extends AbstractVerticle {
         simple.getSimplePacketA(routingContext);
     });
 
+    router.get("/simpleB")
+      .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
+        simple.getSimplePacketB(routingContext);
+    });
+
     /**
      * Start server 
      */

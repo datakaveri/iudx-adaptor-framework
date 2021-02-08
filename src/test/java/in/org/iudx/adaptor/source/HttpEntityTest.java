@@ -10,12 +10,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.codegen.Parser;
-import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
-import in.org.iudx.adaptor.codegen.SimpleTestTransformer;
-import in.org.iudx.adaptor.codegen.SimpleTestParser;
+import in.org.iudx.adaptor.codegen.SimpleATestParser;
 
 public class HttpEntityTest {
 
@@ -23,19 +19,14 @@ public class HttpEntityTest {
   void simpleGet() throws InterruptedException {
 
     
-    SimpleTestTransformer trans = new SimpleTestTransformer();
-    SimpleTestParser parser = new SimpleTestParser();
+    SimpleATestParser parser = new SimpleATestParser();
 
     ApiConfig apiConfig = 
       new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
                                           .setRequestType("GET")
-                                          .setKeyingProperty("deviceId")
-                                          .setTimeIndexingProperty("time")
-                                          .setPollingInterval(1000L)
-                                          .setParser(parser)
-                                          .setTransformer(trans);
+                                          .setPollingInterval(1000L);
 
-    HttpEntity httpEntity = new HttpEntity(apiConfig);
+    HttpEntity<Message> httpEntity = new HttpEntity<Message>(apiConfig, parser);
     Message msg = httpEntity.getMessage();
     System.out.println("Result");
     System.out.println(msg);

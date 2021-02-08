@@ -11,6 +11,8 @@ import org.apache.flink.util.Collector;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
+import in.org.iudx.adaptor.codegen.Transformer;
+import in.org.iudx.adaptor.codegen.Deduplicator;
 
 public class GenericProcessFunction 
   extends KeyedProcessFunction<String,Message,Message> {
@@ -20,12 +22,15 @@ public class GenericProcessFunction
 
   private ValueState<Message> streamState;
 
-  private ApiConfig apiConfig;
+  private Transformer transformer;
+  private Deduplicator deduplicator;
 
   private static final long serialVersionUID = 43L;
 
-  public GenericProcessFunction(ApiConfig apiConfig) {
-    this.apiConfig = apiConfig;
+  public GenericProcessFunction(Transformer transformer,
+                                Deduplicator deduplicator) {
+    this.transformer = transformer;
+    this.deduplicator = deduplicator;
   }
 
   @Override
@@ -45,8 +50,8 @@ public class GenericProcessFunction
     } else {
       /* Tranformer logic in transform function applied here */
       /* Add deduplication logic here */
-      if(apiConfig.deduplicator.isDuplicate(msg) == false) {
-        out.collect(apiConfig.transformer.transform(msg));
+      if(deduplicator.isDuplicate(previousMessage, msg) == false) {
+        out.collect(transformer.transform(msg));
         streamState.update(msg);
       }
     }

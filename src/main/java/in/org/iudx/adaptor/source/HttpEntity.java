@@ -1,8 +1,6 @@
 package in.org.iudx.adaptor.source;
 
 
-import java.time.Instant;
-import java.io.IOException;
 import java.net.http.HttpClient;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
@@ -12,10 +10,8 @@ import java.time.Duration;
 import java.net.URI;
 
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.codegen.Parser;
-import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
+import in.org.iudx.adaptor.codegen.Parser;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -32,9 +28,10 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  *  - Parse response bodies
  *
  */
-public class HttpEntity {
+public class HttpEntity<PO> {
 
   public ApiConfig apiConfig;
+  public Parser<PO> parser;
 
   private HttpClient httpClient;
   private HttpRequest httpRequest;
@@ -53,23 +50,29 @@ public class HttpEntity {
    *  - Modularize/cleanup
    *  - Handle timeouts from ApiConfig
    */
-  public HttpEntity(ApiConfig apiConfig) {
+  public HttpEntity(ApiConfig apiConfig, Parser<PO> parser) {
     this.apiConfig = apiConfig;
-    if (this.apiConfig.requestType.equals("GET")) {
-      httpRequest = HttpRequest.newBuilder().uri(URI.create(apiConfig.url))
-                                    .build();
-      httpClient = HttpClient.newBuilder()
-                              .version(Version.HTTP_1_1)
-                              .connectTimeout(Duration.ofSeconds(10))
-                              .build();
-                                    
+    this.parser = parser;
+
+    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
+
+    HttpClient.Builder clientBuilder = HttpClient.newBuilder();
+    clientBuilder.version(Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10));
+
+    if (apiConfig.url != null ) {
+      requestBuilder.uri(URI.create(apiConfig.url));
     }
+
+    /* TODO: consider making this neater */
+
+    if (this.apiConfig.getHeaderString().length > 0) {
+      requestBuilder.headers(this.apiConfig.headersArray);
+    }
+
+    httpRequest = requestBuilder.build();
+    httpClient = clientBuilder.build();
   }
 
-  public HttpEntity setApi(ApiConfig apiConfig) {
-    this.apiConfig = apiConfig;
-    return this;
-  }
 
   public ApiConfig getApiConfig() {
     return this.apiConfig;
@@ -83,20 +86,38 @@ public class HttpEntity {
    *  - This is the method which deals with responses Raw
    */
   public String getSerializedMessage() {
-    if (apiConfig.requestType.equals("GET")) {
-      try {
-        HttpResponse<String> resp = httpClient.send(httpRequest, BodyHandlers.ofString());
-        return resp.body();
-      } catch (Exception e) {
-        return "";
+
+
+    switch (this.apiConfig.requestType) {
+      case "GET": {
+        try {
+          HttpResponse<String> resp =
+            httpClient.send(httpRequest, BodyHandlers.ofString());
+          return resp.body();
+        } catch (Exception e) {
+          return "";
+        }
       }
+
+      case "POST":
+
+        break;
+
+      default:
+        break;
     }
+
+
     return "";
   }
 
 
-  public Message getMessage() {
-    Message msg = apiConfig.parser.parse(getSerializedMessage());
+  public PO getMessage() {
+    /* TODO: 
+     * - Make this generic, because of json array decimation 
+     * - Handle arrays vs simple objects
+     **/
+    PO msg = parser.parse(getSerializedMessage());
     return msg;
   }
 }
