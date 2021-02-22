@@ -1,0 +1,16 @@
+{
+    "host": "http://172.30.48.32:3100/loki/api/v1/push",
+    "lokiPaylod": {
+        "streams": [
+            {
+                "stream": {
+                    "flinkhttp": "test-sideoutput"
+                },
+                "values": [
+                    //to be empty; managed by server;
+                    ["$1","$2"]
+                ]
+            }
+        ]
+    }
+}
