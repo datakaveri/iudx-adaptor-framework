@@ -149,6 +149,13 @@ public class Server extends AbstractVerticle {
           .handler(routingContext -> {
             getLogsHandler(routingContext);
     });
+    
+    router.post(CONFIG_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .consumes(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            postConfigHandler(routingContext);
+          });
 
 
     /* Start server */
@@ -396,5 +403,20 @@ public class Server extends AbstractVerticle {
                 .end(responseHandler.cause().getMessage());
       }
     });
+  }
+  
+  /**
+   * 
+   * @param routingContext
+   */
+  private void postConfigHandler(RoutingContext routingContext) {
+    
+    LOGGER.debug("Info: Processing config file");
+    
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    JsonObject httpPost = routingContext.getBodyAsJson();
+    
+    
   }
 }
