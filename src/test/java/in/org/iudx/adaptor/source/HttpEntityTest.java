@@ -12,6 +12,7 @@ import java.util.HashMap;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
+import in.org.iudx.adaptor.utils.HttpEntity;
 
 public class HttpEntityTest {
 

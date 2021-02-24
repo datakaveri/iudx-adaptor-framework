@@ -8,6 +8,8 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Parser;
 
+import in.org.iudx.adaptor.utils.HttpEntity;
+
 
 /**
  * {@link HttpSource} - The HttpSource Class

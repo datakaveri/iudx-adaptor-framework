@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.source;
+package in.org.iudx.adaptor.utils;
 
 
 import java.net.http.HttpClient;
@@ -8,6 +8,7 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.net.URI;
+import java.net.http.HttpRequest.BodyPublishers;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -33,6 +34,7 @@ public class HttpEntity<PO> {
   public ApiConfig apiConfig;
   public Parser<PO> parser;
 
+  private HttpRequest.Builder requestBuilder;
   private HttpClient httpClient;
   private HttpRequest httpRequest;
 
@@ -69,7 +71,6 @@ public class HttpEntity<PO> {
       requestBuilder.headers(this.apiConfig.headersArray);
     }
 
-    httpRequest = requestBuilder.build();
     httpClient = clientBuilder.build();
   }
 
@@ -87,7 +88,7 @@ public class HttpEntity<PO> {
    */
   public String getSerializedMessage() {
 
-
+    httpRequest = requestBuilder.build();
     switch (this.apiConfig.requestType) {
       case "GET": {
         try {
@@ -108,8 +109,25 @@ public class HttpEntity<PO> {
     }
 
 
+
     return "";
   }
+
+
+  /*
+   * TODO: Manage non-post requests
+   */
+  public String postSerializedMessage(String message) {
+    httpRequest = requestBuilder.POST(BodyPublishers.ofString(message)).build();
+    try {
+      HttpResponse<String> resp =
+        httpClient.send(httpRequest, BodyHandlers.ofString());
+      return resp.body();
+    } catch (Exception e) {
+      return "";
+    }
+  }
+
 
 
   public PO getMessage() {

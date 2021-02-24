@@ -48,8 +48,10 @@ public class LokiSinkTest {
     }
 
     /* inititalize flink minicluster */
-    flinkCluster = new MiniClusterWithClientResource(new MiniClusterResourceConfiguration.Builder()
-        .setNumberSlotsPerTaskManager(2).setNumberTaskManagers(1).build());
+    flinkCluster = new MiniClusterWithClientResource(
+                        new MiniClusterResourceConfiguration.Builder()
+                        .setNumberSlotsPerTaskManager(2)
+                        .setNumberTaskManagers(1).build());
   }
 
   @Test
@@ -67,12 +69,14 @@ public class LokiSinkTest {
     ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
         .setRequestType("GET").setPollingInterval(1000L);
 
+
+
+    ApiConfig lokiConfig = new ApiConfig().setUrl("http://172.30.48.32:3100/loki/api/v1/push");
+
     DataStream<Message> messageStream = env.addSource(new HttpSource<Message>(apiConfig, parser));
 
-    // .addSink(new DumbSink(parser));
 
-    // DataStream<Message> messageStream = JsonSource.messageSource(env);
-
+    // Generate side stream in LokiProcessMessages()
     SingleOutputStreamOperator<Tuple2<Message, Integer>> tokenize =
         messageStream.process(new LokiProcessMessages());
 
@@ -98,7 +102,7 @@ public class LokiSinkTest {
           }
         });
 
-    errorSideoutput.addSink(new LokiSink(confFile)).name("LokiSinkString-Error");
+    errorSideoutput.addSink(new HttpSink(lokiConfig)).name("LokiSinkString-Error");
 
     /* Success Sideoutput Loki */
     DataStream<String> successSideoutput = tokenize.getSideOutput(LokiProcessMessages.successStream)
@@ -113,7 +117,7 @@ public class LokiSinkTest {
           }
         });
     
-    successSideoutput.addSink(new LokiSink(confFile)).name("LokiSinkString-Success");
+    successSideoutput.addSink(new HttpSink(lokiConfig)).name("LokiSinkString-Success");
     
     env.execute();
   }
