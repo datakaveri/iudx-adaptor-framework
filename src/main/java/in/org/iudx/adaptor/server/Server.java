@@ -39,6 +39,7 @@ public class Server extends AbstractVerticle {
   private int port;
   private JsonObject flinkOptions = new JsonObject();
   private Validator validator;
+  private JobScheduler jobScheduler;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -150,11 +151,11 @@ public class Server extends AbstractVerticle {
             getLogsHandler(routingContext);
     });
     
-    router.post(CONFIG_ROUTE)
+    router.post(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .consumes(MIME_APPLICATION_JSON)
+          //.consumes(MIME_APPLICATION_JSON)
           .handler(routingContext -> {
-            postConfigHandler(routingContext);
+            getAllScheduledJobs(routingContext);
           });
 
 
@@ -164,6 +165,7 @@ public class Server extends AbstractVerticle {
     /* Initialize support services */
     flinkClient = new FlinkClient(vertx, flinkOptions);
     validator = new Validator("./src/main/resources/jobSchema.json");
+    jobScheduler = new JobScheduler(flinkClient,"configs/quartz.properties");
     LOGGER.debug("Server Initialized");
   }
 
@@ -409,13 +411,17 @@ public class Server extends AbstractVerticle {
    * 
    * @param routingContext
    */
-  private void postConfigHandler(RoutingContext routingContext) {
+  private void getAllScheduledJobs(RoutingContext routingContext) {
     
     LOGGER.debug("Info: Processing config file");
     
     HttpServerResponse response = routingContext.response();
-    JsonObject requestBody = new JsonObject();
-    JsonObject httpPost = routingContext.getBodyAsJson();
+    //JsonObject requestBody = new JsonObject();
+    //JsonObject httpPost = routingContext.getBodyAsJson();
+    
+    jobScheduler.getAllJobs(handler ->{
+      response.end("s");
+    });
     
     
   }

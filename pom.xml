@@ -32,6 +32,8 @@
 		<vertx.version>4.0.0</vertx.version>
 		<server.mainClass>in.org.iudx.adaptor.server.Server</server.mainClass>
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
+		<quartz.version>2.3.1</quartz.version>
+		<postgres.version>42.2.19</postgres.version>
 	</properties>
 
 	<repositories>
@@ -197,7 +199,17 @@
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
 			<version>2.14.0</version>
-		</dependency>		
+		</dependency>
+		<dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>${quartz.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgres.version}</version>
+        </dependency>		
 	</dependencies>
 	
 	<build>
