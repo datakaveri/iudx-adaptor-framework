@@ -1,9 +1,7 @@
 package in.org.iudx.adaptor.sink;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import org.apache.flink.api.common.functions.MapFunction;
@@ -21,10 +19,10 @@ import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
 import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.process.GenericProcessFunction;
 import in.org.iudx.adaptor.process.LokiProcessMessages;
 import in.org.iudx.adaptor.source.HttpSource;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.handler.sockjs.impl.StringEscapeUtils;
 import org.apache.commons.io.IOUtils;
 
 
@@ -49,9 +47,9 @@ public class LokiSinkTest {
 
     /* inititalize flink minicluster */
     flinkCluster = new MiniClusterWithClientResource(
-                        new MiniClusterResourceConfiguration.Builder()
-                        .setNumberSlotsPerTaskManager(2)
-                        .setNumberTaskManagers(1).build());
+        new MiniClusterResourceConfiguration.Builder()
+        .setNumberSlotsPerTaskManager(2)
+        .setNumberTaskManagers(1).build());
   }
 
   @Test
@@ -61,20 +59,17 @@ public class LokiSinkTest {
     env.enableCheckpointing(500);
     env.disableOperatorChaining();
 
-    SimpleATestTransformer trans = new SimpleATestTransformer();
     SimpleATestParser parser = new SimpleATestParser();
-    SimpleADeduplicator dedup = new SimpleADeduplicator();
-
-
     ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
         .setRequestType("GET").setPollingInterval(1000L);
-
-
-
-    ApiConfig lokiConfig = new ApiConfig().setUrl("http://172.30.48.32:3100/loki/api/v1/push");
+    
+    ApiConfig lokiConfig = new ApiConfig()
+        .setUrl(confJson.getString("host"))
+        .setHeader("content-type", "application/json");
+    
+    String lokiPaylod = confJson.getJsonObject("lokiPaylod").toString();
 
     DataStream<Message> messageStream = env.addSource(new HttpSource<Message>(apiConfig, parser));
-
 
     // Generate side stream in LokiProcessMessages()
     SingleOutputStreamOperator<Tuple2<Message, Integer>> tokenize =
@@ -98,11 +93,14 @@ public class LokiSinkTest {
           public String map(Message value) throws Exception {
             JsonObject tempValue = new JsonObject(value.toString());
             tempValue.put("status", "error");
-            return tempValue.toString();
+            return lokiPaylod
+                .replace("$1", Long.toString(System.currentTimeMillis() * 1000000))
+                .replace("$2",StringEscapeUtils.escapeJava(tempValue.toString()));
           }
         });
 
     errorSideoutput.addSink(new HttpSink(lokiConfig)).name("LokiSinkString-Error");
+    errorSideoutput.print("LokiSideOutput-Error: ");
 
     /* Success Sideoutput Loki */
     DataStream<String> successSideoutput = tokenize.getSideOutput(LokiProcessMessages.successStream)
@@ -113,13 +111,16 @@ public class LokiSinkTest {
           public String map(Message value) throws Exception {
             JsonObject tempValue = new JsonObject(value.toString());
             tempValue.put("status", "success");
-            return tempValue.toString();
+            return lokiPaylod
+                .replace("$1", Long.toString(System.currentTimeMillis() * 1000000))
+                .replace("$2",StringEscapeUtils.escapeJava(tempValue.toString()));
           }
         });
-    
+
     successSideoutput.addSink(new HttpSink(lokiConfig)).name("LokiSinkString-Success");
-    
-    env.execute();
+    successSideoutput.print("LokiSideOutput-Success: ");
+
+    env.execute(LokiSinkTest.class.getSimpleName());
   }
 
 

@@ -56,7 +56,7 @@ public class HttpEntity<PO> {
     this.apiConfig = apiConfig;
     this.parser = parser;
 
-    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
+    requestBuilder = HttpRequest.newBuilder();
 
     HttpClient.Builder clientBuilder = HttpClient.newBuilder();
     clientBuilder.version(Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10));
