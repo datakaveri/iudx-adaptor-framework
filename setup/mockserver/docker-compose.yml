@@ -2,11 +2,9 @@ version: '3.7'
 
 networks:
   adaptor-net:
-    driver: bridge
-
+    external: true
 
 services:
-
   mockserver:
     image: iudx/adaptor-mockserver:latest
     ports:
@@ -18,12 +16,3 @@ services:
          options:
              max-file: "5"
              max-size: "100m"
-
-  rmq:
-    image: rabbitmq:3-management
-    hostname: mockrmq
-    volumes:
-      - ./configs/mock-rmq.json:/etc/rabbitmq/definitions.json
-    ports:
-      - 5672:5672
-      - 15672:15672

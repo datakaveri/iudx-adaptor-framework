@@ -59,17 +59,23 @@ public class LokiSinkTest {
     env.enableCheckpointing(500);
     env.disableOperatorChaining();
 
+
+
+    String lokiPaylod = confJson.getJsonObject("lokiPaylod").toString();
+
+
     SimpleATestParser parser = new SimpleATestParser();
+
     ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
         .setRequestType("GET").setPollingInterval(1000L);
-    
+
     ApiConfig lokiConfig = new ApiConfig()
         .setUrl(confJson.getString("host"))
         .setHeader("content-type", "application/json");
     
-    String lokiPaylod = confJson.getJsonObject("lokiPaylod").toString();
 
-    DataStream<Message> messageStream = env.addSource(new HttpSource<Message>(apiConfig, parser));
+    DataStream<Message> messageStream = env.addSource(new HttpSource<Message>
+                                                        (apiConfig, parser));
 
     // Generate side stream in LokiProcessMessages()
     SingleOutputStreamOperator<Tuple2<Message, Integer>> tokenize =
@@ -77,7 +83,6 @@ public class LokiSinkTest {
 
     tokenize.keyBy(new KeySelector<Tuple2<Message, Integer>, Integer>() {
       private static final long serialVersionUID = 1L;
-
       @Override
       public Integer getKey(Tuple2<Message, Integer> value) throws Exception {
         return value.f1;
@@ -85,10 +90,11 @@ public class LokiSinkTest {
     });
 
     /* Error Sideoutput Loki */
-    DataStream<String> errorSideoutput = tokenize.getSideOutput(LokiProcessMessages.errorStream)
-        .map(new MapFunction<Message, String>() {
+    DataStream<String> errorSideoutput = 
+      tokenize.getSideOutput(
+          LokiProcessMessages.errorStream)
+              .map(new MapFunction<Message, String>() {
           private static final long serialVersionUID = 1L;
-
           @Override
           public String map(Message value) throws Exception {
             JsonObject tempValue = new JsonObject(value.toString());
@@ -103,7 +109,8 @@ public class LokiSinkTest {
     errorSideoutput.print("LokiSideOutput-Error: ");
 
     /* Success Sideoutput Loki */
-    DataStream<String> successSideoutput = tokenize.getSideOutput(LokiProcessMessages.successStream)
+    DataStream<String> successSideoutput = tokenize.getSideOutput(
+                                            LokiProcessMessages.successStream)
         .map(new MapFunction<Message, String>() {
           private static final long serialVersionUID = 1L;
 
@@ -122,7 +129,4 @@ public class LokiSinkTest {
 
     env.execute(LokiSinkTest.class.getSimpleName());
   }
-
-
-
 }

@@ -115,7 +115,9 @@ public class HttpEntity<PO> {
 
 
   /*
-   * TODO: Manage non-post requests
+   * TODO: 
+   * - Manage non-post requests
+   * - Handle auth
    */
   public String postSerializedMessage(String message) {
     httpRequest = requestBuilder.POST(BodyPublishers.ofString(message)).build();

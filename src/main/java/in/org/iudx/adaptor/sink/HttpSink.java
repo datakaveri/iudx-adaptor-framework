@@ -34,6 +34,7 @@ public class HttpSink extends RichSinkFunction<String> {
     httpEntity = new HttpEntity<String>(apiConfig, parser);
   }
 
+  /* TODO: handle different http methods */
   @Override
   public void invoke(String message) throws Exception {
     httpEntity.postSerializedMessage(message);

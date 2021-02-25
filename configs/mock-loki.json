@@ -1,5 +1,5 @@
 {
-    "host": "http://172.30.48.32:3100/loki/api/v1/push",
+    "host": "http://localhost:3100/loki/api/v1/push",
     "lokiPaylod": {
         "streams": [
             {
