@@ -1,0 +1,43 @@
+version: "3"
+
+networks:
+  adaptor-net:
+    external: true
+
+services:
+  loki:
+    image: grafana/loki:2.0.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - adaptor-net
+
+  promtail:
+    image: grafana/promtail:2.0.0
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers
+      - ./promtail/docker-config.yml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - adaptor-net
+
+  prometheus:
+    image: prom/prometheus:v2.22.1
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/flink.rules.yml:/etc/prometheus/flink.rules.yml
+    networks:
+      - adaptor-net
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - adaptor-net

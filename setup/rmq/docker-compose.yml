@@ -1,0 +1,18 @@
+version: '3.7'
+
+networks:
+  adaptor-net:
+    external: true
+
+services:
+
+  rmq:
+    image: rabbitmq:3-management
+    hostname: mockrmq
+    volumes:
+      - ./configs/mock-rmq.json:/etc/rabbitmq/definitions.json
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - adaptor-net

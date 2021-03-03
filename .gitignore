@@ -2,6 +2,7 @@
 # Your excludes here
 #
 notes.md
+configs/*
 docs/diagrams/*.png
 temp/
 
