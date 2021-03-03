@@ -151,6 +151,7 @@ public class Server extends AbstractVerticle {
             getLogsHandler(routingContext);
     });
     
+    /* Get all the scheduled Jobs */
     router.get(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
           //.consumes(MIME_APPLICATION_JSON)
@@ -158,19 +159,27 @@ public class Server extends AbstractVerticle {
             getAllScheduledJobs(routingContext);
           });
     
+    /* Schedule a quartz Job */
     router.post(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
            //.consumes(MIME_APPLICATION_JSON)
            .handler(routingContext -> {
-              scheduledJobs(routingContext);
+             scheduledJobs(routingContext);
            });
     
+    /*Delete all the scheduled jobs*/
     router.delete(SCHEDULER_ROUTE)
-    .produces(MIME_APPLICATION_JSON)
-     //.consumes(MIME_APPLICATION_JSON)
-     .handler(routingContext -> {
-        deleteScheduledJobs(routingContext);
-     });
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            deleteScheduledJobs(routingContext);
+          });
+
+    /*Delete specific scheduled job*/
+    router.delete(DELETE_SCHEDULER_JOB)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            deleteScheduledJobs(routingContext);
+          });
 
 
     /* Start server */
@@ -426,23 +435,34 @@ public class Server extends AbstractVerticle {
    * @param routingContext
    */
   private void scheduledJobs(RoutingContext routingContext) {
-    
+
     LOGGER.debug("Info: Processing config file");
-    
+
     HttpServerResponse response = routingContext.response();
+    JsonObject payloadBody = routingContext.getBodyAsJson();
     JsonObject requestBody = new JsonObject();
-    JsonObject httpPost = routingContext.getBodyAsJson();
-    
-    requestBody.put("jobId", "testJobId-1").put("schedulePattern", "* * * * *");
-    
-    jobScheduler.schedule(httpPost, handler ->{
-      if(handler.succeeded()) {
-        response.end(handler.result().toString());
-      } else {
-        response.end("failed");
-      }
-    });
-    
+    String jarId = payloadBody.getString(ID);
+
+
+    if (jarId != null) {
+      requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+      requestBody.put(ID, jarId);
+      requestBody.put(DATA, payloadBody.getJsonObject("flinkJobArgs"));
+      requestBody.put(MODE, START);
+      requestBody.put("schedulePattern", payloadBody.getString("schedulePattern"));
+
+      jobScheduler.schedule(requestBody, resHandler -> {
+        if (resHandler.succeeded()) {
+          LOGGER.info("Success: Job submitted");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .end(resHandler.result().toString());
+        } else {
+          LOGGER.error("Error: Jar submission failed; " + resHandler.cause().getMessage());
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON).setStatusCode(400)
+              .end(resHandler.cause().getMessage());
+        }
+      });
+    }
   }
   
   /**
@@ -458,24 +478,45 @@ public class Server extends AbstractVerticle {
     //JsonObject httpPost = routingContext.getBodyAsJson();
     
     jobScheduler.getAllJobs(handler ->{
-      response.end("s");
+      if(handler.succeeded()) {
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON).end(handler.result().encode());
+      } else {
+        response.end("failed");
+      }
     });
   }
   
   /**
+   * Delete the identified Job from the Scheduler.
    * 
    * @param routingContext
    */
   private void deleteScheduledJobs(RoutingContext routingContext) {
     
-    LOGGER.debug("Info: Processing config file");
+    LOGGER.debug("Info: Deleting scheduled quartz job");
     
     HttpServerResponse response = routingContext.response();
     JsonObject requestBody = new JsonObject();
-    //JsonObject httpPost = routingContext.getBodyAsJson();
-    
-    jobScheduler.deleteJobs(requestBody, handler ->{
-      response.end(handler.result().toString());
+    String id = routingContext.pathParam(ID);
+
+    if (id != null) {
+      requestBody.put(ID, id);
+    } else {
+      requestBody.put(ID, "");
+      requestBody.put(URI, JARS);
+    }
+
+    jobScheduler.deleteJobs(requestBody, responseHandler ->{
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Success: scheduler delete query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(responseHandler.result().toString());
+      } else if (responseHandler.failed()) {
+        LOGGER.error("Error: Error in deleting scheduler jobs; " + responseHandler.cause());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(responseHandler.cause().getMessage());
+      }
     });
   }
 }

@@ -50,6 +50,7 @@ public class Constants {
   public static final String GET_CONFIG_ROUTE = CONFIG_ROUTE + "/:id";
   
   public static final String SCHEDULER_ROUTE = basePath + "/schedule";
+  public static final String DELETE_SCHEDULER_JOB = basePath + "/schedule/:id";
 
   /** Response messages */
   public static final String MESSAGE = "message";
