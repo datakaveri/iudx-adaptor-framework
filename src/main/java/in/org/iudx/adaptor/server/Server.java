@@ -151,12 +151,26 @@ public class Server extends AbstractVerticle {
             getLogsHandler(routingContext);
     });
     
-    router.post(SCHEDULER_ROUTE)
+    router.get(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
           //.consumes(MIME_APPLICATION_JSON)
           .handler(routingContext -> {
             getAllScheduledJobs(routingContext);
           });
+    
+    router.post(SCHEDULER_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+           //.consumes(MIME_APPLICATION_JSON)
+           .handler(routingContext -> {
+              scheduledJobs(routingContext);
+           });
+    
+    router.delete(SCHEDULER_ROUTE)
+    .produces(MIME_APPLICATION_JSON)
+     //.consumes(MIME_APPLICATION_JSON)
+     .handler(routingContext -> {
+        deleteScheduledJobs(routingContext);
+     });
 
 
     /* Start server */
@@ -411,6 +425,30 @@ public class Server extends AbstractVerticle {
    * 
    * @param routingContext
    */
+  private void scheduledJobs(RoutingContext routingContext) {
+    
+    LOGGER.debug("Info: Processing config file");
+    
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    JsonObject httpPost = routingContext.getBodyAsJson();
+    
+    requestBody.put("jobId", "testJobId-1").put("schedulePattern", "* * * * *");
+    
+    jobScheduler.schedule(httpPost, handler ->{
+      if(handler.succeeded()) {
+        response.end(handler.result().toString());
+      } else {
+        response.end("failed");
+      }
+    });
+    
+  }
+  
+  /**
+   * 
+   * @param routingContext
+   */
   private void getAllScheduledJobs(RoutingContext routingContext) {
     
     LOGGER.debug("Info: Processing config file");
@@ -422,7 +460,22 @@ public class Server extends AbstractVerticle {
     jobScheduler.getAllJobs(handler ->{
       response.end("s");
     });
+  }
+  
+  /**
+   * 
+   * @param routingContext
+   */
+  private void deleteScheduledJobs(RoutingContext routingContext) {
     
+    LOGGER.debug("Info: Processing config file");
     
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    //JsonObject httpPost = routingContext.getBodyAsJson();
+    
+    jobScheduler.deleteJobs(requestBody, handler ->{
+      response.end(handler.result().toString());
+    });
   }
 }

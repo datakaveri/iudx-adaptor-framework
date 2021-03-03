@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 public class FlinkJobExecute implements  Job {
   
-  private static final Logger LOGGER = LogManager.getLogger(Server.class);
+  private static final Logger LOGGER = LogManager.getLogger(FlinkJobExecute.class);
 
   @Override
   public void execute(JobExecutionContext context) throws JobExecutionException {
