@@ -60,7 +60,7 @@ public class FlinkClient {
         if (request.getString(MODE).equals(STOP)) {
           request.put(URI,
               request.getString(URI) + "/" + resHandler.result().getString("request-id"));
-          httpGenAsync(request, HttpMethod.GET).onComplete(getHandler -> {
+          httpGetAsync(request, HttpMethod.GET).onComplete(getHandler -> {
             if (getHandler.succeeded()) {
               JsonObject result = getHandler.result();
               if(result.containsKey(OPERATION) && !result.getJsonObject(OPERATION).containsKey("failure-cause")) {
@@ -111,7 +111,7 @@ public class FlinkClient {
    */
   public FlinkClient getJarDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
-    Future<JsonObject> future = httpGenAsync(request, HttpMethod.GET);
+    Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
     future.onComplete(resHandler -> {
       if (resHandler.succeeded()) {
         JsonObject result = resHandler.result();
@@ -150,7 +150,7 @@ public class FlinkClient {
     JsonArray idDeleted = new JsonArray();
 
     if (!jarId.isEmpty()) {
-      httpGenAsync(request, HttpMethod.DELETE).onComplete(resHandler -> {
+      httpGetAsync(request, HttpMethod.DELETE).onComplete(resHandler -> {
         if (resHandler.succeeded()) {
           handler.handle(Future.succeededFuture(
               response.withStatus(SUCCESS)
@@ -166,7 +166,7 @@ public class FlinkClient {
         }
       });
     } else {
-      Future<JsonObject> future = httpGenAsync(request, HttpMethod.GET);
+      Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
       future.onComplete(getHandler -> {
         if (!getHandler.result().getJsonArray(FILES).isEmpty()) {
           JsonArray allJars = getHandler.result().getJsonArray(FILES);
@@ -174,7 +174,7 @@ public class FlinkClient {
             JsonObject jar = (JsonObject) entry;
             idDeleted.add(jar.getValue(ID));
             JsonObject reqBody = new JsonObject().put(URI, JARS + "/" + jar.getString(ID));
-            httpGenAsync(reqBody, HttpMethod.DELETE).onComplete(resHandler -> {
+            httpGetAsync(reqBody, HttpMethod.DELETE).onComplete(resHandler -> {
               if (resHandler.failed()) {
                 LOGGER.error("Error: Issue in deletion Jar, ID :" + jar.getString(ID));
               }
@@ -205,7 +205,7 @@ public class FlinkClient {
    */
   public FlinkClient getJobDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
-    Future<JsonObject> future = httpGenAsync(request, HttpMethod.GET);
+    Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
     future.onComplete(resHandler -> {
       if (resHandler.succeeded()) {
         JsonObject result = resHandler.result();
@@ -240,7 +240,7 @@ public class FlinkClient {
   public FlinkClient getLogFiles(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     JsonObject result = new JsonObject();
-    Future<JsonObject> future = httpGenAsync(request, HttpMethod.GET);
+    Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
     future.onComplete(resHandler -> {
       if (resHandler.succeeded()) {
         if (!request.getString(ID).isEmpty()) {
@@ -255,7 +255,7 @@ public class FlinkClient {
             JsonObject key = (JsonObject) entry;
             String tId = key.getString(ID);
             String uri = TASKMANAGER_LOGS_API.replace("$1", tId);
-            httpGenAsync(new JsonObject().put(URI, uri), HttpMethod.GET).onComplete(logsHandler -> {
+            httpGetAsync(new JsonObject().put(URI, uri), HttpMethod.GET).onComplete(logsHandler -> {
               if (logsHandler.succeeded()) {
                 List<String> list = logsHandler.result()
                                                 .getJsonArray("logs")
@@ -343,7 +343,7 @@ public class FlinkClient {
    * @param method
    * @return promise
    */
-  private Future<JsonObject> httpGenAsync(JsonObject requestBody, HttpMethod method) {
+  private Future<JsonObject> httpGetAsync(JsonObject requestBody, HttpMethod method) {
 
     Promise<JsonObject> promise = Promise.promise();
     RequestOptions options = new RequestOptions(flinkOptions);

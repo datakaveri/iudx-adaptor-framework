@@ -30,7 +30,7 @@
 		<log4j.version>2.12.1</log4j.version>
 		<exec.mainClass>in.org.iudx.adaptor.Adaptor</exec.mainClass>
 		<vertx.version>4.0.0</vertx.version>
-		<server.mainClass>in.org.iudx.adaptor.server.Server</server.mainClass>
+		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
 		<quartz.version>2.3.1</quartz.version>
 		<postgres.version>42.2.19</postgres.version>
@@ -246,7 +246,7 @@
 				<executions>
 					<!-- Run shade goal on package phase -->
 					<execution>
-                        <id>rmq</id>
+                        <id>server</id>
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
@@ -273,36 +273,12 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>${exec.mainClass}</mainClass>
+                                    <mainClass>${server.mainClass}</mainClass>
 									<manifestEntries>
 										<Multi-Release>true</Multi-Release>
 									</manifestEntries>
 								</transformer>
 							</transformers>
-						</configuration>
-					</execution>
-					<execution>
-						<id>server</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>io.vertx.core.Launcher</Main-Class>
-										<Main-Verticle>${server.mainClass}</Main-Verticle>
-									</manifestEntries>
-								</transformer>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory</resource>
-								</transformer>
-							</transformers>
-							<artifactSet>
-							</artifactSet>
 							<outputFile>${project.build.directory}/server.jar</outputFile>
 						</configuration>
 					</execution>

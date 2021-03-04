@@ -1,0 +1,23 @@
+version: '3.7'
+
+networks:
+  adaptor-net:
+    external: true
+
+services:
+  server:
+    image: iudx/adaptor-server:latest
+    ports:
+      - "8080:8080"
+    networks: 
+      - adaptor-net
+    volumes:
+      - ../../configs/config.json:/usr/share/app/configs/config.json
+      - ../../configs/keystore.jks:/usr/share/app/configs/keystore.jks
+        # command: "java -jar ./server.jar -c configs/config.json"
+    command: "tail -f /dev/null"
+    logging:
+         driver: "json-file"
+         options:
+             max-file: "5"
+             max-size: "100m"

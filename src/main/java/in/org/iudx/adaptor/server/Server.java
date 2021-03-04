@@ -47,6 +47,7 @@ public class Server extends AbstractVerticle {
   public void start() throws Exception {
     router = Router.router(vertx);
 
+    LOGGER.debug("config" + config());
     keystore = config().getString(KEYSTORE_PATH);
     keystorePassword = config().getString(KEYSTORE_PASSWORD);
     isSsl = config().getBoolean(IS_SSL);
@@ -188,7 +189,7 @@ public class Server extends AbstractVerticle {
     /* Initialize support services */
     flinkClient = new FlinkClient(vertx, flinkOptions);
     validator = new Validator("./src/main/resources/jobSchema.json");
-    jobScheduler = new JobScheduler(flinkClient,"configs/quartz.properties");
+    jobScheduler = new JobScheduler(flinkClient, "configs/quartz.properties");
     LOGGER.debug("Server Initialized");
   }
 

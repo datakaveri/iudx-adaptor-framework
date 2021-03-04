@@ -1,0 +1,36 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:13
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=adaptor@db
+      - POSTGRES_USER=root
+      - POSTGRES_DB=vertx-quartz
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    networks:
+      - adaptor-net
+    volumes:
+      - ./quartz-init.sql:/docker-entrypoint-initdb.d/quartz-init.sql
+      - db-data:/var/lib/postgresql/data/pgdata
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "test@gmail.com"
+      PGADMIN_DEFAULT_PASSWORD: "adaptor@pgadmin"
+    ports:
+      - 16543:80
+    networks:
+      - adaptor-net
+    depends_on:
+      - postgres
+
+volumes:
+  db-data:
+    driver: local
+
+networks:
+  adaptor-net:
+    external: true

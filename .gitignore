@@ -5,6 +5,8 @@ notes.md
 configs/*
 docs/diagrams/*.png
 temp/
+upload-jar
+upload-jar/*
 
 
 
