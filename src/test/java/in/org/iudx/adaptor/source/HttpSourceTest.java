@@ -67,7 +67,7 @@ public class HttpSourceTest {
 
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 

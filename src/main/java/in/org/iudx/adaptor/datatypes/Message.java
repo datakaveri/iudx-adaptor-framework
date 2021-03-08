@@ -19,6 +19,7 @@ public class Message implements Serializable {
   public String body;
   public String key;
   public Instant timestamp;
+  public String timestampString;
 
   private static final long serialVersionUID = 11L;
 
@@ -85,12 +86,21 @@ public class Message implements Serializable {
     return this;
   }
 
-   /**
-   * Hash for this object
-   * TODO: Some validations?
-   * 
-   * @return {@link int}
-   */
+  public Message setEventTimeAsString(String timestampString) {
+    /** Todo:
+     *    - Handle parsing
+     **/
+    this.timestampString = timestampString;
+    return this;
+  }
+
+  public String getEventTimeAsString() {
+    /** Todo:
+     *    - Return Instance time
+     **/
+    return timestampString;
+  }
+
   public long getEventTime() {
     /** Todo:
      *    - Return Instance time

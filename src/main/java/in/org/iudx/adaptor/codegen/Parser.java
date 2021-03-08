@@ -8,8 +8,6 @@ import org.apache.flink.api.common.serialization.SerializationSchema;
 /* PO - Parser output. Thought to handle Message vs Array<Message> */
 
 public interface Parser<PO> extends SerializationSchema<Message> {
-  public String getKey();
-  public Instant getTimeIndex();
   public PO parse(String data);
   /* TODO: Generalize this too? */
   public byte[] serialize(Message inObj);
