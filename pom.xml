@@ -34,6 +34,7 @@
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
 		<quartz.version>2.3.1</quartz.version>
 		<postgres.version>42.2.19</postgres.version>
+        <latest.jolt.version>0.0.16</latest.jolt.version>
 	</properties>
 
 	<repositories>
@@ -210,12 +211,22 @@
             <artifactId>postgresql</artifactId>
             <version>${postgres.version}</version>
         </dependency>		
-	</dependencies>
-	
-	<build>
-		<plugins>
+        <dependency>
+            <groupId>com.bazaarvoice.jolt</groupId>
+            <artifactId>jolt-core</artifactId>
+            <version>${latest.jolt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bazaarvoice.jolt</groupId>
+            <artifactId>json-utils</artifactId>
+            <version>${latest.jolt.version}</version>
+        </dependency>
+    </dependencies>
 
-			<!-- Java Compiler -->
+    <build>
+        <plugins>
+
+            <!-- Java Compiler -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>

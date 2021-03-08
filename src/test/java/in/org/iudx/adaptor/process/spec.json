@@ -1,0 +1,20 @@
+[
+    {
+        "operation": "modify-overwrite-beta",
+        "spec": {
+            "co2": "=split(' ',@(1,co2))"
+        }
+    },
+    {
+        "operation": "modify-overwrite-beta",
+        "spec": {
+            "co2": "=firstElement(@(1,co2))"
+        }
+    },
+    {
+        "operation": "modify-overwrite-beta",
+        "spec": {
+            "co2": ["=toDouble", 0]
+        }
+    }
+]

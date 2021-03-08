@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.source;
+package in.org.iudx.adaptor.testadaptors;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -21,23 +21,28 @@ import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbStringSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
+import in.org.iudx.adaptor.process.DumbProcess;
 
 
+import in.org.iudx.adaptor.source.HttpSource;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Deduplicator;
-import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
-import in.org.iudx.adaptor.codegen.SimpleATestParser;
-import in.org.iudx.adaptor.codegen.SimpleBTestParser;
-import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
+import in.org.iudx.adaptor.codegen.TimeBasedDeduplicator;
+
+import in.org.iudx.adaptor.testadaptors.SimpleATestTransformer;
+import in.org.iudx.adaptor.testadaptors.SimpleBTestParser;
+import in.org.iudx.adaptor.testadaptors.SimpleADeduplicator;
 
 
-public class HttpSourceTest {
+public class VaranasiAqm {
 
   public static MiniClusterWithClientResource flinkCluster;
-  private static final Logger LOGGER = LogManager.getLogger(HttpSourceTest.class);
+  private static final Logger LOGGER = LogManager.getLogger(VaranasiAqm.class);
+  private static StreamExecutionEnvironment env;
 
   @BeforeAll
   public static void initialize() {
@@ -48,12 +53,9 @@ public class HttpSourceTest {
           .setNumberSlotsPerTaskManager(2)
           .setNumberTaskManagers(1)
           .build());
-  }
 
-  @Test
-  void simpleA() throws InterruptedException {
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+    env = StreamExecutionEnvironment.createLocalEnvironment();
     env.setParallelism(1);
 
     env.enableCheckpointing(10000L);
@@ -61,73 +63,36 @@ public class HttpSourceTest {
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
 
-    SimpleATestTransformer trans = new SimpleATestTransformer();
-    SimpleATestParser parser = new SimpleATestParser();
-    SimpleADeduplicator dedup = new SimpleADeduplicator();
-
-
-    ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
-                                          .setRequestType("GET")
-                                          .setPollingInterval(1000L);
-
-
-    /* Include process */
-    env.addSource(new HttpSource<Message>(apiConfig, parser))
-        .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans,dedup))
-        .addSink(new DumbSink(parser));
-
-    /* Passthrough
-     *
-    env.addSource(new HttpSource(apiConfig))
-        .addSink(new DumbStringSink());
-     **/
-
-    try {
-      env.execute("Simple Get");
-    } catch (Exception e) {
-      System.out.println(e);
-    }
   }
+
 
 
   @Test
   void simpleB() throws InterruptedException {
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-    env.setParallelism(1);
-
-    env.enableCheckpointing(10000L);
-    CheckpointConfig config = env.getCheckpointConfig();
-    config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
-
 
     SimpleBTestParser parser = new SimpleBTestParser();
     SimpleATestTransformer trans = new SimpleATestTransformer();
-    SimpleADeduplicator dedup = new SimpleADeduplicator();
-
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleB")
+      new ApiConfig().setUrl("http://220.227.12.146:8081/Equipment/GetEnvrDataStatus?EqpId=all")
                                           .setRequestType("GET")
-                                          .setPollingInterval(1000L);
+                                          .setPollingInterval(10000L);
 
 
     /* Include process */
     env.addSource(new HttpSource<Message[]>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans,dedup))
+        .process(new GenericProcessFunction(trans, new TimeBasedDeduplicator()))
         .addSink(new DumbSink(parser));
 
-    /* Passthrough
-     *
-    env.addSource(new HttpSource(apiConfig))
-        .addSink(new DumbStringSink());
-     **/
+    // env.addSource(new HttpSource<Message[]>(apiConfig, parser))
+    //    .keyBy((Message msg) -> msg.key)
+    //    .process(new DumbProcess())
+    //    .addSink(new DumbStringSink());
 
     try {
-      env.execute("Simple Get");
+      env.execute("Adaptor");
     } catch (Exception e) {
       System.out.println(e);
     }

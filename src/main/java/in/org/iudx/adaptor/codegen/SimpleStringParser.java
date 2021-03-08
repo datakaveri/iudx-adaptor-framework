@@ -13,13 +13,6 @@ public class SimpleStringParser implements Parser<String> {
   public SimpleStringParser() {
   }
 
-  public String getKey() {
-    return null;
-  }
-
-  public Instant getTimeIndex() {
-    return null;
-  }
 
   public String parse(String message) {
     // Try catch around this

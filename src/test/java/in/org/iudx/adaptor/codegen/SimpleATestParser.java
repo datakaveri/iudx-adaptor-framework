@@ -16,13 +16,6 @@ public class SimpleATestParser implements Parser<Message> {
   public SimpleATestParser() {
   }
 
-  public String getKey() {
-    return key;
-  }
-
-  public Instant getTimeIndex() {
-    return time;
-  }
 
   public Message parse(String message) {
     // Try catch around this
