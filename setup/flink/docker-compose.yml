@@ -1,0 +1,29 @@
+version: '3.7'
+
+networks:
+  adaptor-net:
+    external: true
+
+services:
+
+  jobmanager:
+    image: flink:1.12.2-scala_2.12-java11 
+    hostname: jobmanager
+    ports:
+      - 8081:8081
+    env_file:
+      - ./env
+    networks:
+      - adaptor-net
+    command: "jobmanager"
+
+
+  taskmanager:
+    image: flink:1.12.2-scala_2.12-java11 
+    hostname: taskmanager
+    env_file:
+      - ./env
+    networks:
+      - adaptor-net
+    command: "taskmanager"
+

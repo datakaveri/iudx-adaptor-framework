@@ -7,6 +7,7 @@ networks:
 services:
   mockserver:
     image: iudx/adaptor-mockserver:latest
+    # Note: internal port 8080 will be accessed
     ports:
       - "8888:8080"
     networks: 
