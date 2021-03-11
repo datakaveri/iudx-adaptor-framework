@@ -15,6 +15,7 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 
 import java.util.Map;
 import java.util.HashMap;
+import org.json.JSONObject;
 
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
@@ -34,9 +35,17 @@ import in.org.iudx.adaptor.codegen.SimpleBTestParser;
 import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
 
 
+import in.org.iudx.adaptor.process.JoltTransformer;
+import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
+
+
 public class HttpSourceTest {
 
   public static MiniClusterWithClientResource flinkCluster;
+
+
+  private static StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+
   private static final Logger LOGGER = LogManager.getLogger(HttpSourceTest.class);
 
   @BeforeAll
@@ -48,17 +57,21 @@ public class HttpSourceTest {
           .setNumberSlotsPerTaskManager(2)
           .setNumberTaskManagers(1)
           .build());
-  }
 
-  @Test
-  void simpleA() throws InterruptedException {
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+    StreamExecutionEnvironment.createLocalEnvironment();
     env.setParallelism(1);
 
     env.enableCheckpointing(10000L);
     CheckpointConfig config = env.getCheckpointConfig();
     config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+
+
+
+  }
+
+  @Test
+  void simpleA() throws InterruptedException {
 
 
     SimpleATestTransformer trans = new SimpleATestTransformer();
@@ -95,13 +108,6 @@ public class HttpSourceTest {
   @Test
   void simpleB() throws InterruptedException {
 
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
-    env.setParallelism(1);
-
-    env.enableCheckpointing(10000L);
-    CheckpointConfig config = env.getCheckpointConfig();
-    config.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
-
 
     SimpleBTestParser parser = new SimpleBTestParser();
     SimpleATestTransformer trans = new SimpleATestTransformer();
@@ -109,7 +115,7 @@ public class HttpSourceTest {
 
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleB")
+      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleB")
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 
@@ -118,6 +124,57 @@ public class HttpSourceTest {
     env.addSource(new HttpSource<Message[]>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
+        .addSink(new DumbSink(parser));
+
+    /* Passthrough
+     *
+    env.addSource(new HttpSource(apiConfig))
+        .addSink(new DumbStringSink());
+     **/
+
+    try {
+      env.execute("Simple Get");
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+  }
+
+  @Test
+  void configBased() throws InterruptedException {
+
+
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleB")
+                                          .setRequestType("GET")
+                                          .setPollingInterval(1000L);
+
+    String parseSpec = new JSONObject()
+                                .put("containerPath", "$.data")
+                                .put("keyPath", "$.deviceId")
+                                .put("timestampPath", "$.time")
+                                .toString();
+
+    String dedupSpec = new JSONObject()
+                              .put("deduplicationType", "timeBased")
+                              .toString();
+
+
+    String joltSpec = "[{ \"operation\": \"shift\", \"spec\": { \"time\": \"observationDateTime\", \"deviceId\": \"id\", \"k1\": \"k1\" } }, { \"operation\": \"modify-overwrite-beta\", \"spec\": { \"id\": \"=concat('datakaveri.org/123/', id)\" } }]";
+
+
+    String transformSpec = new JSONObject().put("transformType", "jolt")
+                                                .put("joltSpec", joltSpec)
+                                                .toString();
+
+                                  
+    JsonPathParser<Message[]> parser = new JsonPathParser<Message[]>(parseSpec);
+    JoltTransformer trans = new JoltTransformer(transformSpec);
+    TimeBasedDeduplicator dedup = new TimeBasedDeduplicator();
+
+    /* Include process */
+    env.addSource(new HttpSource<Message[]>(apiConfig, parser))
+        .keyBy((Message msg) -> msg.key)
+        .process(new GenericProcessFunction(trans, dedup))
         .addSink(new DumbSink(parser));
 
     /* Passthrough

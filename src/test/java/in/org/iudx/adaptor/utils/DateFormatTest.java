@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.source;
+package in.org.iudx.adaptor.utils;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;

@@ -104,7 +104,6 @@ public class LokiSinkTest {
                 .replace("$2",StringEscapeUtils.escapeJava(tempValue.toString()));
           }
         });
-
     errorSideoutput.addSink(new HttpSink(lokiConfig)).name("LokiSinkString-Error");
     errorSideoutput.print("LokiSideOutput-Error: ");
 
