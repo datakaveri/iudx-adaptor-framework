@@ -34,7 +34,7 @@
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
 		<quartz.version>2.3.1</quartz.version>
 		<postgres.version>42.2.19</postgres.version>
-        <latest.jolt.version>0.0.16</latest.jolt.version>
+        <latest.jolt.version>0.1.1</latest.jolt.version>
 	</properties>
 
 	<repositories>
@@ -241,6 +241,11 @@
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
             <version>1.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.5.0</version>
         </dependency>
     </dependencies>
 

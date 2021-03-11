@@ -3,6 +3,10 @@ package in.org.iudx.adaptor.source;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
+import java.util.ArrayList;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -32,6 +36,7 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
   private ApiConfig apiConfig;
   private Parser<PO> parser;
 
+  private static final Logger LOGGER = LogManager.getLogger(HttpSource.class);
   /**
    * {@link HttpEntity} Constructor
    * 
@@ -77,12 +82,14 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
 
       PO msg = httpEntity.getMessage();
 
+
       /* Message array */
-      if (msg instanceof Message[]) {
-        Message[] m = (Message[]) msg;
-        for (int i=0; i<m.length; i++) {
-          ctx.collectWithTimestamp(m[i], m[i].getEventTime());
-          ctx.emitWatermark(new Watermark(m[i].getEventTime()));
+      if (msg instanceof ArrayList) {
+        ArrayList<Message> message = (ArrayList<Message>) msg;
+        for (int i=0; i<message.size(); i++) {
+          Message m = (Message) message.get(i);
+          ctx.collectWithTimestamp(m, m.getEventTime());
+          ctx.emitWatermark(new Watermark(m.getEventTime()));
         }
       } 
 

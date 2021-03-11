@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.codegen;
+package in.org.iudx.adaptor.process;
 
 import org.json.JSONObject;
 import java.time.Instant;
