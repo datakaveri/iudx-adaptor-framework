@@ -31,7 +31,7 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.Deduplicator;
-import in.org.iudx.adaptor.codegen.TimeBasedDeduplicator;
+import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 
 import in.org.iudx.adaptor.testadaptors.SimpleATestTransformer;
 import in.org.iudx.adaptor.testadaptors.SimpleBTestParser;
