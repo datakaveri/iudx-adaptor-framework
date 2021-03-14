@@ -32,7 +32,7 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
 
   private static final long serialVersionUID = 1L;
   private volatile boolean running = true;
-  private HttpEntity<PO> httpEntity;
+  private HttpEntity httpEntity;
   private ApiConfig apiConfig;
   private Parser<PO> parser;
 
@@ -61,7 +61,7 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
-    httpEntity = new HttpEntity<PO>(apiConfig, parser);
+    httpEntity = new HttpEntity(apiConfig);
   }
 
   /**
@@ -80,7 +80,7 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
      **/
     while (running) {
 
-      PO msg = httpEntity.getMessage();
+      PO msg = parser.parse(httpEntity.getSerializedMessage());
 
 
       /* Message array */

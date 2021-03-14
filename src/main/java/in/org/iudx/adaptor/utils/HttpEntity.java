@@ -10,9 +10,7 @@ import java.time.Duration;
 import java.net.URI;
 import java.net.http.HttpRequest.BodyPublishers;
 
-import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
-import in.org.iudx.adaptor.codegen.Parser;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -29,10 +27,9 @@ import in.org.iudx.adaptor.codegen.Parser;
  *  - Parse response bodies
  *
  */
-public class HttpEntity<PO> {
+public class HttpEntity {
 
   public ApiConfig apiConfig;
-  public Parser<PO> parser;
 
   private HttpRequest.Builder requestBuilder;
   private HttpClient httpClient;
@@ -52,9 +49,8 @@ public class HttpEntity<PO> {
    *  - Modularize/cleanup
    *  - Handle timeouts from ApiConfig
    */
-  public HttpEntity(ApiConfig apiConfig, Parser<PO> parser) {
+  public HttpEntity(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
-    this.parser = parser;
 
     requestBuilder = HttpRequest.newBuilder();
 
@@ -64,13 +60,10 @@ public class HttpEntity<PO> {
     if (apiConfig.url != null ) {
       requestBuilder.uri(URI.create(apiConfig.url));
     }
-
     /* TODO: consider making this neater */
-
     if (this.apiConfig.getHeaderString().length > 0) {
       requestBuilder.headers(this.apiConfig.headersArray);
     }
-
     httpClient = clientBuilder.build();
   }
 
@@ -99,17 +92,12 @@ public class HttpEntity<PO> {
           return "";
         }
       }
-
       case "POST":
-
         break;
 
       default:
         break;
     }
-
-
-
     return "";
   }
 
@@ -128,16 +116,5 @@ public class HttpEntity<PO> {
     } catch (Exception e) {
       return "";
     }
-  }
-
-
-
-  public PO getMessage() {
-    /* TODO: 
-     * - Make this generic, because of json array decimation 
-     * - Handle arrays vs simple objects
-     **/
-    PO msg = parser.parse(getSerializedMessage());
-    return msg;
   }
 }

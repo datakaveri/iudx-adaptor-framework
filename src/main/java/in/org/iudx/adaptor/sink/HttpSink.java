@@ -10,14 +10,12 @@ public class HttpSink extends RichSinkFunction<String> {
 
   private static final long serialVersionUID = 54L;  
   
-  private HttpEntity<String> httpEntity;
+  private HttpEntity httpEntity;
   private ApiConfig apiConfig;
-  private SimpleStringParser parser;
 
 
   public HttpSink(ApiConfig apiConfig) {
     this.apiConfig = apiConfig;
-    parser = new SimpleStringParser();
   }
 
   /**
@@ -31,7 +29,7 @@ public class HttpSink extends RichSinkFunction<String> {
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
-    httpEntity = new HttpEntity<String>(apiConfig, parser);
+    httpEntity = new HttpEntity(apiConfig);
   }
 
   /* TODO: handle different http methods */
