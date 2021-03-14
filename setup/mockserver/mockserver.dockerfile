@@ -5,14 +5,14 @@ ARG VERSION="1"
 FROM maven:latest as dependencies
 
 WORKDIR /usr/share/app
-COPY pom.xml .
+COPY framework/pom.xml .
 RUN mvn clean package -Dmaven.test.skip=true
 
 
 FROM dependencies as builder
 
 WORKDIR /usr/share/app
-COPY ./src ./src
+COPY ./framework/src ./src
 RUN mvn clean package -Dmaven.test.skip=true
 
 
