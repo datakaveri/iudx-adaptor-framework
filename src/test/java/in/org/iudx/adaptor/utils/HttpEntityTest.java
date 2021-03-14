@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.source;
+package in.org.iudx.adaptor.utils;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +12,6 @@ import java.util.HashMap;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
-import in.org.iudx.adaptor.utils.HttpEntity;
 
 public class HttpEntityTest {
 
@@ -20,21 +19,13 @@ public class HttpEntityTest {
   void simpleGet() throws InterruptedException {
 
     
-    SimpleATestParser parser = new SimpleATestParser();
 
     ApiConfig apiConfig = 
       new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 
-    HttpEntity<Message> httpEntity = new HttpEntity<Message>(apiConfig, parser);
-    Message msg = httpEntity.getMessage();
-    System.out.println("Result");
-    System.out.println(msg);
-    System.out.println("Keying Property");
-    System.out.println(msg.key);
-    System.out.println("Time");
-    System.out.println(msg.getEventTime());
-
+    HttpEntity httpEntity = new HttpEntity(apiConfig);
+    System.out.println(httpEntity.getSerializedMessage());
   }
 }
