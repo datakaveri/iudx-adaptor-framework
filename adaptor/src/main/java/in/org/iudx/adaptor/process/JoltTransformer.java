@@ -24,18 +24,15 @@ public class JoltTransformer implements Transformer {
   private String transformSpec;
 
   public JoltTransformer(String transformSpec) {
-    this.transformSpec = new JSONObject(transformSpec).getString("joltSpec");
+    this.transformSpec = new JSONObject(transformSpec).getJSONArray("joltSpec").toString();
   }
 
 
 
   public Message transform(Message inMessage) throws Exception {
 
-    System.out.println("Started");
     List chainrSpecJSON = JsonUtils.jsonToList(transformSpec);
     Chainr chainr = Chainr.fromSpec( chainrSpecJSON );
-
-    System.out.println("Here");
 
     Object inputJSON = JsonUtils.jsonToObject(inMessage.body);
     Object transformedOutput = chainr.transform( inputJSON );

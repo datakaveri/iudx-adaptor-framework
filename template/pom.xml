@@ -1,55 +1,107 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-    <artifactId>template</artifactId>
-	<version>1</version>
-    <name>template</name>
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion>
+<artifactId>template</artifactId>
+<version>1</version>
+<name>template</name>
 
-    <properties>
-        <target.java.version>11</target.java.version>
-    </properties>
+<properties>
+    <target.java.version>11</target.java.version>
+    <server.mainClass>in.org.iudx.template.Adaptor</server.mainClass>
+</properties>
 
-    <parent>
+<parent>
+    <groupId>org.datakaveri</groupId>
+    <artifactId>adaptor-framework</artifactId>
+    <version>1</version>
+    <relativePath>../</relativePath>
+</parent>
+
+<dependencies>
+    <dependency>
         <groupId>org.datakaveri</groupId>
-        <artifactId>adaptor-framework</artifactId>
+        <artifactId>adaptor</artifactId>
         <version>1</version>
-        <relativePath>../</relativePath>
-    </parent>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.datakaveri</groupId>
-            <artifactId>adaptor</artifactId>
-            <version>1</version>
-        </dependency>
-    </dependencies>
+    </dependency>
+</dependencies>
 
 
 
-    <build>
-        <plugins>
+<build>
+    <plugins>
 
-            <!-- Java Compiler -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.1</version>
-                <configuration>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.auto.service</groupId>
-                            <artifactId>auto-service</artifactId>
-                            <version>${auto-service.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
-                    <source>${target.java.version}</source>
-                    <target>${target.java.version}</target>
-				</configuration>
-			</plugin>
-		</plugins>
+        <!-- Java Compiler -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.1</version>
+            <configuration>
+                <annotationProcessorPaths>
+                    <path>
+                        <groupId>com.google.auto.service</groupId>
+                        <artifactId>auto-service</artifactId>
+                        <version>${auto-service.version}</version>
+                    </path>
+                </annotationProcessorPaths>
+                <source>${target.java.version}</source>
+                <target>${target.java.version}</target>
+            </configuration>
+        </plugin>
 
-	</build>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <version>3.1.1</version>
+            <executions>
+                <!-- Run shade goal on package phase -->
+                <execution>
+                    <id>adaptor</id>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <artifactSet>
+                            <excludes>
+                                <exclude>org.apache.flink:force-shading</exclude>
+                                <exclude>com.google.code.findbugs:jsr305</exclude>
+                            </excludes>
+                        </artifactSet>
+                        <filters>
+                            <filter>
+                                <!-- Do not copy the signatures in the META-INF folder. Otherwise, 
+                                this might cause SecurityExceptions when using the JAR. -->
+                                <artifact>*:*</artifact>
+                                <excludes>
+                                    <exclude>META-INF/*.SF</exclude>
+                                    <exclude>META-INF/*.DSA</exclude>
+                                    <exclude>META-INF/*.RSA</exclude>
+                                </excludes>
+                            </filter>
+                        </filters>
+                        <transformers>
+                            <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>in.org.iudx.template.Adaptor</mainClass>
+                            <manifestEntries>
+                                <Multi-Release>true</Multi-Release>
+                            </manifestEntries>
+                        </transformer>
+                    </transformers>
+                    <outputFile>${project.build.directory}/adaptor.jar</outputFile>
+                </configuration>
+            </execution>
+
+        </executions>
+    </plugin>
+
+
+
+</plugins>
+
+
+    </build>
 
 
 </project>

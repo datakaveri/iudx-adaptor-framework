@@ -20,7 +20,7 @@ import java.util.List;
 
 
 
-public class JoltTransform {
+public class JoltTransformTest {
 
   @Test
   void transform() throws InterruptedException {

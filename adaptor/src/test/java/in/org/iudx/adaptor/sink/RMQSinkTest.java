@@ -31,9 +31,9 @@ import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
 import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
-import in.org.iudx.adaptor.codegen.SimplePublisher;
 import in.org.iudx.adaptor.source.HttpSource;
 import in.org.iudx.adaptor.sink.AMQPSink;
+import in.org.iudx.adaptor.sink.StaticStringPublisher;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 
 
@@ -98,7 +98,7 @@ public class RMQSinkTest {
 
 
    RMQConfig amqconfig = new RMQConfig(); 
-   amqconfig.setPublisher(new SimplePublisher());
+   amqconfig.setPublisher(new StaticStringPublisher("adaptor-test", "test"));
    amqconfig.builder.setUri("amqp://localhost")
                     .setPort(5672)
                     .setUserName("guest")
@@ -113,7 +113,7 @@ public class RMQSinkTest {
         //.process(new DumbProcess())
         //.addSink(new DumbStringSink());
         //.addSink(new RMQSink<String>(rmqConfig, new SimpleStringSchema(), publishOptions));
-        .addSink(new AMQPSink(amqconfig, parser));
+        .addSink(new AMQPSink(amqconfig));
 
     try {
       env.execute("Simple Get");

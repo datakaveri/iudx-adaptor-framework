@@ -16,9 +16,12 @@ import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import java.util.Map;
 import java.util.HashMap;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
+
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
@@ -33,6 +36,10 @@ import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
 import in.org.iudx.adaptor.codegen.SimpleBTestParser;
 import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
+
+import in.org.iudx.adaptor.sink.AMQPSink;
+import in.org.iudx.adaptor.codegen.RMQConfig;
+import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 
 import in.org.iudx.adaptor.process.JoltTransformer;
@@ -89,7 +96,7 @@ public class HttpSourceTest {
     env.addSource(new HttpSource<Message>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
-        .addSink(new DumbSink(parser));
+        .addSink(new DumbSink());
 
     /* Passthrough
      *
@@ -124,7 +131,7 @@ public class HttpSourceTest {
     env.addSource(new HttpSource<Message[]>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
-        .addSink(new DumbSink(parser));
+        .addSink(new DumbSink());
 
     /* Passthrough
      *
@@ -163,7 +170,7 @@ public class HttpSourceTest {
 
 
     String transformSpec = new JSONObject().put("transformType", "jolt")
-                                                .put("joltSpec", joltSpec)
+                                                .put("joltSpec", new JSONArray(joltSpec))
                                                 .toString();
 
                                   
@@ -175,7 +182,7 @@ public class HttpSourceTest {
     env.addSource(new HttpSource<Message[]>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans, dedup))
-        .addSink(new DumbSink(parser));
+        .addSink(new DumbSink());
 
     /* Passthrough
      *
@@ -189,6 +196,11 @@ public class HttpSourceTest {
       System.out.println(e);
     }
   }
+
+@Test
+void genTest() throws InterruptedException {
+
+}
 
 
 }
