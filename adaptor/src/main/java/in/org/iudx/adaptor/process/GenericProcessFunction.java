@@ -8,6 +8,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -24,6 +25,10 @@ public class GenericProcessFunction
 
   private Transformer transformer;
   private Deduplicator deduplicator;
+
+  public static final OutputTag<String> errorStream 
+    = new OutputTag<String>("error") {};
+
 
   private static final long serialVersionUID = 43L;
 
@@ -51,7 +56,15 @@ public class GenericProcessFunction
       /* Tranformer logic in transform function applied here */
       /* Add deduplication logic here */
       if(deduplicator.isDuplicate(previousMessage, msg) == false) {
-        out.collect(transformer.transform(msg));
+        try {
+          Message transformedMessage = transformer.transform(msg);
+          out.collect(transformedMessage);
+        } catch (Exception e) {
+          /* TODO */
+          String tmpl = 
+          "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\"" + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
+          context.output(errorStream, tmpl) ;
+        }
         streamState.update(msg);
       }
     }

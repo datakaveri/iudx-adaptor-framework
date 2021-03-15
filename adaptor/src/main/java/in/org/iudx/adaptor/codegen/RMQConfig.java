@@ -21,7 +21,7 @@ public class RMQConfig implements SinkConfig<RMQConnectionConfig>,RMQSinkPublish
   private boolean immediate = false;
 
   /* User provided */
-  private Publisher publisher;
+  public Publisher publisher;
   public transient Builder builder;
   public RMQConnectionConfig connectionConfig;
 

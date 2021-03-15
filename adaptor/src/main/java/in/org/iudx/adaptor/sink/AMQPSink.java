@@ -6,7 +6,7 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 
-import in.org.iudx.adaptor.codegen.Parser;
+import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 
 /**
@@ -16,11 +16,9 @@ import in.org.iudx.adaptor.codegen.Parser;
 public class AMQPSink extends RMQSink<Message> {
 
   private RMQConfig rmqConfig;
-  private Parser parser;
 
-  public AMQPSink(RMQConfig rmqConfig, Parser parser) {
-    super(rmqConfig.connectionConfig, parser, rmqConfig);
-    this.parser = parser;
+  public AMQPSink(RMQConfig rmqConfig) {
+    super(rmqConfig.connectionConfig, rmqConfig.publisher, rmqConfig);
     this.rmqConfig = rmqConfig;
   }
 }

@@ -28,10 +28,4 @@ public class SimpleATestParser implements Parser<Message> {
     msg.setResponseBody(message);
     return msg;
   }
-
-  public byte[] serialize(Message obj) {
-    return obj.toString().getBytes();
-  }
-
-
 }

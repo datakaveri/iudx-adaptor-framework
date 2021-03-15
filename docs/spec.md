@@ -4,6 +4,7 @@
 ## Spec Outline
 ``` 
 {
+    "name": "<unique name for this adaptor",
     "inputSpec": {
     },
     
@@ -30,9 +31,7 @@
 ``` 
 
 {
-    "type": "<json|xml>",
-    "messageContainer": "<array - multiple messages in same message |
-                          single - single message in one message>"
+    "type": "<http|protobuf>",
     "url": "<url with protocol>",
     "requestType": "<GET | POST",
     "pollingInterval": <number (if > threshold, will be batch job)>,
@@ -48,6 +47,9 @@
 Currently only for json
 ``` 
 {
+    "type": "<json|xml>",
+    "messageContainer": "<array - multiple messages in same message |
+                          single - single message in one message>"
     "containerPath": "json path to container (list of objects) of messages in case
                         inputSpec.messageContainer == array.
                       Subsequent to this all paths will apply to individual objects
@@ -62,7 +64,7 @@ Currently only for json
 ## Deduplication spec
 ``` 
 {
-    "deduplicateType": "<timeBased | keyBased >"
+    "type": "<timeBased | keyBased >"
 }
 ```
 
@@ -71,8 +73,23 @@ Currently only for json
 Currently only for json
 ``` 
 {
-    "transformType": "<jolt | jsonPath>",
+    "type": "<jolt | jsonPath>",
     "joltSpec": "<stringified jolt spec>",
     "jsonPathSpec": "<stringified json path spec>"
+}
+```
+
+
+## Publish spec
+Currently on for RMQ
+``` 
+{
+    "type": "<rmq>"
+    "url": "<url with protocol no port>",
+    "port": <port>,
+    "uname": "<uname>",
+    "password": "<password>",
+    "sinkName": "<exchange name>",
+    "tagName": "<routing key>"
 }
 ```

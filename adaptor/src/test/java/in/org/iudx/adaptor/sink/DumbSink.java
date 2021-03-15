@@ -19,10 +19,10 @@ public class DumbSink implements SinkFunction<Message> {
 
   private static final Logger LOGGER = LogManager.getLogger(DumbSink.class);
 
-  private Parser parser;
+  private StaticStringPublisher publisher;
 
-  public DumbSink(Parser parser) {
-    this.parser = parser;
+  public DumbSink() {
+    publisher = new StaticStringPublisher("test", "test");
   }
 
   /** Statefulness for dumb things */
@@ -35,7 +35,7 @@ public class DumbSink implements SinkFunction<Message> {
    */
   @Override
   public void invoke(Message msg) {
-    LOGGER.info(new String(parser.serialize(msg)));
+    LOGGER.info(new String(publisher.serialize(msg)));
   }
 
 }
