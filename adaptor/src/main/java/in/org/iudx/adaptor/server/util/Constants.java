@@ -37,7 +37,7 @@ public class Constants {
 
   /** Routes */
   public static final String JARS = "/jars";
-  public static String UPLOAD_DIR = "./upload-jar";
+  public static String UPLOAD_DIR = "../upload-jar";
   private static String basePath = "/iudx/adaptor/v1";
   public static final String JAR_ROUTE = basePath + "/jar";
   public static final String GET_JAR_ROUTE = basePath + "/jar/:id";

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -63,7 +64,8 @@ import java.util.Map;
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-      String env = System.getenv("ADAPTOR_CONFIG_PATH");
+    //  String env = System.getenv("ADAPTOR_CONFIG_PATH");      
+      String env = System.getProperty("ADAPTOR_CONFIG_PATH");
       TopologyConfig config;
 
       try {
@@ -73,6 +75,7 @@ import java.util.Map;
         TopologyBuilder tb = new TopologyBuilder(config, filer);
         tb.gencode();
       } catch (Exception e) {
+        System.out.println("Exception in loading file: "+e);
         return false;
       }
       // Send to config parser

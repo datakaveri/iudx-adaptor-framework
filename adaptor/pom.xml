@@ -251,6 +251,11 @@
             <artifactId>json-path</artifactId>
             <version>2.5.0</version>
         </dependency>
+        <dependency>
+        	<groupId>org.apache.maven.shared</groupId>
+        	<artifactId>maven-invoker</artifactId>
+        	<version>3.1.0</version>
+		</dependency>
     </dependencies>
 
     <build>
@@ -417,7 +422,7 @@
 									<argument>-jar</argument>
 									<argument>{project.build.directory}/${project.artifactId}-dev-${project.version}-fat.jar</argument>
 									<argument>-c</argument>
-									<argument>./configs/config-test.json</argument>
+									<argument>../configs/config-test.json</argument>
 								</arguments>
 							</configuration>
 						</execution>

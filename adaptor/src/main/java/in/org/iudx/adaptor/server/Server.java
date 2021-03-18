@@ -1,6 +1,8 @@
 package in.org.iudx.adaptor.server;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
@@ -13,9 +15,11 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import in.org.iudx.adaptor.server.util.CodegenInit;
 import in.org.iudx.adaptor.server.util.Constants;
 import in.org.iudx.adaptor.server.util.Validator;
 import static in.org.iudx.adaptor.server.util.Constants.*;
+import java.nio.file.FileSystems;
 import java.util.Set;
 
 /**
@@ -40,6 +44,7 @@ public class Server extends AbstractVerticle {
   private JsonObject flinkOptions = new JsonObject();
   private Validator validator;
   private JobScheduler jobScheduler;
+  private CodegenInit codegenInit;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -181,6 +186,14 @@ public class Server extends AbstractVerticle {
           .handler(routingContext -> {
             deleteScheduledJobs(routingContext);
           });
+    
+    /*Config file processing*/
+    router.post(CONFIG_ROUTE)
+          .consumes(MIME_APPLICATION_JSON)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(routingContext -> {
+            submitConfigHandler(routingContext);
+          });
 
 
     /* Start server */
@@ -189,7 +202,8 @@ public class Server extends AbstractVerticle {
     /* Initialize support services */
     flinkClient = new FlinkClient(vertx, flinkOptions);
     validator = new Validator("./src/main/resources/jobSchema.json");
-    jobScheduler = new JobScheduler(flinkClient, "configs/quartz.properties");
+    jobScheduler = new JobScheduler(flinkClient, "../configs/quartz.properties");
+    codegenInit = new CodegenInit();
     LOGGER.debug("Server Initialized");
   }
 
@@ -517,6 +531,57 @@ public class Server extends AbstractVerticle {
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                 .setStatusCode(400)
                 .end(responseHandler.cause().getMessage());
+      }
+    });
+  }
+  
+  
+  /**
+   * Accepts the JsonConfig, processes, creates and submit Jar.
+   * @param routingContext
+   */
+  private void submitConfigHandler(RoutingContext routingContext) {
+
+    LOGGER.debug("Info: Processing config file");
+
+    HttpServerResponse response = routingContext.response();
+    Buffer buffBody = routingContext.getBody();
+    JsonObject jsonBody = routingContext.getBodyAsJson();
+    String fileName = jsonBody.getString(NAME);
+    String filePath = UPLOAD_DIR + "/" + fileName;
+    JsonObject request = new JsonObject();
+
+    FileSystem fileSystem = vertx.fileSystem();
+    fileSystem.writeFile(filePath, buffBody, fileHandler -> {
+      if (fileHandler.succeeded()) {
+        String path =
+            FileSystems.getDefault().getPath(filePath).normalize().toAbsolutePath().toString();
+
+        codegenInit.mvnInit(path, resHandler -> {
+          if (resHandler.succeeded()) {
+            request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
+
+            flinkClient.submitJar(request, responseHandler -> {
+              if (responseHandler.succeeded()) {
+                LOGGER.info("Info: Jar submitted successfully");
+                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                        .end(responseHandler.result().toString());
+              } else {
+                LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
+                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                        .setStatusCode(400)
+                        .end(responseHandler.cause().getMessage());
+              }
+            });
+          } else {
+            LOGGER.error("Error: Codegen failed; " + resHandler.cause().getMessage());
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(resHandler.cause().getMessage());
+          }
+        });
+      } else if (fileHandler.failed()) {
+        System.out.println(fileHandler.cause());
       }
     });
   }
