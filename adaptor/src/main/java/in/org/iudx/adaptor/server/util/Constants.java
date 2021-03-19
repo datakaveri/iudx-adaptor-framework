@@ -6,6 +6,11 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class Constants {
+  
+  /** Service Addresses */
+  public static final String FLINK_SERVICE_ADDRESS = "iudx.adaptor.framework.flink.service";
+  public static final String CODEGENINIT_SERVICE_ADDRESS = "iudx.adaptor.framework.codegenmvn.service";
+  
   public static final String IS_SSL = "ssl";
   public static final String PORT = "port";
   public static final String KEYSTORE_PATH = "keystorePath";

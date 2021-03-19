@@ -5,13 +5,13 @@ import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
-import in.org.iudx.adaptor.server.FlinkClient;
+import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class FlinkJobExecute implements Job {
-  FlinkClient flinkClient;
+  FlinkClientServiceImpl flinkClient;
   JsonObject request = new JsonObject();
 
   private static final Logger LOGGER = LogManager.getLogger(FlinkJobExecute.class);
@@ -26,7 +26,7 @@ public class FlinkJobExecute implements Job {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    FlinkClient flinkClient = (FlinkClient) schedulerContext.get("flinkClient");
+    FlinkClientServiceImpl flinkClient = (FlinkClientServiceImpl) schedulerContext.get("flinkClient");
     String requestBody = (String) schedulerContext.get("data");
     
     //final JobDataMap  jobDataMap = context.getJobDetail().getJobDataMap();

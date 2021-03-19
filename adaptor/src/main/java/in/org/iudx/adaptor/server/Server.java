@@ -15,7 +15,10 @@ import io.vertx.ext.web.handler.CorsHandler;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import in.org.iudx.adaptor.server.util.CodegenInit;
+import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
+import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
+import in.org.iudx.adaptor.server.flink.FlinkClientService;
+import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.Constants;
 import in.org.iudx.adaptor.server.util.Validator;
 import static in.org.iudx.adaptor.server.util.Constants.*;
@@ -32,7 +35,7 @@ import java.util.Set;
 public class Server extends AbstractVerticle {
 
   private HttpServer server;
-  private FlinkClient flinkClient;
+  private FlinkClientService flinkClient ;
 
   @SuppressWarnings("unused")
   private Router router;
@@ -44,7 +47,7 @@ public class Server extends AbstractVerticle {
   private JsonObject flinkOptions = new JsonObject();
   private Validator validator;
   private JobScheduler jobScheduler;
-  private CodegenInit codegenInit;
+  private CodegenInitService codegenInit;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -200,10 +203,10 @@ public class Server extends AbstractVerticle {
     server.requestHandler(router).listen(port);
 
     /* Initialize support services */
-    flinkClient = new FlinkClient(vertx, flinkOptions);
+    flinkClient = FlinkClientService.createProxy(vertx, FLINK_SERVICE_ADDRESS);
+    codegenInit = CodegenInitService.createProxy(vertx, CODEGENINIT_SERVICE_ADDRESS);
     validator = new Validator("./src/main/resources/jobSchema.json");
     jobScheduler = new JobScheduler(flinkClient, "../configs/quartz.properties");
-    codegenInit = new CodegenInit();
     LOGGER.debug("Server Initialized");
   }
 
