@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.server.util;
+package in.org.iudx.adaptor.server.codegeninit;
 
 import static in.org.iudx.adaptor.server.util.Constants.SUCCESS;
 import java.io.File;
@@ -17,11 +17,16 @@ import io.vertx.core.file.FileSystem;
 import io.vertx.core.json.JsonObject;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 
-public class CodegenInit {
+public class CodegenInitServiceImpl implements CodegenInitService {
 
-  FileSystem fileSystem = Vertx.vertx().fileSystem();
+  FileSystem fileSystem; /*= Vertx.vertx().fileSystem();*/
+  
+  public CodegenInitServiceImpl(Vertx vertx) {
+    fileSystem = vertx.fileSystem();
+  }
 
-  public CodegenInit mvnInit(String path, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public CodegenInitService mvnInit(String path, Handler<AsyncResult<JsonObject>> handler) {
 
     String fileName = new File(path).getName();
     InvocationRequest request = new DefaultInvocationRequest();

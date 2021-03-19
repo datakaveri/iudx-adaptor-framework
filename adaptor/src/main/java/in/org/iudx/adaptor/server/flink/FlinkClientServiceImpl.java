@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.server;
+package in.org.iudx.adaptor.server.flink;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,14 +18,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class FlinkClient {
+public class FlinkClientServiceImpl implements FlinkClientService{
 
-  private static final Logger LOGGER = LogManager.getLogger(FlinkClient.class);
+  private static final Logger LOGGER = LogManager.getLogger(FlinkClientServiceImpl.class);
   private WebClient client;
   private JsonObject flinkOptions;
   RespBuilder response = new RespBuilder();
 
-  public FlinkClient(Vertx vertx, JsonObject flinkOptions) {
+  public FlinkClientServiceImpl(Vertx vertx, JsonObject flinkOptions) {
     this.client = WebClient.create(vertx);
     this.flinkOptions = flinkOptions;
   }
@@ -37,7 +37,8 @@ public class FlinkClient {
    * @param handler
    * @return jsonObject response
    */
-  public FlinkClient submitJar(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService submitJar(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     Future<JsonObject> future = httpPostFormAsync(request);
     future.onComplete(handler);
@@ -51,7 +52,8 @@ public class FlinkClient {
    * @param handler
    * @return jsonObject response
    */
-  public FlinkClient handleJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService handleJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     Future<JsonObject> future = httpPostAsync(request, HttpMethod.POST);
     future.onComplete(resHandler -> {
@@ -109,7 +111,8 @@ public class FlinkClient {
    * @param handler
    * @return jsonObject response
    */
-  public FlinkClient getJarDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService getJarDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
     future.onComplete(resHandler -> {
@@ -144,7 +147,8 @@ public class FlinkClient {
    * @param handler
    * @return response
    */
-  public FlinkClient deleteItems(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService deleteItems(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     String jarId = request.getString(ID, "");
     JsonArray idDeleted = new JsonArray();
@@ -203,7 +207,8 @@ public class FlinkClient {
    * @param handler
    * @return response
    */
-  public FlinkClient getJobDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService getJobDetails(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);
     future.onComplete(resHandler -> {
@@ -237,7 +242,8 @@ public class FlinkClient {
    * @param handler
    * @return jsonObject response
    */
-  public FlinkClient getLogFiles(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  @Override
+  public FlinkClientService getLogFiles(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     JsonObject result = new JsonObject();
     Future<JsonObject> future = httpGetAsync(request, HttpMethod.GET);

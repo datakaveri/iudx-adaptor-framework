@@ -12,6 +12,8 @@ import org.quartz.impl.JobDetailImpl;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import in.org.iudx.adaptor.server.flink.FlinkClientService;
+import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.FlinkJobExecute;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -31,7 +33,7 @@ import java.util.List;
 public class JobScheduler {
 
   private Scheduler scheduler;
-  private FlinkClient flinkClient;
+  private FlinkClientService flinkClient;
   private static final Logger LOGGER = LogManager.getLogger(JobScheduler.class);
   
   /**
@@ -41,7 +43,7 @@ public class JobScheduler {
    * @param propertiesName
    * @throws SchedulerException
    */
-  public JobScheduler(FlinkClient flinkClient, String propertiesName) throws SchedulerException {
+  public JobScheduler(FlinkClientService flinkClient, String propertiesName) throws SchedulerException {
     
     this.flinkClient = flinkClient;
     SchedulerFactory factory = new StdSchedulerFactory(propertiesName);
