@@ -9,6 +9,10 @@
 			"ip": "127.0.0.1",
 			"keystorePath": "configs/keystore.jks",
 			"keystorePassword": "password",
+			"auth": {
+				"username": "user",
+				"password": "user-password"
+			},
 			"flinkOptions": {
 				"port": 8086,
 				"host": "127.0.0.1",
