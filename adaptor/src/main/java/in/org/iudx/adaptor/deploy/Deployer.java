@@ -68,6 +68,9 @@ public class Deployer {
     }
     JsonObject configuration = new JsonObject(config);
     Vertx vertx = Vertx.vertx(options);
+    
+    vertx.deployVerticle("in.org.iudx.adaptor.server.codegeninit.CodegenInitVerticle",
+        new DeploymentOptions().setWorker(true));
     recursiveDeploy(vertx, configuration, 0);
   }
 
