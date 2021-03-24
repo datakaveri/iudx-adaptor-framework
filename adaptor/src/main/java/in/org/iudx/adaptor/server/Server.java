@@ -47,6 +47,7 @@ public class Server extends AbstractVerticle {
   private JobScheduler jobScheduler;
   private CodegenInit codegenInit;
   private JsonObject authCred;
+  private String quartzPropertiesPath;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -61,6 +62,8 @@ public class Server extends AbstractVerticle {
     port = config().getInteger(PORT);
     flinkOptions = config().getJsonObject(FLINKOPTIONS);
     authCred = config().getJsonObject("auth");
+    quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
+
 
     HttpServerOptions serverOptions = new HttpServerOptions();
 
@@ -219,8 +222,8 @@ public class Server extends AbstractVerticle {
 
     /* Initialize support services */
     flinkClient = new FlinkClient(vertx, flinkOptions);
-    validator = new Validator("./src/main/resources/jobSchema.json");
-    jobScheduler = new JobScheduler(flinkClient, "../configs/quartz.properties");
+    validator = new Validator("/jobSchema.json");
+    jobScheduler = new JobScheduler(flinkClient, quartzPropertiesPath);
     codegenInit = new CodegenInit();
     LOGGER.debug("Server Initialized");
   }
