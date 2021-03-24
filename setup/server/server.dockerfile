@@ -2,22 +2,25 @@
 
 ARG VERSION="1"
 
-FROM maven:latest as dependencies
-
-WORKDIR /usr/share/app
-COPY pom.xml .
-RUN mvn clean package -Dmaven.test.skip=true
-
-
-FROM dependencies as builder
-
-WORKDIR /usr/share/app
-COPY ./src ./src
-RUN mvn clean package -Dmaven.test.skip=true
+FROM maven:latest as deps
+WORKDIR /usr/share/app/iudx-adaptor-framework
+RUN mkdir adaptor \
+    && mkdir template
+COPY ./pom.xml ./pom.xml
+COPY ./adaptor/pom.xml ./adaptor/pom.xml
+COPY ./template/pom.xml ./template/pom.xml
+RUN cd adaptor \
+    && mvn clean package 
 
 
+FROM deps as builder
+COPY ./adaptor ./adaptor/
+COPY ./template ./adaptor/template
+RUN cd adaptor \
+    && mvn clean package -Dmaven.test.skip=true
 
-FROM openjdk:14-slim-buster
+
+FROM builder
 ENV JAR="server.jar"
-WORKDIR /usr/share/app
-COPY --from=builder /usr/share/app/target/${JAR} ./${JAR}
+WORKDIR /usr/share/app/iudx-adaptor-framework/
+COPY --from=builder /usr/share/app/iudx-adaptor-framework/adaptor/target/${JAR} ./${JAR}

@@ -19,7 +19,7 @@ public class Validator {
    * @throws ProcessingException
    */
   public Validator(String schemaPath) throws IOException, ProcessingException {
-    final JsonNode schemaNode = JsonLoader.fromPath(schemaPath);
+    final JsonNode schemaNode = JsonLoader.fromResource(schemaPath);
     final JsonSchemaFactory factory = JsonSchemaFactory.byDefault();
     schema = factory.getJsonSchema(schemaNode);
   }
