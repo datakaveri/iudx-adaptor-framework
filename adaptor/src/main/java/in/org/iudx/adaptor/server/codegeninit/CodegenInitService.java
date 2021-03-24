@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.server.codegeninit;
 
+import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.ProxyGen;
@@ -20,8 +21,16 @@ public interface CodegenInitService {
    * @return
    */
   @Fluent
-  CodegenInitService mvnInit(String path, Handler<AsyncResult<JsonObject>> handler);
+  CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
+  /**
+   * Return codegen progess.
+   * @param handler
+   * @return
+   */
+  @Fluent
+  CodegenInitService getMvnStatus(Handler<AsyncResult<JsonObject>> handler);
+
   /**
    * 
    * @param vertx
@@ -29,7 +38,7 @@ public interface CodegenInitService {
    * @return
    */
   @GenIgnore
-  static CodegenInitService createProxy(Vertx vertx, String address) {
+  static CodegenInitService createProxy(Vertx vertx,  String address) {
     return new CodegenInitServiceVertxEBProxy(vertx, address);
   }
 }

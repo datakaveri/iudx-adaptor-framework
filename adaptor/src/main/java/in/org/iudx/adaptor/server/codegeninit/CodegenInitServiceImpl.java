@@ -1,57 +1,145 @@
 package in.org.iudx.adaptor.server.codegeninit;
 
-import static in.org.iudx.adaptor.server.util.Constants.SUCCESS;
+import static in.org.iudx.adaptor.server.util.Constants.*;
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.CopyOptions;
 import io.vertx.core.file.FileSystem;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import static in.org.iudx.adaptor.server.util.Constants.*;
 
 public class CodegenInitServiceImpl implements CodegenInitService {
 
-  FileSystem fileSystem; /*= Vertx.vertx().fileSystem();*/
-  
-  public CodegenInitServiceImpl(Vertx vertx) {
+  private static final Logger LOGGER = LogManager.getLogger(CodegenInitServiceImpl.class);
+  FileSystem fileSystem;
+  Vertx vertx;
+  FlinkClientService flinkClient;
+  JsonObject mvnProgress = new JsonObject();
+
+  public CodegenInitServiceImpl(Vertx vertx, FlinkClientService flinkClient) {
     fileSystem = vertx.fileSystem();
+    this.vertx = vertx;
+    this.flinkClient = flinkClient;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
-  public CodegenInitService mvnInit(String path, Handler<AsyncResult<JsonObject>> handler) {
+  public CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    
+    String path  = request.getString("path");
+    Future<JsonObject> future = mvnExecute(path);
+    future.onComplete(resHandler -> {
+      if (future.succeeded()) {
+        submitConfigJar(request, flinkClient).onComplete(flinkHandler -> {
+          if (flinkHandler.succeeded()) {
+            String id = flinkHandler.result().getString("filename");
+            mvnProgress.put(new File(path).getName(), new JsonObject().put(ID, id).put(STATUS, "completed"));
+          } else if (flinkHandler.failed()) {
+            mvnProgress.put(new File(path).getName(), new JsonObject().put(ID, null).put(STATUS, "failed"));
+          }
+        });
+      }
+
+    });
+    return this;
+  }
+
+  /**
+   * Polling codegen progess.
+   * @param handler
+   * @return
+   */
+  @Override
+  public CodegenInitService getMvnStatus(Handler<AsyncResult<JsonObject>> handler) {
+
+    JsonObject temp = new JsonObject();
+    
+    if(mvnProgress.isEmpty()) {
+      temp.put(STATUS, SUCCESS).put(RESULTS, new JsonArray());
+    } else {
+      temp.put(STATUS, SUCCESS).put(RESULTS, new JsonArray().add(mvnProgress));
+    }
+    handler.handle(Future.succeededFuture(temp));
+    return this;
+  }
+  
+  /**
+   * 
+   * @param path
+   * @return
+   */
+  private Future<JsonObject> mvnExecute(String path) {
+    Promise<JsonObject> promise = Promise.promise();
 
     String fileName = new File(path).getName();
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(new File("../pom.xml"));
     request.setGoals(Arrays.asList("-DADAPTOR_CONFIG_PATH=" + path, "clean", "package",
         "-Dmaven.test.skip=true"));
+    
+    mvnProgress.put(fileName, new JsonObject().put(ID, null).put(STATUS, "progress"));
 
     Invoker invoker = new DefaultInvoker();
 
-    try {
-      invoker.execute(request);
-      CopyOptions options = new CopyOptions().setReplaceExisting(true);
-      fileSystem.move("../template/target/adaptor.jar", "../upload-jar/" + fileName, options,
-          mvHandler -> {
-            if (mvHandler.succeeded()) {
-              handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
-            } else if (mvHandler.failed()) {
-              handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-            }
-          });
+    vertx.executeBlocking(blockingCodeHandler -> {
+      try {
+        invoker.execute(request);
+        CopyOptions options = new CopyOptions().setReplaceExisting(true);
+        fileSystem.move("../template/target/adaptor.jar", "../upload-jar/" + fileName, options,
+            mvHandler -> {
+              if (mvHandler.succeeded()) {
+                blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
+              } else if (mvHandler.failed()) {
+                blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
+              }
+             // blockingCodeHandler.future();
+            });
 
-    } catch (MavenInvocationException e) {
-      e.printStackTrace();
-      handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-    }
-    return this;
+      } catch (MavenInvocationException e) {
+        e.printStackTrace();
+        blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
+      }
+      //blockingCodeHandler.future();
+    }, resultHandler -> {
+      if (resultHandler.succeeded()) {
+        promise.complete((JsonObject)resultHandler.result());
+      } else if (resultHandler.failed()) {
+        promise.fail(resultHandler.cause());
+      }
+    });
+    return promise.future();
+  }
+
+
+  private Future<JsonObject> submitConfigJar(JsonObject request, FlinkClientService flinkClient) {
+    Promise<JsonObject> promise = Promise.promise();
+
+    flinkClient.submitJar(request, responseHandler -> {
+      if (responseHandler.succeeded()) {
+        LOGGER.info("Info: Jar submitted successfully");
+        promise.complete(responseHandler.result());
+      } else {
+        LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
+        promise.fail(responseHandler.cause());
+      }
+    });
+    return promise.future();
   }
 }
