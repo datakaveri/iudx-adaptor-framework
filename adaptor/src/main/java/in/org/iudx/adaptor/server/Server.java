@@ -194,10 +194,16 @@ public class Server extends AbstractVerticle {
     router.post(CONFIG_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
-          .handler(routingContext -> {
+          .blockingHandler(routingContext -> {
             submitConfigHandler(routingContext);
           });
-
+    
+    /*Polling config codegen*/
+    router.get(CONFIG_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .blockingHandler(routingContext -> {
+            statusConfigHandler(routingContext);
+          });
 
     /* Start server */
     server.requestHandler(router).listen(port);
@@ -560,31 +566,43 @@ public class Server extends AbstractVerticle {
         String path =
             FileSystems.getDefault().getPath(filePath).normalize().toAbsolutePath().toString();
 
-        codegenInit.mvnInit(path, resHandler -> {
-          if (resHandler.succeeded()) {
-            request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
 
-            flinkClient.submitJar(request, responseHandler -> {
-              if (responseHandler.succeeded()) {
-                LOGGER.info("Info: Jar submitted successfully");
-                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                        .end(responseHandler.result().toString());
-              } else {
-                LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
-                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                        .setStatusCode(400)
-                        .end(responseHandler.cause().getMessage());
-              }
-            });
-          } else {
-            LOGGER.error("Error: Codegen failed; " + resHandler.cause().getMessage());
-            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                    .setStatusCode(400)
-                    .end(resHandler.cause().getMessage());
-          }
+        request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
+        codegenInit.mvnInit(request, handler -> {
         });
+        response.setStatusCode(202).end();
+
+        /*
+         * codegenInit.mvnInit(request, resHandler -> { if (resHandler.succeeded()) {
+         * request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
+         * 
+         * flinkClient.submitJar(request, responseHandler -> { if (responseHandler.succeeded()) {
+         * LOGGER.info("Info: Jar submitted successfully"); response.putHeader(HEADER_CONTENT_TYPE,
+         * MIME_APPLICATION_JSON) .end(responseHandler.result().toString()); } else {
+         * LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
+         * response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON) .setStatusCode(400)
+         * .end(responseHandler.cause().getMessage()); } }); } else {
+         * LOGGER.error("Error: Codegen failed; " + resHandler.cause().getMessage());
+         * response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON) .setStatusCode(400)
+         * .end(resHandler.cause().getMessage()); } });
+         */
       } else if (fileHandler.failed()) {
         System.out.println(fileHandler.cause());
+      }
+    });
+  }
+  
+  
+  private void statusConfigHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Getting status of codegen");
+
+    HttpServerResponse response = routingContext.response();
+    
+    codegenInit.getMvnStatus(handler->{
+      if(handler.succeeded()) {
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(200)
+                .end(handler.result().toString());
       }
     });
   }
