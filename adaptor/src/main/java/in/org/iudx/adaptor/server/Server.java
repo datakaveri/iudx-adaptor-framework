@@ -19,6 +19,7 @@ import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
+import in.org.iudx.adaptor.server.util.AuthHandler;
 import in.org.iudx.adaptor.server.util.Constants;
 import in.org.iudx.adaptor.server.util.Validator;
 import static in.org.iudx.adaptor.server.util.Constants.*;
@@ -48,6 +49,8 @@ public class Server extends AbstractVerticle {
   private Validator validator;
   private JobScheduler jobScheduler;
   private CodegenInitService codegenInit;
+  private JsonObject authCred;
+  private String quartzPropertiesPath;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -61,6 +64,9 @@ public class Server extends AbstractVerticle {
     isSsl = config().getBoolean(IS_SSL);
     port = config().getInteger(PORT);
     flinkOptions = config().getJsonObject(FLINKOPTIONS);
+    authCred = config().getJsonObject("auth");
+    quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
+
 
     HttpServerOptions serverOptions = new HttpServerOptions();
 
@@ -92,6 +98,7 @@ public class Server extends AbstractVerticle {
     /* Sumbit Jar Route */
     router.post(JAR_ROUTE)
           .consumes(Constants.MULTIPART_FORM_DATA)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             submitJarHandler(routingContext);
     });
@@ -99,6 +106,7 @@ public class Server extends AbstractVerticle {
     /* Get all the Jar */
     router.get(JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getJarsHandler(routingContext);
     });
@@ -106,6 +114,7 @@ public class Server extends AbstractVerticle {
     /* Get a Single Jar plan */
     router.get(GET_JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getJarsHandler(routingContext);
     });
@@ -113,6 +122,7 @@ public class Server extends AbstractVerticle {
     /* Delete all the submitted Jar */
     router.delete(JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             deleteJarsHandler(routingContext);
     });
@@ -120,6 +130,7 @@ public class Server extends AbstractVerticle {
     /* Delete a single jar */
     router.delete(GET_JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             deleteJarsHandler(routingContext);
     });
@@ -128,6 +139,7 @@ public class Server extends AbstractVerticle {
     router.post(JOB_RUN_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             runJobHandler(routingContext);
         });
@@ -135,6 +147,7 @@ public class Server extends AbstractVerticle {
     /* Get the all running/completed jobs */
     router.get(JOBS_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getJobsHandler(routingContext);
         });
@@ -142,6 +155,7 @@ public class Server extends AbstractVerticle {
     /* Get the details of single job */
     router.get(JOB_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getJobsHandler(routingContext);
     });
@@ -149,6 +163,7 @@ public class Server extends AbstractVerticle {
     /* Get the all logs file */
     router.get(LOGS_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getLogsHandler(routingContext);
         });
@@ -156,6 +171,7 @@ public class Server extends AbstractVerticle {
     /* Get the single log file*/
     router.get(LOG_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getLogsHandler(routingContext);
     });
@@ -164,6 +180,7 @@ public class Server extends AbstractVerticle {
     router.get(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
           //.consumes(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             getAllScheduledJobs(routingContext);
           });
@@ -172,13 +189,15 @@ public class Server extends AbstractVerticle {
     router.post(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
            //.consumes(MIME_APPLICATION_JSON)
-           .handler(routingContext -> {
-             scheduledJobs(routingContext);
+          .handler(AuthHandler.create(authCred))
+          .handler(routingContext -> {
+            scheduledJobs(routingContext);
            });
     
     /*Delete all the scheduled jobs*/
     router.delete(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             deleteScheduledJobs(routingContext);
           });
@@ -186,6 +205,7 @@ public class Server extends AbstractVerticle {
     /*Delete specific scheduled job*/
     router.delete(DELETE_SCHEDULER_JOB)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(authCred))
           .handler(routingContext -> {
             deleteScheduledJobs(routingContext);
           });
@@ -194,7 +214,8 @@ public class Server extends AbstractVerticle {
     router.post(CONFIG_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
-          .blockingHandler(routingContext -> {
+          .handler(AuthHandler.create(authCred))
+          .handler(routingContext -> {
             submitConfigHandler(routingContext);
           });
     
@@ -211,8 +232,8 @@ public class Server extends AbstractVerticle {
     /* Initialize support services */
     flinkClient = FlinkClientService.createProxy(vertx, FLINK_SERVICE_ADDRESS);
     codegenInit = CodegenInitService.createProxy(vertx, CODEGENINIT_SERVICE_ADDRESS);
-    validator = new Validator("./src/main/resources/jobSchema.json");
-    jobScheduler = new JobScheduler(flinkClient, "../configs/quartz.properties");
+    validator = new Validator("/jobSchema.json");
+    jobScheduler = new JobScheduler(flinkClient, quartzPropertiesPath);
     LOGGER.debug("Server Initialized");
   }
 
@@ -571,21 +592,6 @@ public class Server extends AbstractVerticle {
         codegenInit.mvnInit(request, handler -> {
         });
         response.setStatusCode(202).end();
-
-        /*
-         * codegenInit.mvnInit(request, resHandler -> { if (resHandler.succeeded()) {
-         * request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
-         * 
-         * flinkClient.submitJar(request, responseHandler -> { if (responseHandler.succeeded()) {
-         * LOGGER.info("Info: Jar submitted successfully"); response.putHeader(HEADER_CONTENT_TYPE,
-         * MIME_APPLICATION_JSON) .end(responseHandler.result().toString()); } else {
-         * LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
-         * response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON) .setStatusCode(400)
-         * .end(responseHandler.cause().getMessage()); } }); } else {
-         * LOGGER.error("Error: Codegen failed; " + resHandler.cause().getMessage());
-         * response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON) .setStatusCode(400)
-         * .end(resHandler.cause().getMessage()); } });
-         */
       } else if (fileHandler.failed()) {
         System.out.println(fileHandler.cause());
       }

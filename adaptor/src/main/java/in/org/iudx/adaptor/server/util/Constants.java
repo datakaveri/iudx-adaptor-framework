@@ -87,6 +87,7 @@ public class Constants {
 
   /** Others */
   public static final String FLINKOPTIONS = "flinkOptions";
+  public static final String QUARTZ_PROPERTIES_PATH = "quartzPropertiesPath";
   public static final String NAME = "name";
   public static final String PATH = "path";
   public static final String URI = "uri";
