@@ -15,6 +15,8 @@ public class Constants {
   public static final String PORT = "port";
   public static final String KEYSTORE_PATH = "keystorePath";
   public static final String KEYSTORE_PASSWORD = "keystorePassword";
+  public static final String TEMPLATE_PATH = "templatePath";
+  public static final String JAR_OUT_PATH = "jarOutPath";
 
 
   /** Accept Headers and CORS */
@@ -42,7 +44,6 @@ public class Constants {
 
   /** Routes */
   public static final String JARS = "/jars";
-  public static String UPLOAD_DIR = "../upload-jar";
   private static String basePath = "/iudx/adaptor/v1";
   public static final String JAR_ROUTE = basePath + "/jar";
   public static final String GET_JAR_ROUTE = basePath + "/jar/:id";

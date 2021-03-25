@@ -13,7 +13,9 @@ services:
       - adaptor-net
     volumes:
       - ../../configs/:/usr/share/app/iudx-adaptor-framework/configs/
-    command: "java -jar server.jar -c configs/config.json"
+    environment:
+      - M2_HOME=/usr/share/maven/
+    command: "java -jar server.jar -c configs/config.json -Dmaven.home=/root/.m2"
     logging:
          driver: "json-file"
          options:

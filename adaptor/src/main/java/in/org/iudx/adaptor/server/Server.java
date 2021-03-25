@@ -51,6 +51,7 @@ public class Server extends AbstractVerticle {
   private CodegenInitService codegenInit;
   private JsonObject authCred;
   private String quartzPropertiesPath;
+  private String jarOutPath;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -66,6 +67,7 @@ public class Server extends AbstractVerticle {
     flinkOptions = config().getJsonObject(FLINKOPTIONS);
     authCred = config().getJsonObject("auth");
     quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
+    jarOutPath = config().getString(JAR_OUT_PATH);
 
 
     HttpServerOptions serverOptions = new HttpServerOptions();
@@ -88,7 +90,7 @@ public class Server extends AbstractVerticle {
     /* Route for enabling file upload with dir */
     router.route().handler(
         BodyHandler.create()
-                   .setUploadsDirectory(UPLOAD_DIR)
+                   .setUploadsDirectory(JAR_OUT_PATH)
                    .setDeleteUploadedFilesOnEnd(true));
     
     router.route().handler(
@@ -578,7 +580,7 @@ public class Server extends AbstractVerticle {
     Buffer buffBody = routingContext.getBody();
     JsonObject jsonBody = routingContext.getBodyAsJson();
     String fileName = jsonBody.getString(NAME);
-    String filePath = UPLOAD_DIR + "/" + fileName;
+    String filePath = jarOutPath + "/" + fileName;
     JsonObject request = new JsonObject();
 
     FileSystem fileSystem = vertx.fileSystem();

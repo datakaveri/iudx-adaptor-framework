@@ -31,10 +31,16 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   FlinkClientService flinkClient;
   JsonObject mvnProgress = new JsonObject();
 
-  public CodegenInitServiceImpl(Vertx vertx, FlinkClientService flinkClient) {
+  private String templatePath;
+  private String jarOutPath;
+
+  public CodegenInitServiceImpl(Vertx vertx, FlinkClientService flinkClient, 
+                                  String templatePath, String jarOutPath) {
     fileSystem = vertx.fileSystem();
     this.vertx = vertx;
     this.flinkClient = flinkClient;
+    this.templatePath = templatePath;
+    this.jarOutPath = jarOutPath;
   }
 
   /**
@@ -90,9 +96,13 @@ public class CodegenInitServiceImpl implements CodegenInitService {
 
     String fileName = new File(path).getName();
     InvocationRequest request = new DefaultInvocationRequest();
-    request.setPomFile(new File("../pom.xml"));
-    request.setGoals(Arrays.asList("-DADAPTOR_CONFIG_PATH=" + path, "clean", "package",
-        "-Dmaven.test.skip=true"));
+    request.setBaseDirectory(new File(templatePath));
+    // request.setPomFile(new File(templatePath + "/pom.xml"));
+    LOGGER.debug("Path is ");
+    LOGGER.debug(path);
+    request.setGoals(Arrays.asList("-DADAPTOR_CONFIG_PATH=" + path,
+                                    "clean", "package",
+                                    "-Dmaven.test.skip=true"));
     
     mvnProgress.put(fileName, new JsonObject().put(ID, null).put(STATUS, "progress"));
 
@@ -102,7 +112,8 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       try {
         invoker.execute(request);
         CopyOptions options = new CopyOptions().setReplaceExisting(true);
-        fileSystem.move("../template/target/adaptor.jar", "../upload-jar/" + fileName, options,
+        fileSystem.move(templatePath + "/target/adaptor.jar",
+                         jarOutPath + "/" + fileName, options,
             mvHandler -> {
               if (mvHandler.succeeded()) {
                 blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
@@ -113,7 +124,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
             });
 
       } catch (MavenInvocationException e) {
-        e.printStackTrace();
+        LOGGER.error(e);
         blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
       }
       //blockingCodeHandler.future();

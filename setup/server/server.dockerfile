@@ -15,7 +15,7 @@ RUN cd adaptor \
 
 FROM deps as builder
 COPY ./adaptor ./adaptor/
-COPY ./template ./adaptor/template
+COPY ./template ./template
 RUN cd adaptor \
     && mvn clean package -Dmaven.test.skip=true
 
@@ -23,4 +23,6 @@ RUN cd adaptor \
 FROM builder
 ENV JAR="server.jar"
 WORKDIR /usr/share/app/iudx-adaptor-framework/
+RUN mkdir upload-jar \
+    && mvn clean install -Dmaven.test.skip=true
 COPY --from=builder /usr/share/app/iudx-adaptor-framework/adaptor/target/${JAR} ./${JAR}
