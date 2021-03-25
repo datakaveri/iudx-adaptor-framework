@@ -32,7 +32,7 @@
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
 		<log4j.version>2.12.1</log4j.version>
-		<exec.mainClass>in.org.iudx.adaptor.Adaptor</exec.mainClass>
+		<exec.mainClass>in.org.iudx.adaptor.deploy.Deployer</exec.mainClass>
 		<vertx.version>4.0.0</vertx.version>
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
@@ -432,7 +432,7 @@
 									<argument>-jar</argument>
 									<argument>{project.build.directory}/${project.artifactId}-dev-${project.version}-fat.jar</argument>
 									<argument>-c</argument>
-									<argument>../configs/config-test.json</argument>
+                                    <argument>../configs/config-test.json</argument>
 								</arguments>
 							</configuration>
 						</execution>
