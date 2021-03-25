@@ -12,10 +12,8 @@ services:
     networks: 
       - adaptor-net
     volumes:
-      - ../../configs/config.json:/usr/share/app/configs/config.json
-      - ../../configs/keystore.jks:/usr/share/app/configs/keystore.jks
-        # command: "java -jar ./server.jar -c configs/config.json"
-    command: "tail -f /dev/null"
+      - ../../configs/:/usr/share/app/iudx-adaptor-framework/configs/
+    command: "java -jar server.jar -c configs/config.json"
     logging:
          driver: "json-file"
          options:

@@ -1,1 +1,4 @@
-FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager"
+# FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager"
+
+FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager
+taskmanager.numberOfTaskSlots: 3"
