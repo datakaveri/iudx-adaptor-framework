@@ -7,5 +7,5 @@ docker network create adaptor-net
 docker-compose -f ./setup/rmq/docker-compose.yml up -d
 docker-compose -f ./setup/postgres/docker-compose.yml up -d
 docker-compose -f ./setup/mockserver/docker-compose.yml up -d
-# docker-compose -f ./setup/server/docker-compose.yml up -d
+docker-compose -f ./setup/server/docker-compose.yml up -d
 docker-compose -f ./setup/flink/docker-compose.yml up -d

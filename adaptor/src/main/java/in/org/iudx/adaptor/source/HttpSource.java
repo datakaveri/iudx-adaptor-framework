@@ -80,7 +80,11 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
      **/
     while (running) {
 
-      PO msg = parser.parse(httpEntity.getSerializedMessage());
+      String smsg = httpEntity.getSerializedMessage();
+      if (smsg.isEmpty()) {
+        continue;
+      }
+      PO msg = parser.parse(smsg);
 
 
       /* Message array */
