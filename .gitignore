@@ -8,6 +8,7 @@ temp/
 upload-jar
 upload-jar/*
 *.html
+./README.html
 
 
 

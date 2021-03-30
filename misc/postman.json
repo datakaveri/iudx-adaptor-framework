@@ -1,0 +1,445 @@
+{
+	"info": {
+		"_postman_id": "ef6ed133-3b4e-45e5-afd6-a434457ebeae",
+		"name": "iudx-adaptor-framework",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Jar",
+			"item": [
+				{
+					"name": "Submit a Jar",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "user",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "user-password",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "test",
+									"type": "file",
+									"src": "/home/rraks/Work/gitrepos/iudx-adaptor-framework/template/target/adaptor.jar"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/jar",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"jar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all the Submitted Jars",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/jar",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"jar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get the Single submitted Jar",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/jar/5a519b6c-be16-4264-bc93-ed1669e5aa4c_original-my-flink-project-0.1.jar",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"jar",
+								"5a519b6c-be16-4264-bc93-ed1669e5aa4c_original-my-flink-project-0.1.jar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a Single Jar",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/jar/becfbc0a-40a2-4666-99b5-17cf3d5120e0_original-my-flink-project-0.1.jar",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"jar",
+								"becfbc0a-40a2-4666-99b5-17cf3d5120e0_original-my-flink-project-0.1.jar"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete All Submitted Jar",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/jar/",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"jar",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "job",
+			"item": [
+				{
+					"name": "Run a Job",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"programArgsList\": [\r\n        \"--port\",\r\n        \"9000\",\r\n        \"--ip\",\r\n        \"localhost\"\r\n    ],\r\n    \"parallelism\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar?mode=start",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "start"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All the Jobs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get a Specific Job Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/909069ad460ace339c1f28c661beb6fe",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"909069ad460ace339c1f28c661beb6fe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Stop a Job with Savepoint",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"cancel-job\": true,\r\n    \"target-directory\": \"/tmp/savepoints/\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/c78599d4c3c3359faf11b2afed201162?mode=stop",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"c78599d4c3c3359faf11b2afed201162"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "stop"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Restart a Job with existing savepoint",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"programArgsList\": [\r\n        \"--port\",\r\n        \"9000\",\r\n        \"--ip\",\r\n        \"localhost\"\r\n    ],\r\n    \"parallelism\": 1,\r\n    \"savepointPath\" :\"/tmp/savepoints/savepoint-c78599-9d7f7fa6a057\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/job/299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar?mode=start",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"job",
+								"299a6181-c9f3-49dd-b1fa-c7e768913b4c_my-flink-project-0.1.jar"
+							],
+							"query": [
+								{
+									"key": "mode",
+									"value": "start"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "log",
+			"item": [
+				{
+					"name": "Get All Log FIle and taskManagers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/log/",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"log",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get the Log of specific file",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/log/af10e5ca28eb12196017644f98e8858d/flink-root-standalonesession-1-elk-db-test.out",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"log",
+								"af10e5ca28eb12196017644f98e8858d",
+								"flink-root-standalonesession-1-elk-db-test.out"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "quartz-scheduler",
+			"item": [
+				{
+					"name": "Scheduler a Job",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": \"436d2515-a75d-4029-a5ea-688ec6010483_FlinkTestApp-0.0.1-SNAPSHOT.jar\", //JarId, Jar should already be submitted (name will be considered as JobKey).\r\n    \"schedulePattern\": \"0 * * * * ?\", //Cron format i.e. https://crontab.guru/\r\n    //\"schedulePattern\": \"*/10 8 * * * ?\",\r\n    \"flinkJobArgs\": {\r\n        \"entryClass\": \"com.flink.test.sideoutput.ProcessorSideOutput\",\r\n        \"parallelism\": 1\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}{{base}}/schedule/",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}{{base}}",
+							"path": [
+								"schedule",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all Submitted Quartz job",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "127.0.0.1:8085/iudx/adaptor/v1/schedule",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8085",
+							"path": [
+								"iudx",
+								"adaptor",
+								"v1",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete all the submitted job",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "127.0.0.1:8085/iudx/adaptor/v1/schedule",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8085",
+							"path": [
+								"iudx",
+								"adaptor",
+								"v1",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete a quartz job",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "127.0.0.1:8085/iudx/adaptor/v1/schedule/436d2515-a75d-4029-a5ea-688ec6010483_FlinkTestApp-0.0.1-SNAPSHOT.jar",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8085",
+							"path": [
+								"iudx",
+								"adaptor",
+								"v1",
+								"schedule",
+								"436d2515-a75d-4029-a5ea-688ec6010483_FlinkTestApp-0.0.1-SNAPSHOT.jar"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "configs",
+			"item": [
+				{
+					"name": "submit",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

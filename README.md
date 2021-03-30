@@ -81,6 +81,8 @@ The following is the spec outline to be followed in making a configuration file.
 
 
 ### Input spec
+Define the input downstream datasource with the polling interval.
+The framework will periodically poll the api and obtain data from the downstream server.
 
 ``` 
 
@@ -98,7 +100,13 @@ The following is the spec outline to be followed in making a configuration file.
 
 
 ### Parse Spec for json
-Currently only for json
+Define how the downstream serialized data needs to be parsed.
+Currently only support for json is provided.
+An api may yield an array of data packets whose json path will have to be provided
+in `containerPath` and messageContainer will have to be `array`.
+All paths mentioned here are [JSON Path](https://github.com/json-path/JsonPath) paths.
+Every packet needs a primary key whose path is defined by `keyPath`.
+Every packet needs a primary timestamp whose path is defined by `timestampPath`.
 ``` 
 {
     "type": "<json|xml>",
@@ -116,6 +124,8 @@ Currently only for json
 
 
 ### Deduplication spec
+Define the mechanism by which a duplicate data packet can be identified and rejected.
+Currently only time based deduplication is supported.
 ``` 
 {
     "type": "<timeBased | extraKeyBased >"
@@ -124,7 +134,10 @@ Currently only for json
 
 
 ### Transform spec
-Currently only for json
+Define how to transform the data into the sink compatible format.
+Currently only `jolt` based transformation is supported.
+The jolt specification format can be understood from 
+[Jolt](https://github.com/bazaarvoice/jolt).
 ``` 
 {
     "type": "<jolt | jsonPath>",
@@ -135,7 +148,10 @@ Currently only for json
 
 
 ### Publish spec
-Currently on for RMQ
+Define where the transformed data should be published to.
+Currently only rabbitmq sink is supported.
+`sinkName` specifies the "exchange" to which data needs to be published into
+and `tagName` specifies the "routing-key".
 ``` 
 {
     "type": "<rmq>"
@@ -148,8 +164,52 @@ Currently on for RMQ
 }
 ```
 
-Once the pipeline is specified according to the above, it maybe submitted 
-to the adaptor server (which maybe locally brought up as shown in [Getting started](Getting started).
+### Example
+An example of the complete spec is below 
+```
+{
+    "name": "test",
+
+    "inputSpec": {
+        "type": "http",
+        "url": "http://mockserver:8080/simpleB",
+        "requestType": "GET",
+        "pollingInterval": 1000
+    },
+
+    "parseSpec": {
+        "type": "json",
+        "messageContainer": "array",
+        "containerPath": "$.data",
+        "keyPath": "$.deviceId",
+        "timestampPath": "$.time"
+    },
+    
+    "deduplicationSpec": {
+        "type": "timeBased"
+    },
+    
+    "transformSpec": {
+        "type": "jolt",
+        "joltSpec": [
+            { "operation": "shift", "spec": 
+                { "time": "observationDateTime", "deviceId": "id", "k1": "k1" } },
+            { "operation": "modify-overwrite-beta", "spec": 
+                { "id": "=concat('datakaveri.org/123/', id)" } }
+        ]
+    },
+
+    "publishSpec": {
+        "type": "rmq",
+        "url": "amqp://mockrmq",
+        "port": 5672,
+        "uname": "guest",
+        "password": "guest",
+        "sinkName": "adaptor-test",
+        "tagName": "test"
+    }
+}
+```
 
 
 ## Starting a local development/deployment environment
@@ -160,9 +220,14 @@ to the adaptor server (which maybe locally brought up as shown in [Getting start
    Modify `./configs/quartz.properties` and make the quartz config.
 3. Modify `./setup/*/docker-compose` to take up the correct config files.
 4. Bring up the local environment 
-   `./setup/start_local_dev_env.sh`
-5. Use the apis to submit a config
-   
+   `./setup/start_local_dev_env.sh` 
+   This brings up flink, rabbitmq, the apiserver and a mockserver.
+5. Use the apis to submit the above example config
+
+
+## Sample Postman collection
+After bringing the local dev env, you may use the provided [postman collection](./misc/)
+to test the framework.
 
 
 ## Future Works
