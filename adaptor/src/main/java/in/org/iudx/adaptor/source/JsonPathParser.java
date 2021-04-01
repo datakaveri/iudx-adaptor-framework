@@ -11,6 +11,10 @@ import org.apache.logging.log4j.Logger;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /* 
  * Parse input json data based on json path specifier
@@ -23,6 +27,13 @@ public class JsonPathParser<T> implements Parser<T> {
   private String keyPath;
   private String containerPath;
 
+  private String inputTimeFormat;
+  private String outputTimeFormat;
+
+  private DateFormat fromFormat;
+  private DateFormat toFormat;
+
+
   private static final Logger LOGGER = LogManager.getLogger(JsonPathParser.class);
 
   public JsonPathParser(String parseSpecString) {
@@ -32,9 +43,21 @@ public class JsonPathParser<T> implements Parser<T> {
     try {
       this.timestampPath = parseSpec.getString("timestampPath");
       this.keyPath = parseSpec.getString("keyPath");
-      this.containerPath = parseSpec.getString("containerPath");
+
+      this.containerPath = parseSpec.optString("containerPath");
+      this.inputTimeFormat = parseSpec.optString("inputTimeFormat");
+      this.outputTimeFormat = parseSpec.optString("outputTimeFormat");
+
     } catch (Exception e) {
-      // TODO: Handle this
+      // TODO: Exit
+    }
+
+    if (!inputTimeFormat.isEmpty() && !outputTimeFormat.isEmpty()) {
+     fromFormat = new SimpleDateFormat(inputTimeFormat); 
+     toFormat = new SimpleDateFormat(outputTimeFormat); 
+     fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+     toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+      
     }
   }
 
@@ -44,9 +67,17 @@ public class JsonPathParser<T> implements Parser<T> {
     ReadContext ctx = JsonPath.parse(message);
 
     /* Parse into Message */
-    if (containerPath != null && containerPath.isEmpty()) {
+    if (containerPath.isEmpty()) {
       Message msg = new Message();
-      msg.setEventTimestamp(Instant.parse(ctx.read(timestampPath)));
+      try {
+        Date date = fromFormat.parse(ctx.read(timestampPath));
+        String parsedDate = toFormat.format(date);
+        msg.setEventTimeAsString(parsedDate);
+        msg.setEventTimestamp(date.toInstant());
+        message = JsonPath.parse(message).set(timestampPath, parsedDate).jsonString();
+      } catch (Exception e) {
+        // TODO: Handle this
+      }
       msg.setKey(ctx.read(keyPath));
       msg.setResponseBody(message);
       return (T) msg;
@@ -58,11 +89,19 @@ public class JsonPathParser<T> implements Parser<T> {
         // TODO: Improve
         Message tmpmsg = new Message();
         ReadContext tmpctx = JsonPath.parse(container.get(i));
+        String msgBody = tmpctx.jsonString();
         String key = tmpctx.read(keyPath);
-        String timeString = tmpctx.read(timestampPath);
-        tmpmsg.setEventTimestamp(Instant.parse(timeString));
+        try {
+          Date date = fromFormat.parse(tmpctx.read(timestampPath));
+          String parsedDate = toFormat.format(date);
+          tmpmsg.setEventTimeAsString(parsedDate);
+          tmpmsg.setEventTimestamp(date.toInstant());
+          msgBody = JsonPath.parse(msgBody).set(timestampPath, parsedDate).jsonString();
+        } catch (Exception e) {
+          // TODO: Handle this
+        }
         tmpmsg.setKey(key);
-        tmpmsg.setResponseBody(tmpctx.jsonString());
+        tmpmsg.setResponseBody(msgBody);
         msgArray.add(tmpmsg);
       }
       return (T) msgArray;

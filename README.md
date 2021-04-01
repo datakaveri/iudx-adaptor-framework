@@ -117,8 +117,9 @@ Every packet needs a primary timestamp whose path is defined by `timestampPath`.
                       Subsequent to this all paths will apply to individual objects
                       of the container."
     "timestampPath": "json path to time",
-    "keyPath": "json path to key (deviceId/id etc)",
-    
+    "inputTimeFormat": "yyyy-MM-dd HH:mm:ss",
+    "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX",
+    "keyPath": "json path to key (deviceId/id etc)"
 }
 ```
 
@@ -182,7 +183,9 @@ An example of the complete spec is below
         "messageContainer": "array",
         "containerPath": "$.data",
         "keyPath": "$.deviceId",
-        "timestampPath": "$.time"
+        "timestampPath": "$.time",
+        "inputTimeFormat": "yyyy-MM-dd HH:mm:ss",
+        "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX"
     },
     
     "deduplicationSpec": {
