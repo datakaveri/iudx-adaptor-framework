@@ -15,6 +15,9 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Deduplicator;
 
+/* Primarily used for stateless transformation and deduplication
+ * Avoid transforming here if you use a library with heavy initialization*/
+
 public class GenericProcessFunction 
   extends KeyedProcessFunction<String,Message,Message> {
 
@@ -33,8 +36,13 @@ public class GenericProcessFunction
   private static final long serialVersionUID = 43L;
 
   public GenericProcessFunction(Transformer transformer,
-                                Deduplicator deduplicator) {
+      Deduplicator deduplicator) {
     this.transformer = transformer;
+    this.deduplicator = deduplicator;
+  }
+
+  public GenericProcessFunction(Deduplicator deduplicator) {
+    this.transformer = null;
     this.deduplicator = deduplicator;
   }
 
@@ -47,27 +55,30 @@ public class GenericProcessFunction
 
   @Override
   public void processElement(Message msg,
-                              Context context, Collector<Message> out) throws Exception {
+      Context context, Collector<Message> out) throws Exception {
     Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {
       streamState.update(msg);
     } else {
-      /* Tranformer logic in transform function applied here */
-      /* Add deduplication logic here */
-      if(deduplicator.isDuplicate(previousMessage, msg) == false) {
-        try {
-          Message transformedMessage = transformer.transform(msg);
-          out.collect(transformedMessage);
-        } catch (Exception e) {
-          /* TODO */
-          String tmpl = 
-          "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\"" + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
-          context.output(errorStream, tmpl) ;
-        }
-        streamState.update(msg);
+      if(deduplicator.isDuplicate(previousMessage, msg) == true) {
+        return;
       }
     }
+    try {
+      if (transformer == null) {
+        out.collect(msg);
+      } else {
+        Message transformedMessage = transformer.transform(msg);
+        out.collect(transformedMessage);
+      }
+    } catch (Exception e) {
+      /* TODO */
+      String tmpl = 
+        "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\"" 
+        + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
+      context.output(errorStream, tmpl) ;
+    }
+    streamState.update(msg);
   }
-
 }

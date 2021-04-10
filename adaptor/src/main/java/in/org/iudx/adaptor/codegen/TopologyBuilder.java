@@ -21,11 +21,13 @@ import in.org.iudx.adaptor.source.HttpSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import in.org.iudx.adaptor.source.JsonPathParser;
 import in.org.iudx.adaptor.process.JoltTransformer;
+import in.org.iudx.adaptor.process.JSProcessFunction;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
 import in.org.iudx.adaptor.sink.AMQPSink;
 import in.org.iudx.adaptor.codegen.RMQConfig;
+import in.org.iudx.adaptor.process.JSTransformSpec;
 import in.org.iudx.adaptor.sink.StaticStringPublisher;
 import javax.annotation.processing.Filer;
 import java.io.IOException;
@@ -36,10 +38,17 @@ public class TopologyBuilder {
   private TopologyConfig tc;
   private Filer filer;
 
+  private boolean hasNonGenericTransformer;
+  private boolean hasJSTransformer;
 
   public TopologyBuilder(TopologyConfig config, Filer filer) {
     this.tc = config;
     this.filer = filer;
+  }
+
+  public TopologyBuilder(TopologyConfig config) {
+    this.tc = config;
+    this.filer = null;
   }
 
   public void gencode() throws IOException {
@@ -71,7 +80,13 @@ public class TopologyBuilder {
 
     JavaFile javaFile = JavaFile.builder("in.org.iudx.template", adaptor)
       .build();
-    javaFile.writeTo(filer);
+
+    if (filer != null) {
+      javaFile.writeTo(filer);
+    }
+    else {
+      javaFile.writeTo(System.out);
+    }
   }
 
 
@@ -121,11 +136,16 @@ public class TopologyBuilder {
   private void transformSpecBuilder(Builder mainBuilder, JSONObject transformSpec) {
     String transformType = transformSpec.getString("type");
 
+    mainBuilder.addStatement("String transformSpec = $S", transformSpec.toString());
+
     if ("jolt".equals(transformType)) {
-      mainBuilder.addStatement("String transformSpec = $S",
-                                transformSpec.toString());
+      hasNonGenericTransformer = true;
       mainBuilder.addStatement("$T trans = new $T(transformSpec)",
                                   JoltTransformer.class, JoltTransformer.class);
+    }
+    if ("js".equals(transformType)) {
+      hasJSTransformer = true;
+      hasNonGenericTransformer = false;
     }
   }
 
@@ -153,13 +173,28 @@ public class TopologyBuilder {
 
   private void buildTopology(Builder mainBuilder) {
 
-    /* TODO: Parse and perform */
-    mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
-                                + ".keyBy(($T msg) -> msg.key)"
-                                + ".process(new $T(trans, dedup))",
-                              SingleOutputStreamOperator.class, Message.class,
-                              HttpSource.class, Message.class,
-                              Message.class, GenericProcessFunction.class);
+    /* TODO: Parse and perform 
+     * TODO: Break this construction logic further
+     **/
+    if (hasNonGenericTransformer) {
+      mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+                                  + ".keyBy(($T msg) -> msg.key)"
+                                  + ".process(new $T(trans, dedup))",
+                                SingleOutputStreamOperator.class, Message.class,
+                                HttpSource.class, Message.class,
+                                Message.class, GenericProcessFunction.class);
+    } else {
+      if (hasJSTransformer) {
+        mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+                                    + ".keyBy(($T msg) -> msg.key)"
+                                    + ".process(new $T(dedup))"
+                                    + ".flatMap(new $T(transformSpec))",
+                                  SingleOutputStreamOperator.class, Message.class,
+                                  HttpSource.class, Message.class,
+                                  Message.class, GenericProcessFunction.class,
+                                  JSProcessFunction.class);
+      }
+    }
 
     mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
                               DataStream.class, GenericProcessFunction.class);

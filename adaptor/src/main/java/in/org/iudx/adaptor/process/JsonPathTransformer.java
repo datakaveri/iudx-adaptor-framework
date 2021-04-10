@@ -5,6 +5,8 @@ import java.util.HashMap;
 
 import com.bazaarvoice.jolt.Chainr;
 import com.bazaarvoice.jolt.JsonUtils;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 
 import java.io.IOException;
 import java.util.List;
@@ -24,7 +26,7 @@ public class JsonPathTransformer implements Transformer {
   private String transformSpec;
 
   public JsonPathTransformer(String transformSpec) {
-    this.transformSpec = new JSONObject(transformSpec).getJSONArray("joltSpec").toString();
+    this.transformSpec = new JSONObject(transformSpec).getJSONArray("jsonPathSpec").toString();
   }
 
 

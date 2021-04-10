@@ -49,6 +49,7 @@ public class JsonPathParser<T> implements Parser<T> {
       this.outputTimeFormat = parseSpec.optString("outputTimeFormat");
 
     } catch (Exception e) {
+      LOGGER.error("Unable to process with JsonPathParser");
       // TODO: Exit
     }
 
@@ -62,6 +63,9 @@ public class JsonPathParser<T> implements Parser<T> {
   }
 
 
+  /* TODO:
+   *  - Abstract out parsing time
+   */
   public T parse(String message) {
 
     ReadContext ctx = JsonPath.parse(message);
@@ -69,17 +73,23 @@ public class JsonPathParser<T> implements Parser<T> {
     /* Parse into Message */
     if (containerPath.isEmpty()) {
       Message msg = new Message();
-      try {
-        Date date = fromFormat.parse(ctx.read(timestampPath));
-        String parsedDate = toFormat.format(date);
-        msg.setEventTimeAsString(parsedDate);
-        msg.setEventTimestamp(date.toInstant());
-        message = JsonPath.parse(message).set(timestampPath, parsedDate).jsonString();
-      } catch (Exception e) {
-        // TODO: Handle this
-      }
       msg.setKey(ctx.read(keyPath));
       msg.setResponseBody(message);
+      if (inputTimeFormat.isEmpty() || outputTimeFormat.isEmpty()) {
+        msg.setEventTimeAsString(ctx.read(timestampPath));
+        msg.setEventTimestamp(Instant.parse(ctx.read(timestampPath)));
+      }
+      else {
+        try {
+          Date date = fromFormat.parse(ctx.read(timestampPath));
+          String parsedDate = toFormat.format(date);
+          msg.setEventTimeAsString(parsedDate);
+          msg.setEventTimestamp(date.toInstant());
+          message = JsonPath.parse(message).set(timestampPath, parsedDate).jsonString();
+        } catch (Exception e) {
+          // TODO: Handle this
+        }
+      }
       return (T) msg;
     }
     else {
@@ -91,14 +101,20 @@ public class JsonPathParser<T> implements Parser<T> {
         ReadContext tmpctx = JsonPath.parse(container.get(i));
         String msgBody = tmpctx.jsonString();
         String key = tmpctx.read(keyPath);
-        try {
-          Date date = fromFormat.parse(tmpctx.read(timestampPath));
-          String parsedDate = toFormat.format(date);
-          tmpmsg.setEventTimeAsString(parsedDate);
-          tmpmsg.setEventTimestamp(date.toInstant());
-          msgBody = JsonPath.parse(msgBody).set(timestampPath, parsedDate).jsonString();
-        } catch (Exception e) {
-          // TODO: Handle this
+        if (inputTimeFormat.isEmpty() || outputTimeFormat.isEmpty()) {
+          tmpmsg.setEventTimeAsString(tmpctx.read(timestampPath));
+          tmpmsg.setEventTimestamp(Instant.parse(tmpctx.read(timestampPath)));
+        }
+        else {
+          try {
+            Date date = fromFormat.parse(tmpctx.read(timestampPath));
+            String parsedDate = toFormat.format(date);
+            tmpmsg.setEventTimeAsString(parsedDate);
+            tmpmsg.setEventTimestamp(date.toInstant());
+            msgBody = JsonPath.parse(msgBody).set(timestampPath, parsedDate).jsonString();
+          } catch (Exception e) {
+            // TODO: Handle this
+          }
         }
         tmpmsg.setKey(key);
         tmpmsg.setResponseBody(msgBody);

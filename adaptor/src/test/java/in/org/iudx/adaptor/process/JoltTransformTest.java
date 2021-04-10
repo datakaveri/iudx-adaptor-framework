@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import in.org.iudx.adaptor.datatypes.Message;
 
 import java.util.Map;
@@ -36,7 +37,7 @@ public class JoltTransformTest {
 
 
     String transformSpec = new JSONObject().put("transformType", "jolt")
-                                                .put("joltSpec", joltSpec)
+                                                .put("joltSpec", new JSONArray(joltSpec))
                                                 .toString();
 
     String input = "{ \"time\": \"2021-03-11T12:59:20Z\", \"k1\": 769, \"deviceId\": \"abc-123\" }";
@@ -47,7 +48,19 @@ public class JoltTransformTest {
 
 
     try {
-      System.out.println(trans.transform(msg));
+      long startTime = System.nanoTime();
+      //System.out.println(trans.transform(msg));
+      trans.transform(msg);
+      long endTime = System.nanoTime();
+      System.out.println("Exec time = " + (endTime - startTime));
+
+      for (int i =0; i<10; i++) {
+        startTime = System.nanoTime();
+        trans.transform(msg);
+        endTime = System.nanoTime();
+        System.out.println("Exec time = " + (endTime - startTime));
+      }
+
     } catch (Exception e) {
       System.out.println(e);
     }

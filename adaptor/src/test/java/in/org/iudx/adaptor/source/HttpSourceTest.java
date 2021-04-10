@@ -25,7 +25,9 @@ import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbStringSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
+import in.org.iudx.adaptor.process.DumbProcess;
 
 
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -98,11 +100,6 @@ public class HttpSourceTest {
         .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());
 
-    /* Passthrough
-     *
-    env.addSource(new HttpSource(apiConfig))
-        .addSink(new DumbStringSink());
-     **/
 
     try {
       env.execute("Simple Get");

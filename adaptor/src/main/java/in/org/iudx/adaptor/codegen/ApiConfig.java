@@ -19,6 +19,7 @@ import java.lang.StringBuilder;
  *
  * TODO: 
  *  - Extend as needed
+ *  - Jackson databind
  *
  */
 public class ApiConfig implements Serializable {
