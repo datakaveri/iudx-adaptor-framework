@@ -13,16 +13,11 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>adaptor</artifactId>
+    <groupId>in.org.iudx.adaptor</groupId>
+	<artifactId>server</artifactId>
 	<version>1</version>
-	<name>adaptor</name>
+	<name>server</name>
 
-    <parent>
-        <groupId>org.datakaveri</groupId>
-        <artifactId>adaptor-framework</artifactId>
-        <version>1</version>
-        <relativePath>../</relativePath>
-    </parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,7 +30,6 @@
 		<exec.mainClass>in.org.iudx.adaptor.deploy.Deployer</exec.mainClass>
 		<vertx.version>4.0.0</vertx.version>
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
-		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
 		<quartz.version>2.3.1</quartz.version>
 		<postgres.version>42.2.19</postgres.version>
         <latest.jolt.version>0.1.1</latest.jolt.version>
@@ -56,32 +50,6 @@
 	</repositories>
 
 	<dependencies>
-		<!-- Apache Flink dependencies -->
-		<!-- These dependencies are provided, because they should not be packaged 
-			into the JAR file. -->
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-java</artifactId>
-			<version>${flink.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-streaming-java_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-clients_${scala.binary.version}</artifactId>
-			<version>${flink.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-test-utils_2.11</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
@@ -98,11 +66,6 @@
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>2.14.0</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.flink</groupId>
-			<artifactId>flink-test-utils_2.11</artifactId>
-			<version>1.12.0</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
@@ -131,21 +94,10 @@
 			<version>2.0.29.Final</version>
 		</dependency>
 		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20201115</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-slf4j-impl</artifactId>
 			<version>2.14.0</version>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-rabbitmq_2.11</artifactId>
-            <version>1.12.0</version>
-        </dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
@@ -182,11 +134,6 @@
 			<groupId>io.netty</groupId>
 			<artifactId>netty-tcnative-boringssl-static</artifactId>
 			<version>2.0.29.Final</version>
-		</dependency>
-		<dependency>
-			<groupId>org.json</groupId>
-			<artifactId>json</artifactId>
-			<version>20201115</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -226,27 +173,6 @@
             <version>${latest.jolt.version}</version>
         </dependency>
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>1.3.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>30.1-jre</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
-            <version>1.0-rc7</version>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup</groupId>
-            <artifactId>javapoet</artifactId>
-            <version>1.13.0</version>
-        </dependency>
-        <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
             <version>2.5.0</version>
@@ -265,11 +191,6 @@
             <groupId>io.vertx</groupId>
             <artifactId>vertx-service-discovery</artifactId>
             <version>${vertx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mozilla</groupId>
-            <artifactId>rhino</artifactId>
-            <version>1.7.13</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -355,31 +276,6 @@
 								</transformer>
 							</transformers>
 							<outputFile>${project.build.directory}/server.jar</outputFile>
-						</configuration>
-					</execution>
-					<execution>
-						<id>mockserver</id>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<manifestEntries>
-										<Main-Class>io.vertx.core.Launcher</Main-Class>
-										<Main-Verticle>${mockserver.mainClass}</Main-Verticle>
-									</manifestEntries>
-								</transformer>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-									<resource>META-INF/services/io.vertx.core.spi.VerticleFactory</resource>
-								</transformer>
-							</transformers>
-							<artifactSet>
-							</artifactSet>
-							<outputFile>${project.build.directory}/mockserver.jar</outputFile>
 						</configuration>
 					</execution>
 
