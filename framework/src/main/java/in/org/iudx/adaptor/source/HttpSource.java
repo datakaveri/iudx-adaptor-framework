@@ -64,6 +64,30 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
     httpEntity = new HttpEntity(apiConfig);
   }
 
+  public void emitMessage(SourceContext<Message> ctx) {
+    String smsg = httpEntity.getSerializedMessage();
+    if (smsg.isEmpty()) {
+      return;
+    }
+    PO msg = parser.parse(smsg);
+    /* Message array */
+    if (msg instanceof ArrayList) {
+      ArrayList<Message> message = (ArrayList<Message>) msg;
+      for (int i=0; i<message.size(); i++) {
+        Message m = (Message) message.get(i);
+        ctx.collectWithTimestamp(m, m.getEventTime());
+        ctx.emitWatermark(new Watermark(m.getEventTime()));
+      }
+    } 
+    /* Single object */
+    if (msg instanceof Message) {
+      Message m = (Message) msg;
+      ctx.collectWithTimestamp(m, m.getEventTime());
+      ctx.emitWatermark(new Watermark(m.getEventTime()));
+    }
+
+  }
+
   /**
    * Forever loop with a delay
    * 
@@ -78,33 +102,17 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
     /** TODO:
      *    - Configure delays
      **/
-    while (running) {
 
-      String smsg = httpEntity.getSerializedMessage();
-      if (smsg.isEmpty()) {
-        continue;
+    /* TODO: Better way of figuring out batch jobs */
+    if (apiConfig.pollingInterval == -1) {
+      emitMessage(ctx);
+    }
+
+    else {
+      while (running) {
+        emitMessage(ctx);
+        Thread.sleep(apiConfig.pollingInterval);
       }
-      PO msg = parser.parse(smsg);
-
-
-      /* Message array */
-      if (msg instanceof ArrayList) {
-        ArrayList<Message> message = (ArrayList<Message>) msg;
-        for (int i=0; i<message.size(); i++) {
-          Message m = (Message) message.get(i);
-          ctx.collectWithTimestamp(m, m.getEventTime());
-          ctx.emitWatermark(new Watermark(m.getEventTime()));
-        }
-      } 
-
-      /* Single object */
-      if (msg instanceof Message) {
-        Message m = (Message) msg;
-        ctx.collectWithTimestamp(m, m.getEventTime());
-        ctx.emitWatermark(new Watermark(m.getEventTime()));
-      }
-
-      Thread.sleep(apiConfig.pollingInterval);
     }
   }
 

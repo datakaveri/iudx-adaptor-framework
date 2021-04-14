@@ -5,7 +5,7 @@ import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import in.org.iudx.adaptor.datatypes.Message;
-import io.vertx.core.json.JsonObject;
+import org.json.JSONObject;
 
 public class LokiProcessMessages extends ProcessFunction<Message, Tuple2<Message, Integer>> {
 
@@ -21,8 +21,8 @@ public class LokiProcessMessages extends ProcessFunction<Message, Tuple2<Message
       ProcessFunction<Message, Tuple2<Message, Integer>>.Context ctx,
       Collector<Tuple2<Message, Integer>> out) throws Exception {
     
-    JsonObject body = new JsonObject(value.body);
-    Integer flag = body.getInteger("k1");
+    JSONObject body = new JSONObject(value.body);
+    Integer flag = body.getInt("k1");
     if(flag % 2 != 0) {
       ctx.output(errorStream, value);
     } else if(flag % 2 == 0) {

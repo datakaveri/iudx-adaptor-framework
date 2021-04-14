@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 /* 
  * PO - Parser Output
  **/
-public class SimpleBTestParser implements Parser<Message[]> {
+public class SimpleBTestParser implements Parser<List<Message>> {
 
   private String key;
   private Instant time;
@@ -25,7 +25,7 @@ public class SimpleBTestParser implements Parser<Message[]> {
   }
 
 
-  public Message[] parse(String message) {
+  public List<Message> parse(String message) {
     // Try catch around this
     msg = new JSONObject(message);
     data = msg.getJSONArray("data");
@@ -38,7 +38,7 @@ public class SimpleBTestParser implements Parser<Message[]> {
       tmpmsg.setResponseBody(tmpObj.toString());
       msgArray.add(tmpmsg);
     }
-    return msgArray.toArray(new Message[0]);
+    return msgArray;
   }
 
   public byte[] serialize(Message obj) {

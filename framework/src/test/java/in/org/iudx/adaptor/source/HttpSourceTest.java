@@ -13,6 +13,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 
 
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import org.json.JSONObject;
@@ -125,7 +126,7 @@ public class HttpSourceTest {
 
 
     /* Include process */
-    env.addSource(new HttpSource<Message[]>(apiConfig, parser))
+    env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());
