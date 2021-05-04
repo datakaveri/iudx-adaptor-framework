@@ -2,8 +2,8 @@ package in.org.iudx.adaptor.server.codegeninit;
 
 import static in.org.iudx.adaptor.server.util.Constants.CODEGENINIT_SERVICE_ADDRESS;
 import static in.org.iudx.adaptor.server.util.Constants.FLINK_SERVICE_ADDRESS;
-import static in.org.iudx.adaptor.server.util.Constants.JAR_OUT_PATH;;
-import static in.org.iudx.adaptor.server.util.Constants.TEMPLATE_PATH;;;
+import static in.org.iudx.adaptor.server.util.Constants.JAR_OUT_PATH;
+import static in.org.iudx.adaptor.server.util.Constants.TEMPLATE_PATH;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
