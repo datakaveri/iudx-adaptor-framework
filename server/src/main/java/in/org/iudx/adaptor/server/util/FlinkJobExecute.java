@@ -7,6 +7,7 @@ import org.quartz.JobExecutionException;
 import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
+import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
@@ -23,25 +24,24 @@ public class FlinkJobExecute implements Job {
   public void execute(JobExecutionContext context) throws JobExecutionException {
     
     SchedulerContext schedulerContext = null;
+    flinkClient = JobScheduler.getClientInstance();
+    
     try {
       schedulerContext = context.getScheduler().getContext();
     } catch (SchedulerException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      LOGGER.error("Error: Scheduler context; "+ e.getMessage());
     }
-    FlinkClientService flinkClient = (FlinkClientService) schedulerContext.get("flinkClient");
+    
+    //FlinkClientService flinkClient = (FlinkClientService) schedulerContext.get("flinkClient");
     //String requestBody = (String) schedulerContext.get("data");
     
     final JobDataMap  jobDataMap = context.getJobDetail().getJobDataMap();
     String requestBody = (String) jobDataMap.get("data");
-    //FlinkClient flinkClient = (FlinkClient) jobDataMap.get("flinkClient");
-    
     JsonObject data = new JsonObject(requestBody);
-    System.out.println("FlinkJobExecute: "+ data);
     
     flinkClient.handleJob(data, resHandler->{
       if (resHandler.succeeded()) {
-        LOGGER.info("Success: Job submitted "+ resHandler.succeeded());
+        LOGGER.info("Success: Job submitted; "+ resHandler.succeeded());
       } else {
         LOGGER.error("Error: Jar submission failed; " + resHandler.cause().getMessage());
       }

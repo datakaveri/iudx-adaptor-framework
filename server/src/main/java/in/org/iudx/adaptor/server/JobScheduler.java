@@ -33,7 +33,7 @@ import java.util.List;
 public class JobScheduler {
 
   private Scheduler scheduler;
-  private FlinkClientService flinkClient;
+  private static FlinkClientService flinkClient;
   private static final Logger LOGGER = LogManager.getLogger(JobScheduler.class);
   
   /**
@@ -45,10 +45,18 @@ public class JobScheduler {
    */
   public JobScheduler(FlinkClientService flinkClient, String propertiesName) throws SchedulerException {
     
-    this.flinkClient = flinkClient;
+    JobScheduler.flinkClient = flinkClient;
     SchedulerFactory factory = new StdSchedulerFactory(propertiesName);
     scheduler = factory.getScheduler();
     scheduler.start();
+  }
+  
+  /**
+   * 
+   * @return flinkClient
+   */
+  public static FlinkClientService getClientInstance() {
+    return JobScheduler.flinkClient;
   }
   
   /**
@@ -97,7 +105,7 @@ public class JobScheduler {
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
         return this;
       } else {
-        scheduler.getContext().put("flinkClient", this.flinkClient);
+        //scheduler.getContext().put("flinkClient", JobScheduler.flinkClient);
         scheduler.getContext().put("data",config.encode());
         trigger.setCronExpression(cronExpression);
         scheduler.scheduleJob(jobDetail, trigger);
