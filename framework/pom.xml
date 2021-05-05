@@ -30,6 +30,7 @@
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<mockserver.mainClass>in.org.iudx.adaptor.mockserver.Server</mockserver.mainClass>
         <latest.jolt.version>0.1.1</latest.jolt.version>
+        <jackson.version>2.12.0</jackson.version>
 	</properties>
 
 	<repositories>
@@ -188,7 +189,6 @@
             <version>2.0.2-beta</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
