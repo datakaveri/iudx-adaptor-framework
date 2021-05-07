@@ -22,6 +22,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import in.org.iudx.adaptor.source.JsonPathParser;
 import in.org.iudx.adaptor.process.JoltTransformer;
 import in.org.iudx.adaptor.process.JSProcessFunction;
+import in.org.iudx.adaptor.process.JSPathProcessFunction;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
@@ -40,6 +41,7 @@ public class TopologyBuilder {
 
   private boolean hasNonGenericTransformer;
   private boolean hasJSTransformer;
+  private boolean hasJSPathTransformer;
 
   public TopologyBuilder(TopologyConfig config, Filer filer) {
     this.tc = config;
@@ -147,6 +149,10 @@ public class TopologyBuilder {
       hasJSTransformer = true;
       hasNonGenericTransformer = false;
     }
+    if ("jsPath".equals(transformType)) {
+      hasJSPathTransformer = true;
+      hasNonGenericTransformer = false;
+    }
   }
 
   private void publishSpecBuilder(Builder mainBuilder, JSONObject publishSpec) {
@@ -193,6 +199,16 @@ public class TopologyBuilder {
                                   HttpSource.class, Message.class,
                                   Message.class, GenericProcessFunction.class,
                                   JSProcessFunction.class);
+      }
+      if (hasJSPathTransformer) {
+        mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+                                    + ".keyBy(($T msg) -> msg.key)"
+                                    + ".process(new $T(dedup))"
+                                    + ".flatMap(new $T(transformSpec))",
+                                  SingleOutputStreamOperator.class, Message.class,
+                                  HttpSource.class, Message.class,
+                                  Message.class, GenericProcessFunction.class,
+                                  JSPathProcessFunction.class);
       }
     }
 
