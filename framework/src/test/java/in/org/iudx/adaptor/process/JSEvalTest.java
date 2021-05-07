@@ -19,6 +19,7 @@ import org.mozilla.javascript.ContextAction;
 import org.mozilla.javascript.ContextFactory;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptableObject;
+import org.mozilla.javascript.Scriptable;
 
 
 public class JSEvalTest {
@@ -75,6 +76,20 @@ public class JSEvalTest {
     System.out.println("Result is");
     System.out.println(res.name);
     System.out.println(res.age);
+  }
+
+  @Test
+  void singleLine() throws InterruptedException {
+
+    String  script = "parseFloat(a.split(\" \")[0])";
+
+    ScriptableObject.putProperty(scope, "a", stringedNum);
+    Object obj = context.evaluateString(scope,
+                                    script, "test", 1, null);
+    System.out.println("Result is");
+    System.out.println(obj);
+    System.out.println(obj.getClass().getName());
+
   }
 
 }

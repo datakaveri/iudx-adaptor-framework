@@ -1,0 +1,15 @@
+{
+    "type": "jsPath",
+    "template": "{ 'co2': { 'avgOverTime': 100}, 'id': 'abc'}",
+    "jsonPathSpec": [
+        {
+            "outputKeyPath": "$.co2.avgOverTime",
+            "inputValuePath": "$.k1"
+        },
+        {
+            "outputKeyPath": "$.id",
+            "inputValuePath": "$.deviceId",
+            "valueModifierScript": "value.split('-')[0]"
+        }
+    ]
+}

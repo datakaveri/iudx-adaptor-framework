@@ -92,8 +92,8 @@ public class JSProcessFunction
       String resp = org.mozilla.javascript.Context.toString(
           transformFunction.call(
             cx, scope, scope, args));
-      Message transformedMessage = msg.setResponseBody(resp);
-      out.collect(transformedMessage);
+      msg.setResponseBody(resp);
+      out.collect(msg);
     } catch (Exception e) {
     }
   }
