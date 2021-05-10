@@ -15,6 +15,7 @@ The above necessitates the need for a tool which:
 - Ensures data deduplication and late message rejections to give out a stream of novel data
 - Transforms the data format into the formats required by the exchange
 - Publishes the transformed data into the exchange with flexibility in choosing the sink
+- Supporta a fully configuration file based specification and operation of the entire pipeline
 
 
 ## Overview
@@ -34,7 +35,7 @@ Note: Some features are work in progress.
 - [JSON Path](https://github.com/json-path/JsonPath) based parsing and key extraction for watermarking
 - [Jolt](https://github.com/bazaarvoice/jolt) based Json-Json transformation
 - [Quartz](http://www.quartz-scheduler.org/) based job scheduling
-- [Vert x](https://vertx.io/) based Api server with user and adaptor job management and monitoring
+- [Vert x](https://vertx.io/) based Api server with config based pipeline JAR generation, user and adaptor job management and monitoring
 - Docker development and deployment
 
 
@@ -45,16 +46,21 @@ The figure below shows an overview of the implementation of the framework and co
 </p>
 
 The Generic layer is the standard Flink based pipeline which all adaptors are comprised off. The generic layer assumes the implementation of the interfaces which constitute the activity of the particular block. Further, the framework provides standard implementations of the interfaces for specification file based code-generation purposes.
-It maybe possible for a developer to pass their own implementation of the interfaces to obtain more control over the components of the pipeline.
+It maybe possible for a developer to pass their own implementation of the interfaces to obtain more control over the components of the pipeline in the Process stage (WIP).
 
 
-## Pipeline Specification File
+## Usage
+
+Using the framework as an ordinary consumer involves writing a specification file for the entire pipeline (source -> transform -> sink)
+and using a hosted instances api to publish the spec and perform the pipeline operations.
+
+### Pipeline Specification file
 
 A pipeline maybe specified in Json format and submitted to the framework server
 to auto-generate JAR files and run them. 
 The following is the spec outline to be followed in making a configuration file.
 
-### Spec Outline
+#### Spec Outline
 ``` 
 {
     "name": "<unique name for this adaptor",
@@ -62,8 +68,6 @@ The following is the spec outline to be followed in making a configuration file.
     "inputSpec": {
     },
     
-    // Below specs apply specifically for the inputSpec type
-    
     "parseSpec": {
     },
     
@@ -78,141 +82,49 @@ The following is the spec outline to be followed in making a configuration file.
 }
 ``` 
 
+Detailed explanation of the individual specs are given below.  
+- [Input Spec](docs/input_spec.md)  
+- [Parse Spec](docs/parse_spec.md)  
+- [Deduplication Spec](docs/parse_spec.md)  
+- [Transformation Spec](docs/transform_spec.md)  
+- [Publish Spec](docs/publish_spec.md)  
+
+The spec can then be submitted to the adaptor server which will validate it and generate a JAR for the entire pipeline.
 
 
-### Input spec
-Define the input downstream datasource with the polling interval.
-The framework will periodically poll the api and obtain data from the downstream server.
+### Apis
+The framework provides Apis to manage the lifecycle of the adaptor pipeline and to monitor it.
+Assuming the administrator of the framework has already provided the user with authentication credentials, 
+the Api of relevance to get started with are 
 
-``` 
+1. **newAdaptor**: Submit the above pipeline spec and create a new adaptor 
+   ```
+   POST /adaptor
+   Header: {"username": "uname", "password": "password"}
+   Body: Spec File
+   Content-Type: application/json
+   Response: 203 (Accepted and generating jar), 401 (Unauthorized), 400 (Bad spec file) 
+   ```
 
-{
-    "type": "<http|protobuf>",
-    "url": "<url with protocol>",
-    "requestType": "<GET | POST",
-    "pollingInterval": <number (if > threshold, will be batch job)>,
-    "headers": {
-        ... <map> ...
-    },
-    "postBody": "<templated body, later support for changing body params will be supported>"
-}
-```
+2. **getAdaptors**: List all the adaptors and their running state (including recently submitted ones) and their ids
+   ```
+   GET /adaptor
+   Header: {"username": "uname", "password": "password"}
+   Content-Type: application/json
+   Response: 200 (List of adaptors and their running state)
+   ```
 
+3. **deleteAdaptors**: Delete an adaptor given its id
+   ```
+   DELETE /adaptor/{id}
+   Header: {"username": "uname", "password": "password"}
+   Content-Type: application/json
+   Response: 200 (Deleted), 404 (No such adaptor), 401 (Unauthorized)
+   ```
 
-### Parse Spec for json
-Define how the downstream serialized data needs to be parsed.
-Currently only support for json is provided.
-An api may yield an array of data packets whose json path will have to be provided
-in `containerPath` and messageContainer will have to be `array`.
-All paths mentioned here are [JSON Path](https://github.com/json-path/JsonPath) paths.
-Every packet needs a primary key whose path is defined by `keyPath`.
-Every packet needs a primary timestamp whose path is defined by `timestampPath`.
-``` 
-{
-    "type": "<json|xml>",
-    "messageContainer": "<array - multiple messages in same message |
-                          single - single message in one message>"
-    "containerPath": "json path to container (list of objects) of messages in case
-                        inputSpec.messageContainer == array.
-                      Subsequent to this all paths will apply to individual objects
-                      of the container."
-    "timestampPath": "json path to time",
-    "inputTimeFormat": "yyyy-MM-dd HH:mm:ss",
-    "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX",
-    "keyPath": "json path to key (deviceId/id etc)"
-}
-```
+On submitting the adaptor pipeline spec file, the server will generate a JAR with all the dependencies and run the pipeline according to the configurations specified.
 
-
-### Deduplication spec
-Define the mechanism by which a duplicate data packet can be identified and rejected.
-Currently only time based deduplication is supported.
-``` 
-{
-    "type": "<timeBased | extraKeyBased >"
-}
-```
-
-
-### Transform spec
-Define how to transform the data into the sink compatible format.
-Currently only `jolt` based transformation is supported.
-The jolt specification format can be understood from 
-[Jolt](https://github.com/bazaarvoice/jolt).
-``` 
-{
-    "type": "<jolt | jsonPath>",
-    "joltSpec": "<stringified jolt spec>",
-    "jsonPathSpec": "<stringified json path spec>"
-}
-```
-
-
-### Publish spec
-Define where the transformed data should be published to.
-Currently only rabbitmq sink is supported.
-`sinkName` specifies the "exchange" to which data needs to be published into
-and `tagName` specifies the "routing-key".
-``` 
-{
-    "type": "<rmq>"
-    "url": "<url with protocol no port>",
-    "port": <port>,
-    "uname": "<uname>",
-    "password": "<password>",
-    "sinkName": "<exchange name>",
-    "tagName": "<routing key>"
-}
-```
-
-### Example
-An example of the complete spec is below 
-```
-{
-    "name": "test",
-
-    "inputSpec": {
-        "type": "http",
-        "url": "http://mockserver:8080/simpleB",
-        "requestType": "GET",
-        "pollingInterval": 1000
-    },
-
-    "parseSpec": {
-        "type": "json",
-        "messageContainer": "array",
-        "containerPath": "$.data",
-        "keyPath": "$.deviceId",
-        "timestampPath": "$.time",
-        "inputTimeFormat": "yyyy-MM-dd HH:mm:ss",
-        "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX"
-    },
-    
-    "deduplicationSpec": {
-        "type": "timeBased"
-    },
-    
-    "transformSpec": {
-        "type": "jolt",
-        "joltSpec": [
-            { "operation": "shift", "spec": 
-                { "time": "observationDateTime", "deviceId": "id", "k1": "k1" } },
-            { "operation": "modify-overwrite-beta", "spec": 
-                { "id": "=concat('datakaveri.org/123/', id)" } }
-        ]
-    },
-
-    "publishSpec": {
-        "type": "rmq",
-        "url": "amqp://mockrmq",
-        "port": 5672,
-        "uname": "guest",
-        "password": "guest",
-        "sinkName": "adaptor-test",
-        "tagName": "test"
-    }
-}
-```
+The entire API specification can be found [here](./docs/openapi.yml).
 
 
 ## Starting a local development/deployment environment
@@ -228,13 +140,8 @@ An example of the complete spec is below
 5. Use the apis to submit the above example config
 
 
-## Sample Postman collection
-After bringing the local dev env, you may use the provided [postman collection](./misc/)
-to test the framework.
-
 
 ## Future Works
-1. JsonPath based transformer
-2. JavaScript based transformer
-3. Auto generation of logging streams and dashboards
-4. Multi-input sources
+1. Spec validation
+2. Local playground for local spec testing
+3. Support for diverse sources (AMQP, MQTT, GRPC) and sinks (Elasticsearch, Redis, Kafka)

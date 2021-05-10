@@ -1,0 +1,462 @@
+openapi: 3.0.0
+info:
+    title: IUDX Adaptors APIs
+    version: '1.0'
+servers:
+    -
+        url: 'http://localhost:8081'
+        description: localhost
+    -
+        url: 'https://adaptor.iudx.io'
+        description: Dev Instance
+paths:
+    /adaptor:
+        description: Submit a new Adaptor spec json
+        get:
+            responses:
+                '200':
+                    $ref: '#/components/responses/AdaptorListResponse'
+                '401':
+                    description: An unauthorized operation
+            operationId: getAdaptors
+            description: Get all adaptors registered for the user whose credentials are provided
+        post:
+            requestBody:
+                description: ''
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/SpecObject'
+                            description: ''
+                            required:
+                                - name
+                                - inputSpec
+                                - parseSpec
+                                - deduplicationSpec
+                                - transformSpec
+                                - publishSpec
+                            properties:
+                                name:
+                                    minLength: 1
+                                    type: string
+                                inputSpec:
+                                    required:
+                                        - type
+                                        - url
+                                        - requestType
+                                        - pollingInterval
+                                    type: object
+                                    properties:
+                                        type:
+                                            minLength: 1
+                                            type: string
+                                        url:
+                                            minLength: 1
+                                            type: string
+                                        requestType:
+                                            minLength: 1
+                                            type: string
+                                        pollingInterval:
+                                            type: number
+                                parseSpec:
+                                    required:
+                                        - type
+                                        - messageContainer
+                                        - containerPath
+                                        - keyPath
+                                        - timestampPath
+                                    type: object
+                                    properties:
+                                        type:
+                                            minLength: 1
+                                            type: string
+                                        messageContainer:
+                                            minLength: 1
+                                            type: string
+                                        containerPath:
+                                            minLength: 1
+                                            type: string
+                                        keyPath:
+                                            minLength: 1
+                                            type: string
+                                        timestampPath:
+                                            minLength: 1
+                                            type: string
+                                deduplicationSpec:
+                                    required:
+                                        - type
+                                    type: object
+                                    properties:
+                                        type:
+                                            minLength: 1
+                                            type: string
+                                transformSpec:
+                                    required:
+                                        - type
+                                        - joltSpec
+                                    type: object
+                                    properties:
+                                        type:
+                                            minLength: 1
+                                            type: string
+                                        joltSpec:
+                                            minItems: 1
+                                            uniqueItems: true
+                                            type: array
+                                            items:
+                                                required:
+                                                    - operation
+                                                properties:
+                                                    operation:
+                                                        minLength: 1
+                                                        type: string
+                                                    spec:
+                                                        required:
+                                                            - time
+                                                            - deviceId
+                                                            - k1
+                                                        type: object
+                                                        properties:
+                                                            time:
+                                                                minLength: 1
+                                                                type: string
+                                                            deviceId:
+                                                                minLength: 1
+                                                                type: string
+                                                            k1:
+                                                                minLength: 1
+                                                                type: string
+                                publishSpec:
+                                    required:
+                                        - type
+                                        - url
+                                        - port
+                                        - uname
+                                        - password
+                                        - sinkName
+                                        - tagName
+                                    type: object
+                                    properties:
+                                        type:
+                                            minLength: 1
+                                            type: string
+                                        url:
+                                            minLength: 1
+                                            type: string
+                                        port:
+                                            type: number
+                                        uname:
+                                            minLength: 1
+                                            type: string
+                                        password:
+                                            minLength: 1
+                                            type: string
+                                        sinkName:
+                                            minLength: 1
+                                            type: string
+                                        tagName:
+                                            minLength: 1
+                                            type: string
+                        examples:
+                            example-1:
+                                value:
+                                    name: FlinkTestApp
+                                    inputSpec:
+                                        type: http
+                                        url: 'http://mockserver:8080/simpleB'
+                                        requestType: GET
+                                        pollingInterval: -1
+                                    parseSpec:
+                                        type: json
+                                        messageContainer: array
+                                        containerPath: $.data
+                                        keyPath: $.deviceId
+                                        timestampPath: $.time
+                                    deduplicationSpec:
+                                        type: timeBased
+                                    transformSpec:
+                                        type: jolt
+                                        joltSpec:
+                                            -
+                                                operation: shift
+                                                spec:
+                                                    time: observationDateTime
+                                                    deviceId: id
+                                                    k1: k1
+                                            -
+                                                operation: modify-overwrite-beta
+                                                spec:
+                                                    id: '=concat(''datakaveri.org/123/'', id)'
+                                    publishSpec:
+                                        type: rmq
+                                        url: 'amqp://mockrmq'
+                                        port: 5672
+                                        uname: guest
+                                        password: guest
+                                        sinkName: adaptor-test
+                                        tagName: test
+                required: true
+            parameters:
+                -
+                    name: username
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+                -
+                    name: password
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+            responses:
+                '202':
+                    description: The spec is valid and is being processed.
+                '400':
+                    description: The spec is invalid
+                '401':
+                    description: An unauthorized operation
+            operationId: newAdaptor
+            summary: ''
+            description: Submit the Adaptor spec pipeline file from which a JAR of the pipeline will be generated.
+        parameters:
+            -
+                name: username
+                description: 'Username '
+                schema:
+                    type: string
+                in: header
+                required: true
+            -
+                name: password
+                description: |
+                    Password
+                schema:
+                    type: string
+                in: header
+                required: true
+    '/adaptor/{id}':
+        description: Operations on a specific adaptor given its id
+        get:
+            tags: []
+            parameters:
+                -
+                    name: username
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+                -
+                    name: password
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+            responses:
+                '200':
+                    $ref: '#/components/responses/AdaptorResponse'
+            operationId: getAdaptor
+            description: Get all the config(s)
+        delete:
+            parameters:
+                -
+                    name: username
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+                -
+                    name: password
+                    schema:
+                        type: string
+                    in: header
+                    required: true
+            responses:
+                '200':
+                    description: Adaptor deleted
+                '401':
+                    description: Unauthorized to delete the Adaptor
+                '404':
+                    description: No such adaptor exists
+            operationId: deleteAdaptor
+            description: Deletes the Adaptor given its id
+        parameters:
+            -
+                name: username
+                description: Username
+                schema:
+                    type: string
+                in: header
+                required: true
+            -
+                name: password
+                description: Password
+                schema:
+                    type: string
+                in: header
+                required: true
+components:
+    schemas:
+        SpecObject:
+            title: Root Type for SpecObject
+            description: The adaptor specification object
+            type: object
+            properties:
+                name:
+                    type: string
+                inputSpec:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                        url:
+                            type: string
+                        requestType:
+                            type: string
+                        pollingInterval:
+                            format: int32
+                            type: integer
+                parseSpec:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                        messageContainer:
+                            type: string
+                        containerPath:
+                            type: string
+                        keyPath:
+                            type: string
+                        timestampPath:
+                            type: string
+                        inputTimeFormat:
+                            type: string
+                        outputTimeFormat:
+                            type: string
+                deduplicationSpec:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                transformSpec:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                        template:
+                            type: string
+                        jsonPathSpec:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    outputKeyPath:
+                                        type: string
+                                    inputValuePath:
+                                        type: string
+                publishSpec:
+                    type: object
+                    properties:
+                        type:
+                            type: string
+                        url:
+                            type: string
+                        port:
+                            format: int32
+                            type: integer
+                        uname:
+                            type: string
+                        password:
+                            type: string
+                        sinkName:
+                            type: string
+                        tagName:
+                            type: string
+            example:
+                name: test
+                inputSpec:
+                    type: http
+                    url: 'http://mockserver:8080/simpleB'
+                    requestType: GET
+                    pollingInterval: 1000
+                parseSpec:
+                    type: json
+                    messageContainer: array
+                    containerPath: $.data
+                    keyPath: $.deviceId
+                    timestampPath: $.time
+                    inputTimeFormat: 'yyyy-MM-dd''T''HH:mm:ssXXX'
+                    outputTimeFormat: 'yyyy-MM-dd''T''HH:mm:ssXXX'
+                deduplicationSpec:
+                    type: timeBased
+                transformSpec:
+                    type: jsPath
+                    template: '{ ''observationDateTime'': ''2021'', ''co2'': { ''avgOverTime'': 100}, ''id'': ''abc''}'
+                    jsonPathSpec:
+                        -
+                            outputKeyPath: $.observationDateTime
+                            inputValuePath: $.time
+                        -
+                            outputKeyPath: $.co2.avgOverTime
+                            inputValuePath: $.k1
+                        -
+                            outputKeyPath: $.id
+                            inputValuePath: $.deviceId
+                            valueModifierScript: 'value.split(''-'')[0]'
+                publishSpec:
+                    type: rmq
+                    url: 'amqp://mockrmq'
+                    port: 5672
+                    uname: guest
+                    password: guest
+                    sinkName: adaptor-test
+                    tagName: test
+        AdaptorListObject:
+            title: Root Type for AdaptorListObject
+            description: 'List of adaptors '
+            type: object
+            properties:
+                adaptors:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/AdaptorObject'
+            example:
+                adaptors:
+                    -
+                        id: <adaptor-uuid>
+                        name: <name of adaptor>
+                        status: <running|stopped|paused|error>
+                        lastSeen: '2021-05-10T07:35:34Z'
+        AdaptorObject:
+            title: Root Type for AdaptorObject
+            description: Information about a particular adaptor
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                status:
+                    type: string
+                lastSeen:
+                    format: date-time
+                    type: string
+            example:
+                id: <adaptor-uuid>
+                name: <name of adaptor>
+                status: <running|stopped|paused|error>
+                lastSeen: '2021-05-10T07:35:34Z'
+    responses:
+        AdaptorListResponse:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/AdaptorListObject'
+            description: List of adaptors
+        AdaptorResponse:
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/AdaptorObject'
+            description: Detail of a single Adaptor
+
