@@ -41,9 +41,9 @@ public class FlinkJobExecute implements Job {
     
     flinkClient.handleJob(data, resHandler->{
       if (resHandler.succeeded()) {
-        LOGGER.info("Success: Job submitted; "+ resHandler.succeeded());
+        LOGGER.info("Success: Quartz job scheduled; "+ resHandler.succeeded());
       } else {
-        LOGGER.error("Error: Jar submission failed; " + resHandler.cause().getMessage());
+        LOGGER.error("Error: Quartz job schedulling failed; " + resHandler.cause().getMessage());
       }
     });
   }
