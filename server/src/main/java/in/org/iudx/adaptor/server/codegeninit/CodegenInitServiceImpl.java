@@ -14,6 +14,7 @@ import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
+import io.netty.util.internal.StringUtil;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -67,7 +68,8 @@ public class CodegenInitServiceImpl implements CodegenInitService {
        * 
        * })
        */.compose(submitConfigJarResponse -> {
-      String jarId = submitConfigJarResponse.getString("filename");
+      String jarPath = submitConfigJarResponse.getString("filename");
+      String jarId = jarPath.substring(jarPath.lastIndexOf("/")+1);
       request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
       request.put(ID, jarId);
       request.put(DATA, new JsonObject());
@@ -83,26 +85,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
         handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
       }
     });
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-     * mvnExecuteFuture.onComplete(resHandler -> { if (mvnExecuteFuture.succeeded()) {
-     * submitConfigJar(request, flinkClient).onComplete(flinkHandler -> { if
-     * (flinkHandler.succeeded()) { String id = flinkHandler.result().getString("filename");
-     * handler.handle(Future.succeededFuture(new JsonObject().put(ID, id))); mvnProgress.put(new
-     * File(path).getName(), new JsonObject().put(ID, id).put(STATUS, "completed")); } else if
-     * (flinkHandler.failed()) { mvnProgress.put(new File(path).getName(), new JsonObject().put(ID,
-     * null).put(STATUS, "failed")); } }); }
-     * 
-     * });
-     */
+
     return this;
   }
 
@@ -180,6 +163,12 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   }
 
 
+  /**
+   * Submit jar; To submit adaptor jar generated to flink.
+   * @param request
+   * @param flinkClient
+   * @return promise
+   */
   private Future<JsonObject> submitConfigJar(JsonObject request, FlinkClientService flinkClient) {
 
     Promise<JsonObject> promise = Promise.promise();
@@ -205,9 +194,21 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     return promise.future();
   }
   
-  private Future<JsonObject> scheduleJobs(JsonObject request){
+  /**
+   * For schedulling jobs based on the pattern provided inthe config.
+   * @param request
+   * @return promise
+   */
+  private Future<JsonObject> scheduleJobs(JsonObject request) {
     Promise<JsonObject> promise = Promise.promise();
-    promise.complete();
+
+    jobScheduler.schedule(request, resHandler -> {
+      if (resHandler.succeeded()) {
+        promise.complete(resHandler.result());
+      } else {
+        promise.fail(resHandler.cause().getMessage());
+      }
+    });
     return promise.future();
   }
 }
