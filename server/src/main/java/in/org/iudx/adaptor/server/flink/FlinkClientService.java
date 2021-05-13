@@ -7,6 +7,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 
 @VertxGen
@@ -80,8 +81,8 @@ public interface FlinkClientService {
    * @return
    */
   @GenIgnore
-  static FlinkClientService createProxy(Vertx vertx, String address) {
-    return new FlinkClientServiceVertxEBProxy(vertx, address);
+  static FlinkClientService createProxy(Vertx vertx, String address,Long timeout) {
+    return new FlinkClientServiceVertxEBProxy(vertx, address,new DeliveryOptions().setSendTimeout(timeout));
   }
 
 }

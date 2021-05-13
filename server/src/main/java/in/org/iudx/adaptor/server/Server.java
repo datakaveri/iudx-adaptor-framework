@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
+import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.AuthHandler;
@@ -52,6 +53,8 @@ public class Server extends AbstractVerticle {
   private JsonObject authCred;
   private String quartzPropertiesPath;
   private String jarOutPath;
+  private DatabaseService databaseService;
+  private DbFlinkSync dbFlinkSync;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -69,7 +72,7 @@ public class Server extends AbstractVerticle {
     quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
     jarOutPath = config().getString(JAR_OUT_PATH);
 
-
+    databaseService = DatabaseService.createProxy(vertx, DATABASE_SERVICE_ADDRESS);
     HttpServerOptions serverOptions = new HttpServerOptions();
 
     if (isSsl) {
@@ -232,10 +235,13 @@ public class Server extends AbstractVerticle {
     server.requestHandler(router).listen(port);
 
     /* Initialize support services */
-    flinkClient = FlinkClientService.createProxy(vertx, FLINK_SERVICE_ADDRESS);
-    codegenInit = CodegenInitService.createProxy(vertx, CODEGENINIT_SERVICE_ADDRESS);
+    flinkClient = FlinkClientService.createProxy(vertx, FLINK_SERVICE_ADDRESS,EVENT_BUS_TIMEOUT);
+    codegenInit = CodegenInitService.createProxy(vertx, CODEGENINIT_SERVICE_ADDRESS, EVENT_BUS_TIMEOUT);
     validator = new Validator("/jobSchema.json");
     jobScheduler = new JobScheduler(flinkClient, quartzPropertiesPath);
+    dbFlinkSync = new DbFlinkSync(flinkClient,databaseService);
+    dbFlinkSync.periodicTaskScheduler();
+    CodegenInitServiceImpl.setSchedulerInstance(jobScheduler);
     LOGGER.debug("Server Initialized");
   }
 
@@ -289,6 +295,8 @@ public class Server extends AbstractVerticle {
     JsonObject requestBody = new JsonObject();
     String jarId = routingContext.pathParam(ID);
 
+    databaseService.registerUser(requestBody, handler ->{});
+    
     if (jarId != null && jarId.endsWith(".jar")) {
       requestBody.put(URI, JAR_PLAN_API.replace("$1", jarId));
       requestBody.put(ID, jarId);
@@ -496,7 +504,7 @@ public class Server extends AbstractVerticle {
       requestBody.put(ID, jarId);
       requestBody.put(DATA, payloadBody.getJsonObject("flinkJobArgs"));
       requestBody.put(MODE, START);
-      requestBody.put("schedulePattern", payloadBody.getString("schedulePattern"));
+      requestBody.put(SCHEDULE_PATTERN, payloadBody.getString(SCHEDULE_PATTERN));
 
       jobScheduler.schedule(requestBody, resHandler -> {
         if (resHandler.succeeded()) {
@@ -586,11 +594,17 @@ public class Server extends AbstractVerticle {
     FileSystem fileSystem = vertx.fileSystem();
     fileSystem.writeFile(filePath, buffBody, fileHandler -> {
       if (fileHandler.succeeded()) {
-        String path =
-            FileSystems.getDefault().getPath(filePath).normalize().toAbsolutePath().toString();
-
-
-        request.put(NAME, fileName + ".jar").put(PATH, path).put(URI, JAR_UPLOAD_API);
+        String path = FileSystems.getDefault()
+                                 .getPath(filePath)
+                                 .normalize()
+                                 .toAbsolutePath()
+                                 .toString();
+        
+        request.put(NAME, fileName + ".jar")
+               .put(PATH, path)
+               .put(URI, JAR_UPLOAD_API)
+               .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
+        
         codegenInit.mvnInit(request, handler -> {
         });
         response.setStatusCode(202).end();

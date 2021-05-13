@@ -10,7 +10,9 @@ public class Constants {
   /** Service Addresses */
   public static final String FLINK_SERVICE_ADDRESS = "iudx.adaptor.framework.flink.service";
   public static final String CODEGENINIT_SERVICE_ADDRESS = "iudx.adaptor.framework.codegenmvn.service";
+  public static final String DATABASE_SERVICE_ADDRESS = "iudx.adaptor.framework.database.service";
   
+  public static final Long EVENT_BUS_TIMEOUT = 120000L;
   public static final String IS_SSL = "ssl";
   public static final String PORT = "port";
   public static final String KEYSTORE_PATH = "keystorePath";
@@ -106,6 +108,9 @@ public class Constants {
   public static final String RESUME = "resume";
   public static final ArrayList<String> MODES 
   = new ArrayList<String>(Arrays.asList(START,STOP,RESUME));
+  
+  public static final long POLLING_INTEVAL = 60000; //1 Minute
+  public static final String SCHEDULE_PATTERN = "schedulePattern";
 
 
 }

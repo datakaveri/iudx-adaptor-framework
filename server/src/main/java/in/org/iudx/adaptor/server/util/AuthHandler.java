@@ -8,6 +8,7 @@ import io.vertx.ext.web.RoutingContext;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import in.org.iudx.adaptor.server.database.DatabaseService;
 
 /**
  * Handles Basic authentication of APIs
@@ -17,11 +18,17 @@ public class AuthHandler implements Handler<RoutingContext> {
   
   private static final Logger LOGGER = LogManager.getLogger(AuthHandler.class);
   static JsonObject authCred;
+  private static DatabaseService databaseService;
   
   public static AuthHandler create(JsonObject auth){
     authCred = auth;
     return new AuthHandler();
   }
+  
+  /*
+   * public static AuthHandler create(DatabaseService dbService){ databaseService = dbService;
+   * return new AuthHandler(); }
+   */
   
   @Override
   public void handle(RoutingContext routingContext) {

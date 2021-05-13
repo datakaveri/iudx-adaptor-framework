@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.server.codegeninit;
 
+import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.GenIgnore;
@@ -8,6 +9,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.json.JsonObject;
 
 @VertxGen
@@ -16,7 +18,8 @@ public interface CodegenInitService {
   
   /**
    * 
-   * @param path
+   * @param jobScheduler
+   * @param request
    * @param handler
    * @return
    */
@@ -38,7 +41,7 @@ public interface CodegenInitService {
    * @return
    */
   @GenIgnore
-  static CodegenInitService createProxy(Vertx vertx,  String address) {
-    return new CodegenInitServiceVertxEBProxy(vertx, address);
+  static CodegenInitService createProxy(Vertx vertx,  String address, Long timeout) {
+    return new CodegenInitServiceVertxEBProxy(vertx, address, new DeliveryOptions().setSendTimeout(timeout));
   }
 }
