@@ -3,8 +3,6 @@ package in.org.iudx.adaptor.server.codegeninit;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
@@ -14,7 +12,6 @@ import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
-import io.netty.util.internal.StringUtil;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -62,12 +59,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     mvnExecuteFuture.compose(mvnExecuteResponse -> {
       return submitConfigJar(request, flinkClient);
       
-    })/*
-       * .recover(mapper ->{ LOGGER.debug("Error: Recover mapper; "+ mapper.getMessage()); return
-       * null;
-       * 
-       * })
-       */.compose(submitConfigJarResponse -> {
+    }).compose(submitConfigJarResponse -> {
       String jarPath = submitConfigJarResponse.getString("filename");
       String jarId = jarPath.substring(jarPath.lastIndexOf("/")+1);
       request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
@@ -110,48 +102,55 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   
   /**
    * 
-   * @param path
+   * @param configPath
    * @return
    */
-  private Future<JsonObject> mvnExecute(String path) {
+  private Future<JsonObject> mvnExecute(String configPath) {
     
     LOGGER.debug("Info: Compiling config file; Generating flink jar");
     
     Promise<JsonObject> promise = Promise.promise();
-    String fileName = new File(path).getName();
-    InvocationRequest request = new DefaultInvocationRequest();
-    request.setBaseDirectory(new File(templatePath));
-    // request.setPomFile(new File(templatePath + "/pom.xml"));
-    LOGGER.debug("Path is ");
-    LOGGER.debug(path);
-    request.setGoals(Arrays.asList("-T 1","-DADAPTOR_CONFIG_PATH=" + path,
+    String fileName = new File(configPath).getName();
+    CopyOptions options = new CopyOptions().setReplaceExisting(true);
+    String destinationDirectory = "../" + fileName + "-" + System.currentTimeMillis();
+
+    fileSystem.copyRecursive(templatePath, destinationDirectory, true, directoryHandler -> {
+      if (directoryHandler.succeeded()) {
+        LOGGER.debug("Info: Temp directory created; " + destinationDirectory);
+      } else if (directoryHandler.failed()) {
+        promise.fail(new JsonObject().put(STATUS, FAILED).toString());
+      }
+    });
+
+    InvocationRequest mvnRequest = new DefaultInvocationRequest();
+    mvnRequest.setBaseDirectory(new File(destinationDirectory));
+    
+    LOGGER.debug("Adaptor Config path is: "+configPath);
+    mvnRequest.setGoals(Arrays.asList("-T 1","-DADAPTOR_CONFIG_PATH=" + configPath,
                                     "clean", "package",
                                     "-Dmaven.test.skip=true"));
     
     mvnProgress.put(fileName, new JsonObject().put(ID, null).put(STATUS, "progress"));
-
     Invoker invoker = new DefaultInvoker();
 
     vertx.executeBlocking(blockingCodeHandler -> {
       try {
-        invoker.execute(request);
-        CopyOptions options = new CopyOptions().setReplaceExisting(true);
-        fileSystem.copy(templatePath + "/target/adaptor.jar",
+        invoker.execute(mvnRequest);
+        fileSystem.move(destinationDirectory + "/target/adaptor.jar",
                          jarOutPath + "/" + fileName, options,
             mvHandler -> {
               if (mvHandler.succeeded()) {
+                tempCleanUp(destinationDirectory);
                 blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
               } else if (mvHandler.failed()) {
                 blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
               }
-             // blockingCodeHandler.future();
             });
 
       } catch (MavenInvocationException e) {
         LOGGER.error(e);
         blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
       }
-      //blockingCodeHandler.future();
     },true, resultHandler -> {
       if (resultHandler.succeeded()) {
         promise.complete((JsonObject)resultHandler.result());
@@ -177,6 +176,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       flinkClient.submitJar(request, responseHandler -> {
         if (responseHandler.succeeded()) {
           LOGGER.info("Info: Jar submitted successfully");
+          tempCleanUp(request.getString("path"));
           blockingCodeHandler.complete(responseHandler.result());
         } else {
           LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
@@ -195,7 +195,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   }
   
   /**
-   * For schedulling jobs based on the pattern provided inthe config.
+   * For scheduling jobs based on the pattern provided in the request.
    * @param request
    * @return promise
    */
@@ -210,5 +210,17 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       }
     });
     return promise.future();
+  }
+  
+  /**
+   * Deleting the temp files and directories.
+   * @param path
+   * @return
+   */
+  private boolean tempCleanUp(String path) {
+    
+    LOGGER.debug("Info: Cleaning temp file & diretories");
+    Future<Void> promise = fileSystem.deleteRecursive(path, true);
+    return promise.succeeded();
   }
 }
