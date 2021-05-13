@@ -12,6 +12,7 @@ import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -30,6 +31,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   Vertx vertx;
   FlinkClientService flinkClient;
   JsonObject mvnProgress = new JsonObject();
+  static JobScheduler jobScheduler;
 
   private String templatePath;
   private String jarOutPath;
@@ -42,6 +44,10 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     this.templatePath = templatePath;
     this.jarOutPath = jarOutPath;
   }
+  
+  public static void setSchedulerInstance(JobScheduler jobScheduler1) {
+    jobScheduler = jobScheduler1;
+  }
 
   /**
    * {@inheritDoc}
@@ -50,20 +56,53 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   public CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     
     String path  = request.getString("path");
-    Future<JsonObject> future = mvnExecute(path);
-    future.onComplete(resHandler -> {
-      if (future.succeeded()) {
-        submitConfigJar(request, flinkClient).onComplete(flinkHandler -> {
-          if (flinkHandler.succeeded()) {
-            String id = flinkHandler.result().getString("filename");
-            mvnProgress.put(new File(path).getName(), new JsonObject().put(ID, id).put(STATUS, "completed"));
-          } else if (flinkHandler.failed()) {
-            mvnProgress.put(new File(path).getName(), new JsonObject().put(ID, null).put(STATUS, "failed"));
-          }
-        });
+    Future<JsonObject> mvnExecuteFuture = mvnExecute(path);
+    
+    mvnExecuteFuture.compose(mvnExecuteResponse -> {
+      return submitConfigJar(request, flinkClient);
+      
+    })/*
+       * .recover(mapper ->{ LOGGER.debug("Error: Recover mapper; "+ mapper.getMessage()); return
+       * null;
+       * 
+       * })
+       */.compose(submitConfigJarResponse -> {
+      String jarId = submitConfigJarResponse.getString("filename");
+      request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+      request.put(ID, jarId);
+      request.put(DATA, new JsonObject());
+      request.put(MODE, START);
+      return scheduleJobs(request);
+      
+    }).onComplete(composeHandler -> {
+      if(composeHandler.succeeded()) {
+        LOGGER.debug("Info: Job scheduled;");
+        handler.handle(Future.succeededFuture(composeHandler.result()));
+      } else if(composeHandler.failed()) {
+        LOGGER.error("Error: Job scheduling failed; "+ composeHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
       }
-
     });
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*
+     * mvnExecuteFuture.onComplete(resHandler -> { if (mvnExecuteFuture.succeeded()) {
+     * submitConfigJar(request, flinkClient).onComplete(flinkHandler -> { if
+     * (flinkHandler.succeeded()) { String id = flinkHandler.result().getString("filename");
+     * handler.handle(Future.succeededFuture(new JsonObject().put(ID, id))); mvnProgress.put(new
+     * File(path).getName(), new JsonObject().put(ID, id).put(STATUS, "completed")); } else if
+     * (flinkHandler.failed()) { mvnProgress.put(new File(path).getName(), new JsonObject().put(ID,
+     * null).put(STATUS, "failed")); } }); }
+     * 
+     * });
+     */
     return this;
   }
 
@@ -92,15 +131,17 @@ public class CodegenInitServiceImpl implements CodegenInitService {
    * @return
    */
   private Future<JsonObject> mvnExecute(String path) {
+    
+    LOGGER.debug("Info: Compiling config file; Generating flink jar");
+    
     Promise<JsonObject> promise = Promise.promise();
-
     String fileName = new File(path).getName();
     InvocationRequest request = new DefaultInvocationRequest();
     request.setBaseDirectory(new File(templatePath));
     // request.setPomFile(new File(templatePath + "/pom.xml"));
     LOGGER.debug("Path is ");
     LOGGER.debug(path);
-    request.setGoals(Arrays.asList("-DADAPTOR_CONFIG_PATH=" + path,
+    request.setGoals(Arrays.asList("-T 1","-DADAPTOR_CONFIG_PATH=" + path,
                                     "clean", "package",
                                     "-Dmaven.test.skip=true"));
     
@@ -112,7 +153,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       try {
         invoker.execute(request);
         CopyOptions options = new CopyOptions().setReplaceExisting(true);
-        fileSystem.move(templatePath + "/target/adaptor.jar",
+        fileSystem.copy(templatePath + "/target/adaptor.jar",
                          jarOutPath + "/" + fileName, options,
             mvHandler -> {
               if (mvHandler.succeeded()) {
@@ -128,7 +169,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
         blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
       }
       //blockingCodeHandler.future();
-    }, resultHandler -> {
+    },true, resultHandler -> {
       if (resultHandler.succeeded()) {
         promise.complete((JsonObject)resultHandler.result());
       } else if (resultHandler.failed()) {
@@ -140,17 +181,33 @@ public class CodegenInitServiceImpl implements CodegenInitService {
 
 
   private Future<JsonObject> submitConfigJar(JsonObject request, FlinkClientService flinkClient) {
+
     Promise<JsonObject> promise = Promise.promise();
 
-    flinkClient.submitJar(request, responseHandler -> {
-      if (responseHandler.succeeded()) {
-        LOGGER.info("Info: Jar submitted successfully");
-        promise.complete(responseHandler.result());
-      } else {
-        LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
-        promise.fail(responseHandler.cause());
+    vertx.executeBlocking(blockingCodeHandler -> {
+      flinkClient.submitJar(request, responseHandler -> {
+        if (responseHandler.succeeded()) {
+          LOGGER.info("Info: Jar submitted successfully");
+          blockingCodeHandler.complete(responseHandler.result());
+        } else {
+          LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
+          blockingCodeHandler.fail(responseHandler.cause());
+        }
+      });
+    },true, resultHandler -> {
+      if (resultHandler.succeeded()) {
+        promise.complete((JsonObject) resultHandler.result());
+      } else if (resultHandler.failed()) {
+        promise.fail(resultHandler.cause());
       }
     });
+    
+    return promise.future();
+  }
+  
+  private Future<JsonObject> scheduleJobs(JsonObject request){
+    Promise<JsonObject> promise = Promise.promise();
+    promise.complete();
     return promise.future();
   }
 }

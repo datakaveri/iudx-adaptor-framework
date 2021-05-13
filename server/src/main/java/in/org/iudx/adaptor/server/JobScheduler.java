@@ -52,7 +52,7 @@ public class JobScheduler {
   }
   
   /**
-   * 
+   * Return static FlinkClient instance.
    * @return flinkClient
    */
   public static FlinkClientService getClientInstance() {
