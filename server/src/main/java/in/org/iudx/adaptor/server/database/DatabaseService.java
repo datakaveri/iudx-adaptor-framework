@@ -16,6 +16,12 @@ public interface DatabaseService {
   @Fluent
   DatabaseService registerUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
+  /**
+   * The authenticateUser authenticates the user with the PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return jsonObject
+   */
   @Fluent
   DatabaseService authenticateUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   

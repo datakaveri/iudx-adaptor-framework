@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 
 /**
- * Handles Basic authentication of APIs
+ * Handles Basic authentication of APIs using PostgreSQL.
  *
  */
 public class AuthHandler implements Handler<RoutingContext> {
@@ -19,46 +19,63 @@ public class AuthHandler implements Handler<RoutingContext> {
   private static final Logger LOGGER = LogManager.getLogger(AuthHandler.class);
   static JsonObject authCred;
   private static DatabaseService databaseService;
-  
-  public static AuthHandler create(JsonObject auth){
-    authCred = auth;
+
+  public static AuthHandler create(DatabaseService dbService) {
+    databaseService = dbService;
     return new AuthHandler();
   }
-  
-  /*
-   * public static AuthHandler create(DatabaseService dbService){ databaseService = dbService;
-   * return new AuthHandler(); }
+
+  /**
+   * Handles the routed authentication request.
    */
-  
   @Override
   public void handle(RoutingContext routingContext) {
     
-    LOGGER.debug("Authenticating request");
+    LOGGER.debug("Info: Authenticating request");
     HttpServerResponse response = routingContext.response();
     MultiMap headers = routingContext.request().headers();
+    JsonObject requestBody = new JsonObject();
     
-    if(headers.contains("username") && headers.contains("password")) {
-      String userName = headers.get("username");
-      String password = headers.get("password");
+    /* validates the username and password in headers */
+    if(headers.contains(USERNAME) && headers.contains(PASSWORD)) {
+      String userName = headers.get(USERNAME);
+      String password = headers.get(PASSWORD);
       
       if((userName != null && password != null) && (!userName.isEmpty() && !password.isEmpty())) {
-        if(userName.equals(authCred.getValue("username")) && password.equals(authCred.getValue("password"))) {
-          LOGGER.info("Successfully authenticated");
-          routingContext.next();
-          return;
-        } else {
-          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                  .setStatusCode(401)
-                  .end(new JsonObject()
-                      .put(STATUS, ERROR)
-                      .put(DESC, "Authorization failed")
-                      .encode());
-        }
+        requestBody.put(USERNAME, userName).put(PASSWORD, password);
+        
+        /* dbrequest to validate the request credentials */
+        databaseService.authenticateUser(requestBody, dbauthHandler -> {
+          if (dbauthHandler.succeeded()) {
+            JsonObject dbRes = dbauthHandler.result();
+            System.out.println(dbRes);
+            if (dbRes.getString(STATUS).equals(SUCCESS)) {
+              LOGGER.info("Info: Successfully authenticated");
+              routingContext.next();
+              return;
+            } else if (dbRes.getString(STATUS).equals(FAILED)) {
+              LOGGER.error("Error: Request unauthorized");
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .setStatusCode(401)
+              .end(new JsonObject()
+                  .put(STATUS, FAILED)
+                  .put(DESC, "Authentication failed")
+                  .encode());
+            }
+          } else if (dbauthHandler.failed()) {
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(new JsonObject()
+                        .put(STATUS, FAILED)
+                        .put(DESC, "Internal server error")
+                        .encode());
+          }
+        });
       } else {
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                 .setStatusCode(400)
                 .end(new JsonObject()
-                    .put(STATUS, ERROR)
+                    .put(STATUS, FAILED)
                     .put(DESC, "Missing username/password header value")
                     .encode());
       }

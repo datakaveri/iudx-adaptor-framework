@@ -6,12 +6,13 @@ import java.util.Set;
 import java.util.HashSet;
 
 public class Constants {
-  
+
   /** Service Addresses */
   public static final String FLINK_SERVICE_ADDRESS = "iudx.adaptor.framework.flink.service";
-  public static final String CODEGENINIT_SERVICE_ADDRESS = "iudx.adaptor.framework.codegenmvn.service";
+  public static final String CODEGENINIT_SERVICE_ADDRESS =
+      "iudx.adaptor.framework.codegenmvn.service";
   public static final String DATABASE_SERVICE_ADDRESS = "iudx.adaptor.framework.database.service";
-  
+
   public static final Long EVENT_BUS_TIMEOUT = 120000L;
   public static final String IS_SSL = "ssl";
   public static final String PORT = "port";
@@ -56,7 +57,7 @@ public class Constants {
   public static final String LOG_ROUTE = basePath + "/log/:tId/:lId";
   public static final String CONFIG_ROUTE = basePath + "/config";
   public static final String GET_CONFIG_ROUTE = CONFIG_ROUTE + "/:id";
-  
+
   public static final String SCHEDULER_ROUTE = basePath + "/schedule";
   public static final String DELETE_SCHEDULER_JOB = basePath + "/schedule/:id";
 
@@ -74,18 +75,21 @@ public class Constants {
   public static final String DESC = "description";
   public static final String ID = "id";
   public static final String MODE = "mode";
+  public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
+  public static final String EXISTS = "exists";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";
   public static final String CLUSTER_OVERVIEW_API = "/overview";
   public static final String CLUSTER_API = "/cluster";
   public static final String JOBS_OVERVIEW_API = "/jobs/overview";
-  public static final String JAR_PLAN_API = JARS+"/$1/plan";
-  public static final String JOB_SUBMIT_API = JARS+"/$1/run";
+  public static final String JAR_PLAN_API = JARS + "/$1/plan";
+  public static final String JOB_SUBMIT_API = JARS + "/$1/run";
   public static final String JOBS_API = "/jobs/";
   public static final String SAVEPOINT = "/savepoints";
-  public static final String TASKMANAGER_API ="/taskmanagers";
-  public static final String TASKMANAGER_LOGS_API = TASKMANAGER_API+"/$1/logs/";
+  public static final String TASKMANAGER_API = "/taskmanagers";
+  public static final String TASKMANAGER_LOGS_API = TASKMANAGER_API + "/$1/logs/";
 
 
   /** Others */
@@ -101,16 +105,20 @@ public class Constants {
   public static final String OPERATION = "operation";
   public static final String TM_ID = "tId";
   public static final String L_ID = "lId";
-  
+
   /* Modes */
   public static final String START = "start";
   public static final String STOP = "stop";
   public static final String RESUME = "resume";
-  public static final ArrayList<String> MODES 
-  = new ArrayList<String>(Arrays.asList(START,STOP,RESUME));
-  
-  public static final long POLLING_INTEVAL = 60000; //1 Minute
+  public static final ArrayList<String> MODES =
+      new ArrayList<String>(Arrays.asList(START, STOP, RESUME));
+
+  public static final long POLLING_INTEVAL = 60000; // 1 Minute
   public static final String SCHEDULE_PATTERN = "schedulePattern";
+
+  /* Database query */
+  public static final String AUTHENTICATE_USER =
+      "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
 
 
 }

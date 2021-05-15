@@ -103,7 +103,7 @@ public class Server extends AbstractVerticle {
     /* Sumbit Jar Route */
     router.post(JAR_ROUTE)
           .consumes(Constants.MULTIPART_FORM_DATA)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             submitJarHandler(routingContext);
     });
@@ -111,7 +111,7 @@ public class Server extends AbstractVerticle {
     /* Get all the Jar */
     router.get(JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getJarsHandler(routingContext);
     });
@@ -119,7 +119,7 @@ public class Server extends AbstractVerticle {
     /* Get a Single Jar plan */
     router.get(GET_JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getJarsHandler(routingContext);
     });
@@ -127,7 +127,7 @@ public class Server extends AbstractVerticle {
     /* Delete all the submitted Jar */
     router.delete(JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             deleteJarsHandler(routingContext);
     });
@@ -135,7 +135,7 @@ public class Server extends AbstractVerticle {
     /* Delete a single jar */
     router.delete(GET_JAR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             deleteJarsHandler(routingContext);
     });
@@ -144,7 +144,7 @@ public class Server extends AbstractVerticle {
     router.post(JOB_RUN_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             runJobHandler(routingContext);
         });
@@ -152,7 +152,7 @@ public class Server extends AbstractVerticle {
     /* Get the all running/completed jobs */
     router.get(JOBS_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getJobsHandler(routingContext);
         });
@@ -160,7 +160,7 @@ public class Server extends AbstractVerticle {
     /* Get the details of single job */
     router.get(JOB_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getJobsHandler(routingContext);
     });
@@ -168,7 +168,7 @@ public class Server extends AbstractVerticle {
     /* Get the all logs file */
     router.get(LOGS_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getLogsHandler(routingContext);
         });
@@ -176,7 +176,7 @@ public class Server extends AbstractVerticle {
     /* Get the single log file*/
     router.get(LOG_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getLogsHandler(routingContext);
     });
@@ -185,7 +185,7 @@ public class Server extends AbstractVerticle {
     router.get(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
           //.consumes(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getAllScheduledJobs(routingContext);
           });
@@ -194,7 +194,7 @@ public class Server extends AbstractVerticle {
     router.post(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
            //.consumes(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             scheduledJobs(routingContext);
            });
@@ -202,7 +202,7 @@ public class Server extends AbstractVerticle {
     /*Delete all the scheduled jobs*/
     router.delete(SCHEDULER_ROUTE)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             deleteScheduledJobs(routingContext);
           });
@@ -210,7 +210,7 @@ public class Server extends AbstractVerticle {
     /*Delete specific scheduled job*/
     router.delete(DELETE_SCHEDULER_JOB)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             deleteScheduledJobs(routingContext);
           });
@@ -219,7 +219,7 @@ public class Server extends AbstractVerticle {
     router.post(CONFIG_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
-          .handler(AuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             submitConfigHandler(routingContext);
           });
@@ -227,6 +227,7 @@ public class Server extends AbstractVerticle {
     /*Polling config codegen*/
     router.get(CONFIG_ROUTE)
           .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
           .blockingHandler(routingContext -> {
             statusConfigHandler(routingContext);
           });
