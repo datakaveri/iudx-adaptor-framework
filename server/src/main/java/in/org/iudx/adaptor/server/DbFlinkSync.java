@@ -51,9 +51,6 @@ public class DbFlinkSync {
       } else if (handler.failed())
         System.out.println(handler.cause());
     });
-    /*
-     * flinkClient.getJobDetails(requestBody, handler ->{ if(handler.succeeded()) { } });
-     */
   }
   
   public void syncJarDetails() {
