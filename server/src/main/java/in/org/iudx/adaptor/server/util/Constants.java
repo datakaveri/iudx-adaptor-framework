@@ -55,11 +55,11 @@ public class Constants {
   public static final String JOB_ROUTE = basePath + "/job/:id";
   public static final String LOGS_ROUTE = basePath + "/log";
   public static final String LOG_ROUTE = basePath + "/log/:tId/:lId";
-  public static final String CONFIG_ROUTE = basePath + "/config";
-  public static final String GET_CONFIG_ROUTE = CONFIG_ROUTE + "/:id";
-
   public static final String SCHEDULER_ROUTE = basePath + "/schedule";
   public static final String DELETE_SCHEDULER_JOB = basePath + "/schedule/:id";
+  
+  public static final String ADAPTOR_ROUTE = "/adaptor";
+  public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
 
   /** Response messages */
   public static final String MESSAGE = "message";
