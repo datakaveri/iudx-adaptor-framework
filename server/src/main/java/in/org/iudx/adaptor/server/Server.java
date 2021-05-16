@@ -215,21 +215,37 @@ public class Server extends AbstractVerticle {
             deleteScheduledJobs(routingContext);
           });
     
-    /*Config file processing*/
-    router.post(CONFIG_ROUTE)
+    /*Adaptor, config file processing*/
+    router.post(ADAPTOR_ROUTE)
           .consumes(MIME_APPLICATION_JSON)
           .produces(MIME_APPLICATION_JSON)
           .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
-            submitConfigHandler(routingContext);
+            postAdaptorHandler(routingContext);
           });
     
-    /*Polling config codegen*/
-    router.get(CONFIG_ROUTE)
+    /*Get a (one) adaptor status*/
+    router.get(ADAPTOR_ROUTE_ID)
           .produces(MIME_APPLICATION_JSON)
           .handler(AuthHandler.create(databaseService))
           .blockingHandler(routingContext -> {
-            statusConfigHandler(routingContext);
+            getAdaptorHandler(routingContext);
+          });
+    
+    /*Get all adaptor status*/
+    router.get(ADAPTOR_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .blockingHandler(routingContext -> {
+            getAdaptorHandler(routingContext);
+          });
+    
+    /*Delete a adaptor*/
+    router.delete(ADAPTOR_ROUTE_ID)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .blockingHandler(routingContext -> {
+            deleteAdaptorHandler(routingContext);
           });
 
     /* Start server */
@@ -581,7 +597,7 @@ public class Server extends AbstractVerticle {
    * Accepts the JsonConfig, processes, creates and submit Jar.
    * @param routingContext
    */
-  private void submitConfigHandler(RoutingContext routingContext) {
+  private void postAdaptorHandler(RoutingContext routingContext) {
 
     LOGGER.debug("Info: Processing config file");
 
@@ -610,14 +626,14 @@ public class Server extends AbstractVerticle {
         });
         response.setStatusCode(202).end();
       } else if (fileHandler.failed()) {
-        System.out.println(fileHandler.cause());
+        LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
       }
     });
   }
   
   
-  private void statusConfigHandler(RoutingContext routingContext) {
-    LOGGER.debug("Info: Getting status of codegen");
+  private void getAdaptorHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Getting adaptor status");
 
     HttpServerResponse response = routingContext.response();
     
@@ -628,5 +644,9 @@ public class Server extends AbstractVerticle {
                 .end(handler.result().toString());
       }
     });
+  }
+  
+  private void deleteAdaptorHandler(RoutingContext routingContex) {
+    LOGGER.debug("Info: Deleting a adaptor");
   }
 }
