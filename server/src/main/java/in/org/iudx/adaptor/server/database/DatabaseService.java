@@ -38,13 +38,28 @@ public interface DatabaseService {
    * Updates the status of the Adaptor process in PostgreSQL database.
    * @param request
    * @param handler
-   * @return
+   * @return jsonObject
    */
   @Fluent
   DatabaseService updateComplex(String query, Handler<AsyncResult<JsonObject>> handler);
   
+  /**
+   * Get Adaptor(s) details from the PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return jsonObject
+   */
   @Fluent
-  DatabaseService handleGenQuery(String query, Handler<AsyncResult<JsonObject>> handler);
+  DatabaseService getAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+ 
+  /**
+   * Delete Adaptor from the the PostgreSQL database in CASCADE mode.
+   * @param query
+   * @param handler
+   * @return jsonObject
+   */
+  @Fluent
+  DatabaseService deleteAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
   @GenIgnore
   static DatabaseService createProxy(Vertx vertx, String address) {

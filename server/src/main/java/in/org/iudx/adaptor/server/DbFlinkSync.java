@@ -45,12 +45,11 @@ public class DbFlinkSync {
     requestBody.put(URI, JOBS_API).put(ID, "");
     String selectQuery = "SELECT * FROM flink_job";
     
-    databaseService.handleGenQuery(selectQuery, handler ->{
-      if(handler.succeeded()) {
-        System.out.println(handler.result());
-      } else if (handler.failed())
-        System.out.println(handler.cause());
-    });
+    /*
+     * databaseService.getAdaptor(selectQuery, handler ->{ if(handler.succeeded()) {
+     * System.out.println(handler.result()); } else if (handler.failed())
+     * System.out.println(handler.cause()); });
+     */
   }
   
   public void syncJarDetails() {

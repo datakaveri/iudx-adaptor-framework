@@ -646,16 +646,11 @@ public class Server extends AbstractVerticle {
     LOGGER.debug("Info: Getting adaptor status");
 
     HttpServerResponse response = routingContext.response();
-    JsonObject requestBody = new JsonObject();
+    String username = routingContext.request().getHeader(USERNAME);
     String id = routingContext.pathParam(ID);
-    String query;
-    if(id != null) {
-      query = GET_ADAPTOR.replace("$1", id).replace("$2", "");
-    } else {
-      query = GET_ADAPTOR.replace("$1", "").replace("$2", "!");
-    }
-    
-    databaseService.handleGenQuery(query, databaseHandler ->{
+    JsonObject requestBody = new JsonObject().put(USERNAME, username).put(ID, id);
+     
+    databaseService.getAdaptor(requestBody, databaseHandler ->{
       if(databaseHandler.succeeded()) {
         LOGGER.info("Success: Get adaptor query");
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -669,7 +664,37 @@ public class Server extends AbstractVerticle {
     });
   }
   
-  private void deleteAdaptorHandler(RoutingContext routingContex) {
+  private void deleteAdaptorHandler(RoutingContext routingContext) {
     LOGGER.debug("Info: Deleting a adaptor");
+    
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String username = routingContext.request().getHeader(USERNAME);
+    String id = routingContext.pathParam(ID);
+    
+    requestBody.put(USERNAME, username)
+               .put(ID, id);
+    
+    if(id != null) {      
+      databaseService.deleteAdaptor(requestBody, databaseHandler->{
+        if(databaseHandler.succeeded()) {
+          LOGGER.info("Success: Get adaptor query");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .end(databaseHandler.result().toString());
+        } else if (databaseHandler.failed()) {
+          LOGGER.error("Error: Get adptor query failed; " + databaseHandler.cause());
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .setStatusCode(400)
+                  .end(databaseHandler.cause().getMessage());
+        }
+      });
+    } else {
+      LOGGER.error("Error: Query param missing;");
+      response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .setStatusCode(400)
+              .end(new ResponseHandler.Builder()
+                  .withStatus(INVALID_SYNTAX)
+                  .build().toJsonString());
+    }
   }
 }

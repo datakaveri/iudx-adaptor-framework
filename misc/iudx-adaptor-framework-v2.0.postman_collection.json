@@ -1,0 +1,142 @@
+{
+	"info": {
+		"_postman_id": "bb3d374f-8e9f-4038-a126-14957aa48f1f",
+		"name": "iudx-adaptor-framework-v2.0",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "adaptor",
+			"item": [
+				{
+					"name": "CreateAdaptor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"FlinkTestApp2\",\r\n    \"schedulePattern\": \"0 * * * * ?\",\r\n    \"inputSpec\": {\r\n        \"type\": \"http\",\r\n        \"url\": \"http://mockserver:8080/simpleB\",\r\n        \"requestType\": \"GET\",\r\n        \"pollingInterval\": 1000\r\n    },\r\n\r\n    \"parseSpec\": {\r\n        \"type\": \"json\",\r\n        \"messageContainer\": \"array\",\r\n        \"containerPath\": \"$.data\",\r\n        \"keyPath\": \"$.deviceId\",\r\n        \"timestampPath\": \"$.time\"\r\n    },\r\n    \r\n    \"deduplicationSpec\": {\r\n        \"type\": \"timeBased\"\r\n    },\r\n    \r\n    \"transformSpec\": {\r\n        \"type\": \"jolt\",\r\n        \"joltSpec\": [\r\n            { \"operation\": \"shift\", \"spec\": \r\n                { \"time\": \"observationDateTime\", \"deviceId\": \"id\", \"k1\": \"k1\" } },\r\n            { \"operation\": \"modify-overwrite-beta\", \"spec\": \r\n                { \"id\": \"=concat('datakaveri.org/123/', id)\" } }\r\n        ]\r\n    },\r\n\r\n    \"publishSpec\": {\r\n        \"type\": \"rmq\",\r\n        \"url\": \"amqp://mockrmq\",\r\n        \"port\": 5672,\r\n        \"uname\": \"guest\",\r\n        \"password\": \"guest\",\r\n        \"sinkName\": \"adaptor-test\",\r\n        \"tagName\": \"test\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAdaptors",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor/",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAdaptor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor/adaptor-user_FlinkTestApp2",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor",
+								"adaptor-user_FlinkTestApp2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteAdaptor",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor/adaptor-user_FlinkTestApp2",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor",
+								"adaptor-user_FlinkTestApp2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

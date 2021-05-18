@@ -78,6 +78,7 @@ public class Constants {
   public static final String USERNAME = "username";
   public static final String PASSWORD = "password";
   public static final String EXISTS = "exists";
+  public static final String INVALID_SYNTAX = "invalidSyntax";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";
@@ -123,6 +124,9 @@ public class Constants {
   public static final String COMPILING = "compiling";
   public static final String SCHEDULED = "scheduled";
   public static final String RUNNING = "running";
+  public static final String LASTSEEN = "lastSeen";
+  public static final String TIMESTAMP = "timestamp";
+  public static final String ADAPTORS = "adaptors";
   
   public static final String AUTHENTICATE_USER =
       "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
@@ -134,6 +138,8 @@ public class Constants {
   
   public static final String UPDATE_JARID = "UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'";
   
+  public static final String DELETE_ADAPTOR = "DELETE FROM adaptor where adaptor_id = '$1'";
+  
   public static final String UPDATE_COMPLEX = "WITH update_adaptor AS (\n" + 
       "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
       "  returning adaptor_id\n" + 
@@ -142,8 +148,17 @@ public class Constants {
       "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" + 
       "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
   
-  public static final String INSERT_JOB = "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
-  public static final String GET_ADAPTOR = "SELECT * FROM adaptor WHERE adaptor_id $2= '$1'";
+  public static final String INSERT_JOB =
+      "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
+  public static final String GET_ALL_ADAPTOR =
+      "SELECT adaptor.* FROM adaptor INNER JOIN public.\"user\" AS _user "
+      + "ON adaptor.user_id = _user.id WHERE _user.id = "
+      + "(SELECT id FROM public.user WHERE username = '$1')";
+  
+  public static final String GET_ONE_ADAPTOR =
+      "SELECT adaptor.* FROM adaptor INNER JOIN public.\"user\" AS _user "
+      + "ON adaptor.user_id = _user.id WHERE adaptor_id = '$2' "
+      + "AND _user.id = (SELECT id FROM public.user WHERE username = '$1')";
   
   public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
       "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
