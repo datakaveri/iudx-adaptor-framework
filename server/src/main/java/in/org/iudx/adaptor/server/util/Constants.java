@@ -143,6 +143,7 @@ public class Constants {
       "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
   
   public static final String INSERT_JOB = "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
+  public static final String GET_ADAPTOR = "SELECT * FROM adaptor WHERE adaptor_id $2= '$1'";
   
   public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
       "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 

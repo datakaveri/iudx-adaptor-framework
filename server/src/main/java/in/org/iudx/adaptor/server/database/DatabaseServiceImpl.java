@@ -22,7 +22,7 @@ public class DatabaseServiceImpl implements DatabaseService {
   }
 
   @Override
-  public DatabaseService handleQuery(String query, Handler<AsyncResult<JsonObject>> handler) {
+  public DatabaseService handleGenQuery(String query, Handler<AsyncResult<JsonObject>> handler) {
 
     JsonArray response = new JsonArray();
 

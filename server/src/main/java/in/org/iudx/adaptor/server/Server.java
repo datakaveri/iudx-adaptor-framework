@@ -646,12 +646,25 @@ public class Server extends AbstractVerticle {
     LOGGER.debug("Info: Getting adaptor status");
 
     HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+    String id = routingContext.pathParam(ID);
+    String query;
+    if(id != null) {
+      query = GET_ADAPTOR.replace("$1", id).replace("$2", "");
+    } else {
+      query = GET_ADAPTOR.replace("$1", "").replace("$2", "!");
+    }
     
-    codegenInit.getMvnStatus(handler->{
-      if(handler.succeeded()) {
+    databaseService.handleGenQuery(query, databaseHandler ->{
+      if(databaseHandler.succeeded()) {
+        LOGGER.info("Success: Get adaptor query");
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                .setStatusCode(200)
-                .end(handler.result().toString());
+                .end(databaseHandler.result().toString());
+      } else if (databaseHandler.failed()) {
+        LOGGER.error("Error: Get adptor query failed; " + databaseHandler.cause());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(databaseHandler.cause().getMessage());
       }
     });
   }

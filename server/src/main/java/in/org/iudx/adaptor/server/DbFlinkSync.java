@@ -45,7 +45,7 @@ public class DbFlinkSync {
     requestBody.put(URI, JOBS_API).put(ID, "");
     String selectQuery = "SELECT * FROM flink_job";
     
-    databaseService.handleQuery(selectQuery, handler ->{
+    databaseService.handleGenQuery(selectQuery, handler ->{
       if(handler.succeeded()) {
         System.out.println(handler.result());
       } else if (handler.failed())

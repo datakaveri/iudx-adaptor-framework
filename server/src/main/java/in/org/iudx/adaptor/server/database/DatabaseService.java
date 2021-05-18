@@ -44,7 +44,7 @@ public interface DatabaseService {
   DatabaseService updateComplex(String query, Handler<AsyncResult<JsonObject>> handler);
   
   @Fluent
-  DatabaseService handleQuery(String query, Handler<AsyncResult<JsonObject>> handler);
+  DatabaseService handleGenQuery(String query, Handler<AsyncResult<JsonObject>> handler);
   
   @GenIgnore
   static DatabaseService createProxy(Vertx vertx, String address) {
