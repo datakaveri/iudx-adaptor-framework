@@ -48,7 +48,6 @@ public class AuthHandler implements Handler<RoutingContext> {
         databaseService.authenticateUser(requestBody, dbauthHandler -> {
           if (dbauthHandler.succeeded()) {
             JsonObject dbRes = dbauthHandler.result();
-            System.out.println(dbRes);
             if (dbRes.getString(STATUS).equals(SUCCESS)) {
               LOGGER.info("Info: Successfully authenticated");
               routingContext.next();

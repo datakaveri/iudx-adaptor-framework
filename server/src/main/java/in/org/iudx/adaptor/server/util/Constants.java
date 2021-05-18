@@ -113,12 +113,49 @@ public class Constants {
   public static final ArrayList<String> MODES =
       new ArrayList<String>(Arrays.asList(START, STOP, RESUME));
 
-  public static final long POLLING_INTEVAL = 60000; // 1 Minute
+  public static final long POLLING_INTEVAL = 600000; // 1 Minute
   public static final String SCHEDULE_PATTERN = "schedulePattern";
 
   /* Database query */
+  public static final String ADAPTOR_ID = "adaptorId";
+  public static final String JAR_ID = "jarId";
+  public static final String JOB_ID = "jobId";
+  public static final String COMPILING = "compiling";
+  public static final String SCHEDULED = "scheduled";
+  public static final String RUNNING = "running";
+  
   public static final String AUTHENTICATE_USER =
       "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
+  public static final String CREATE_ADAPTOR =
+      "INSERT into adaptor(adaptor_id,\"data\",\"timestamp\",user_id) SELECT '$1', '$2'::json, now(), us.\"id\" from public.\"user\" us where username = '$3';"
+      + "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$4', now(),'$1')";
+  
+  public static final String UPDATE_STATUS = "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$1', now(),'$2')";
+  
+  public static final String UPDATE_JARID = "UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'";
+  
+  public static final String UPDATE_COMPLEX = "WITH update_adaptor AS (\n" + 
+      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
+      "  returning adaptor_id\n" + 
+      ")\n" + 
+      "UPDATE codegen_status SET status = '$3', \"timestamp\" = now() \n" + 
+      "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" + 
+      "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
+  
+  public static final String INSERT_JOB = "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
+  
+  public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
+      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
+      "  returning adaptor_id\n" + 
+      "),\n" + 
+      " update_codegen_status AS (\n" + 
+      "  UPDATE codegen_status SET STATUS = '$3', \"timestamp\" = now() \n" + 
+      "  FROM (SELECT adaptor_id FROM update_adaptor) AS adaptor\n" + 
+      "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id\n" + 
+      "  returning adaptor.adaptor_id\n" + 
+      ")\n" + 
+      "INSERT INTO flink_job(job_id, \"timestamp\",status, adaptor_id)\n" + 
+      "SELECT '$4',now(),'$5',adaptor_id from update_codegen_status";
 
 
 }

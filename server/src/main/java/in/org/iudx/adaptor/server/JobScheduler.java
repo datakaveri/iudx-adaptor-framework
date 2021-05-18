@@ -12,6 +12,8 @@ import org.quartz.impl.JobDetailImpl;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
+import in.org.iudx.adaptor.server.database.DatabaseService;
+import in.org.iudx.adaptor.server.database.DatabaseServiceImpl;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.FlinkJobExecute;
@@ -34,6 +36,7 @@ public class JobScheduler {
 
   private Scheduler scheduler;
   private static FlinkClientService flinkClient;
+  private static DatabaseService databaseService;
   private static final Logger LOGGER = LogManager.getLogger(JobScheduler.class);
   
   /**
@@ -43,9 +46,10 @@ public class JobScheduler {
    * @param propertiesName
    * @throws SchedulerException
    */
-  public JobScheduler(FlinkClientService flinkClient, String propertiesName) throws SchedulerException {
+  public JobScheduler(FlinkClientService flinkClient, DatabaseService databaseService, String propertiesName) throws SchedulerException {
     
     JobScheduler.flinkClient = flinkClient;
+    JobScheduler.databaseService = databaseService;
     SchedulerFactory factory = new StdSchedulerFactory(propertiesName);
     scheduler = factory.getScheduler();
     scheduler.start();
@@ -57,6 +61,14 @@ public class JobScheduler {
    */
   public static FlinkClientService getClientInstance() {
     return JobScheduler.flinkClient;
+  }
+  
+  /**
+   * Return static DatabaseService instance.
+   * @return databaseService
+   */
+  public static DatabaseService getDbInstance() {
+    return JobScheduler.databaseService;
   }
   
   /**

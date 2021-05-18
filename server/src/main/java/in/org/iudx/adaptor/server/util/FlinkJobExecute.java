@@ -8,14 +8,17 @@ import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
 import in.org.iudx.adaptor.server.JobScheduler;
+import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import static in.org.iudx.adaptor.server.util.Constants.*;
 
 @PersistJobDataAfterExecution
 public class FlinkJobExecute implements Job {
   FlinkClientService flinkClient;
+  DatabaseService databaseService;
   JsonObject request = new JsonObject();
 
   private static final Logger LOGGER = LogManager.getLogger(FlinkJobExecute.class);
@@ -25,6 +28,7 @@ public class FlinkJobExecute implements Job {
     
     SchedulerContext schedulerContext = null;
     flinkClient = JobScheduler.getClientInstance();
+    databaseService = JobScheduler.getDbInstance();
     
     try {
       schedulerContext = context.getScheduler().getContext();
@@ -42,6 +46,22 @@ public class FlinkJobExecute implements Job {
     flinkClient.handleJob(data, resHandler->{
       if (resHandler.succeeded()) {
         LOGGER.info("Success: Quartz job scheduled; "+ resHandler.succeeded());
+        String jobId = resHandler.result()
+                                 .getJsonArray(RESULTS)
+                                 .getJsonObject(0)
+                                 .getString(DESC);
+        
+        String query = INSERT_JOB.replace("$1",jobId)
+                                 .replace("$2", RUNNING)
+                                 .replace("$3", data.getString(ADAPTOR_ID));
+        
+        databaseService.updateComplex(query, updateHandler ->{
+          if(updateHandler.succeeded()) {
+            LOGGER.debug("Info: database updated");
+          } else {
+            LOGGER.error("Error: database update failed");
+          }
+        });
       } else {
         LOGGER.error("Error: Quartz job schedulling failed; " + resHandler.cause().getMessage());
       }

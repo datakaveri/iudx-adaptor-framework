@@ -19,9 +19,9 @@ import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
-import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.AuthHandler;
 import in.org.iudx.adaptor.server.util.Constants;
+import in.org.iudx.adaptor.server.util.ResponseHandler;
 import in.org.iudx.adaptor.server.util.Validator;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import java.nio.file.FileSystems;
@@ -221,7 +221,7 @@ public class Server extends AbstractVerticle {
           .produces(MIME_APPLICATION_JSON)
           .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
-            postAdaptorHandler(routingContext);
+            createAdaptorHandler(routingContext);
           });
     
     /*Get a (one) adaptor status*/
@@ -255,7 +255,7 @@ public class Server extends AbstractVerticle {
     flinkClient = FlinkClientService.createProxy(vertx, FLINK_SERVICE_ADDRESS,EVENT_BUS_TIMEOUT);
     codegenInit = CodegenInitService.createProxy(vertx, CODEGENINIT_SERVICE_ADDRESS, EVENT_BUS_TIMEOUT);
     validator = new Validator("/jobSchema.json");
-    jobScheduler = new JobScheduler(flinkClient, quartzPropertiesPath);
+    jobScheduler = new JobScheduler(flinkClient, databaseService, quartzPropertiesPath);
     dbFlinkSync = new DbFlinkSync(flinkClient,databaseService);
     dbFlinkSync.periodicTaskScheduler();
     CodegenInitServiceImpl.setSchedulerInstance(jobScheduler);
@@ -597,16 +597,18 @@ public class Server extends AbstractVerticle {
    * Accepts the JsonConfig, processes, creates and submit Jar.
    * @param routingContext
    */
-  private void postAdaptorHandler(RoutingContext routingContext) {
+  private void createAdaptorHandler(RoutingContext routingContext) {
 
     LOGGER.debug("Info: Processing config file");
 
     HttpServerResponse response = routingContext.response();
     Buffer buffBody = routingContext.getBody();
+    String username = routingContext.request().getHeader(USERNAME);
     JsonObject jsonBody = routingContext.getBodyAsJson();
     String fileName = jsonBody.getString(NAME);
     String filePath = jarOutPath + "/" + fileName;
     JsonObject request = new JsonObject();
+    String adaptorId = username+"_"+fileName;
 
     FileSystem fileSystem = vertx.fileSystem();
     fileSystem.writeFile(filePath, buffBody, fileHandler -> {
@@ -617,14 +619,22 @@ public class Server extends AbstractVerticle {
                                  .toAbsolutePath()
                                  .toString();
         
-        request.put(NAME, fileName + ".jar")
+        request.put(USERNAME, username)
+               .put(ADAPTOR_ID, adaptorId)
+               .put(DATA, jsonBody)
+               .put(NAME, fileName + ".jar")
                .put(PATH, path)
                .put(URI, JAR_UPLOAD_API)
                .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
         
         codegenInit.mvnInit(request, handler -> {
         });
-        response.setStatusCode(202).end();
+        response.setStatusCode(202)
+                .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(new JsonObject().put(ID, adaptorId)
+                                     .put(NAME, fileName)
+                                     .put(STATUS, COMPILING)
+                                     .toString());
       } else if (fileHandler.failed()) {
         LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
       }

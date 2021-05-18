@@ -25,6 +25,24 @@ public interface DatabaseService {
   @Fluent
   DatabaseService authenticateUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
+  /**
+   * The createAdaptor creates the adaptor related details in PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return jsonObject
+   */
+  @Fluent
+  DatabaseService createAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
+  /**
+   * Updates the status of the Adaptor process in PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return
+   */
+  @Fluent
+  DatabaseService updateComplex(String query, Handler<AsyncResult<JsonObject>> handler);
+  
   @Fluent
   DatabaseService handleQuery(String query, Handler<AsyncResult<JsonObject>> handler);
   

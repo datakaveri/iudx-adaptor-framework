@@ -35,13 +35,12 @@ public class PostgresClient {
             promise.complete(handler.result());
           } else {
             pgConnection.close();
-            LOGGER.fatal("Fail : " + handler.cause());
-            promise.fail(handler.cause());
+            LOGGER.fatal("Error: PgClient; " + handler.cause().getMessage());
+            promise.fail(handler.cause().getMessage());
           }          
         });
       }
     });
-    
     return promise.future();
   }
 }

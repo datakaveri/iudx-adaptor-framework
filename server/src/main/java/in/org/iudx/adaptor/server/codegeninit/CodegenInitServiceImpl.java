@@ -11,6 +11,7 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import in.org.iudx.adaptor.server.JobScheduler;
+import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -28,6 +29,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   FileSystem fileSystem;
   Vertx vertx;
   FlinkClientService flinkClient;
+  DatabaseService databaseService;
   JsonObject mvnProgress = new JsonObject();
   static JobScheduler jobScheduler;
 
@@ -35,12 +37,13 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   private String jarOutPath;
 
   public CodegenInitServiceImpl(Vertx vertx, FlinkClientService flinkClient, 
-                                  String templatePath, String jarOutPath) {
+                                  DatabaseService databaseService, String templatePath, String jarOutPath) {
     fileSystem = vertx.fileSystem();
     this.vertx = vertx;
     this.flinkClient = flinkClient;
     this.templatePath = templatePath;
     this.jarOutPath = jarOutPath;
+    this.databaseService = databaseService;
   }
   
   public static void setSchedulerInstance(JobScheduler jobScheduler1) {
@@ -52,29 +55,47 @@ public class CodegenInitServiceImpl implements CodegenInitService {
    */
   @Override
   public CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
-    
-    String path  = request.getString("path");
-    Future<JsonObject> mvnExecuteFuture = mvnExecute(path);
-    
-    mvnExecuteFuture.compose(mvnExecuteResponse -> {
-      return submitConfigJar(request, flinkClient);
-      
-    }).compose(submitConfigJarResponse -> {
-      String jarPath = submitConfigJarResponse.getString("filename");
-      String jarId = jarPath.substring(jarPath.lastIndexOf("/")+1);
-      request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
-      request.put(ID, jarId);
-      request.put(DATA, new JsonObject());
-      request.put(MODE, START);
-      return scheduleJobs(request);
-      
-    }).onComplete(composeHandler -> {
-      if(composeHandler.succeeded()) {
-        LOGGER.debug("Info: Job scheduled;");
-        handler.handle(Future.succeededFuture(composeHandler.result()));
-      } else if(composeHandler.failed()) {
-        LOGGER.error("Error: Job scheduling failed; "+ composeHandler.cause().getMessage());
-        handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
+
+    databaseService.createAdaptor(request, adaptorHandler -> {
+      if (adaptorHandler.succeeded()) {
+
+        String path = request.getString("path");
+        Future<JsonObject> mvnExecuteFuture = mvnExecute(path);
+
+        mvnExecuteFuture.compose(mvnExecuteResponse -> {
+          return submitConfigJar(request, flinkClient);
+
+        }).compose(submitConfigJarResponse -> {
+          String jarPath = submitConfigJarResponse.getString("filename");
+          String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
+          request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+          request.put(ID, jarId);
+          request.put(DATA, new JsonObject());
+          request.put(MODE, START);
+          request.put(JAR_ID, jarId);
+          return scheduleJobs(request);
+
+        }).onComplete(composeHandler -> {
+          if (composeHandler.succeeded()) {
+            
+            String query = UPDATE_COMPLEX
+                .replace("$1", request.getString(JAR_ID))
+                .replace("$2", request.getString(ADAPTOR_ID))
+                .replace("$3", SCHEDULED);
+            
+            databaseService.updateComplex(query, updateHandler -> {
+              if(updateHandler.succeeded()) {
+                LOGGER.debug("Info: Job scheduled;");
+              } else {
+                LOGGER.error("Error: Job Scheduled; Update failed");
+              }
+              handler.handle(Future.succeededFuture(composeHandler.result())); 
+            });
+          } else if (composeHandler.failed()) {
+            LOGGER.error("Error: Job scheduling failed; " + composeHandler.cause().getMessage());
+            handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
+          }
+        });
       }
     });
 
