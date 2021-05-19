@@ -60,6 +60,8 @@ public class Constants {
   
   public static final String ADAPTOR_ROUTE = "/adaptor";
   public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
+  public static final String USER_ROUTE = "/user";
+  public static final String USER_ROUTE_ID = USER_ROUTE + "/:id";
 
   /** Response messages */
   public static final String MESSAGE = "message";
@@ -79,6 +81,7 @@ public class Constants {
   public static final String PASSWORD = "password";
   public static final String EXISTS = "exists";
   public static final String INVALID_SYNTAX = "invalidSyntax";
+  public static final String DUPLICATE_ADAPTOR = "duplicateAdaptor";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";
@@ -150,15 +153,18 @@ public class Constants {
   
   public static final String INSERT_JOB =
       "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
+  
   public static final String GET_ALL_ADAPTOR =
-      "SELECT adaptor.* FROM adaptor INNER JOIN public.\"user\" AS _user "
-      + "ON adaptor.user_id = _user.id WHERE _user.id = "
-      + "(SELECT id FROM public.user WHERE username = '$1')";
+      "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN codegen_status AS"
+      + " cg ON ad.adaptor_id = cg.adaptor_id INNER JOIN public.\"user\" AS _user"
+      + " ON ad.user_id = _user.id WHERE _user.id = (SELECT id FROM public.user WHERE username = '$1');";
   
   public static final String GET_ONE_ADAPTOR =
-      "SELECT adaptor.* FROM adaptor INNER JOIN public.\"user\" AS _user "
-      + "ON adaptor.user_id = _user.id WHERE adaptor_id = '$2' "
-      + "AND _user.id = (SELECT id FROM public.user WHERE username = '$1')";
+      "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN "
+      + "codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id "
+      + "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id "
+      + "WHERE ad.adaptor_id = '$2' AND _user.id = "
+      + "(SELECT id FROM public.user WHERE username = '$1');";
   
   public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
       "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 

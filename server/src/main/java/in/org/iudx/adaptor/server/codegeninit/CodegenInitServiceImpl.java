@@ -138,45 +138,44 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     fileSystem.copyRecursive(templatePath, destinationDirectory, true, directoryHandler -> {
       if (directoryHandler.succeeded()) {
         LOGGER.debug("Info: Temp directory created; " + destinationDirectory);
+        
+        InvocationRequest mvnRequest = new DefaultInvocationRequest();
+        mvnRequest.setBaseDirectory(new File(destinationDirectory));
+        
+        LOGGER.debug("Adaptor Config path is: "+configPath);
+        mvnRequest.setGoals(Arrays.asList("-T 1","-DADAPTOR_CONFIG_PATH=" + configPath,
+                                        "clean", "package",
+                                        "-Dmaven.test.skip=true"));
+        
+        Invoker invoker = new DefaultInvoker();
+
+        vertx.executeBlocking(blockingCodeHandler -> {
+          try {
+            invoker.execute(mvnRequest);
+            fileSystem.move(destinationDirectory + "/target/adaptor.jar",
+                             jarOutPath + "/" + fileName, options,
+                mvHandler -> {
+                  if (mvHandler.succeeded()) {
+                    tempCleanUp(destinationDirectory);
+                    blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
+                  } else if (mvHandler.failed()) {
+                    blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
+                  }
+                });
+
+          } catch (MavenInvocationException e) {
+            LOGGER.error(e);
+            blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
+          }
+        },true, resultHandler -> {
+          if (resultHandler.succeeded()) {
+            promise.complete((JsonObject)resultHandler.result());
+          } else if (resultHandler.failed()) {
+            promise.fail(resultHandler.cause());
+          }
+        });
       } else if (directoryHandler.failed()) {
         promise.fail(new JsonObject().put(STATUS, FAILED).toString());
-      }
-    });
-
-    InvocationRequest mvnRequest = new DefaultInvocationRequest();
-    mvnRequest.setBaseDirectory(new File(destinationDirectory));
-    
-    LOGGER.debug("Adaptor Config path is: "+configPath);
-    mvnRequest.setGoals(Arrays.asList("-T 1","-DADAPTOR_CONFIG_PATH=" + configPath,
-                                    "clean", "package",
-                                    "-Dmaven.test.skip=true"));
-    
-    mvnProgress.put(fileName, new JsonObject().put(ID, null).put(STATUS, "progress"));
-    Invoker invoker = new DefaultInvoker();
-
-    vertx.executeBlocking(blockingCodeHandler -> {
-      try {
-        invoker.execute(mvnRequest);
-        fileSystem.move(destinationDirectory + "/target/adaptor.jar",
-                         jarOutPath + "/" + fileName, options,
-            mvHandler -> {
-              if (mvHandler.succeeded()) {
-                tempCleanUp(destinationDirectory);
-                blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
-              } else if (mvHandler.failed()) {
-                blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
-              }
-            });
-
-      } catch (MavenInvocationException e) {
-        LOGGER.error(e);
-        blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
-      }
-    },true, resultHandler -> {
-      if (resultHandler.succeeded()) {
-        promise.complete((JsonObject)resultHandler.result());
-      } else if (resultHandler.failed()) {
-        promise.fail(resultHandler.cause());
       }
     });
     return promise.future();

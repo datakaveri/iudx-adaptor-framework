@@ -13,9 +13,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.impl.triggers.CronTriggerImpl;
 import in.org.iudx.adaptor.server.database.DatabaseService;
-import in.org.iudx.adaptor.server.database.DatabaseServiceImpl;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
-import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import in.org.iudx.adaptor.server.util.FlinkJobExecute;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -98,15 +96,12 @@ public class JobScheduler {
    */
   public JobScheduler schedule(JsonObject config, Handler<AsyncResult<JsonObject>> handler) {
 
-
-    JobKey jobId = new JobKey(config.getString("id"));
-    String cronExpression = config.getString("schedulePattern");
+    JobKey jobId = new JobKey(config.getString(ADAPTOR_ID));
+    String cronExpression = config.getString(SCHEDULE_PATTERN);
+    
     final JobDetailImpl jobDetail = new JobDetailImpl();
     jobDetail.setKey(jobId);
-
-    // jobDetail.getJobDataMap().put("flinkClient", this.flinkClient);
-    jobDetail.getJobDataMap().put("data", config.encode());
-
+    jobDetail.getJobDataMap().put(DATA, config.encode());
     jobDetail.setJobClass(FlinkJobExecute.class);
 
     final CronTriggerImpl trigger = new CronTriggerImpl();
@@ -117,13 +112,12 @@ public class JobScheduler {
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
         return this;
       } else {
-        //scheduler.getContext().put("flinkClient", JobScheduler.flinkClient);
-        scheduler.getContext().put("data",config.encode());
+        scheduler.getContext().put(DATA,config.encode());
         trigger.setCronExpression(cronExpression);
         scheduler.scheduleJob(jobDetail, trigger);
       }
     } catch (ParseException | SchedulerException e) {
-      LOGGER.error("Failed: Schedulling quartz job; " + e.getLocalizedMessage());
+      LOGGER.error("Error: Schedulling quartz job; " + e.getLocalizedMessage());
     }
 
     handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
@@ -175,8 +169,8 @@ public class JobScheduler {
                   .put("jobGroup", jobGroup)
                   .put("trigger", new JsonArray().add(jobTrigger));
 
+         result.add(quartzJob);
          }
-        result.add(quartzJob);
        }
     } catch (SchedulerException e) {
       LOGGER.error("Failed: Getting all scheduled jobs; " + e.getLocalizedMessage());
@@ -194,27 +188,21 @@ public class JobScheduler {
    * @return
    */
   public JobScheduler deleteJobs(JsonObject config, Handler<AsyncResult<JsonObject>> handler) {
-    
+
     String id = config.getString(ID, "");
-    
-    if(!id.isEmpty()) {
-        try {
-         boolean flag =  scheduler.deleteJob(new JobKey(id));
-         if(flag == Boolean.FALSE) {
-           handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-           return this;
-         }
-        } catch (SchedulerException e) {
-          LOGGER.error("Failed: In scheduler job deletion; " + e.getLocalizedMessage());
-        }
-    } else {
-        try {
-          scheduler.clear();
-        } catch (SchedulerException e) {
-          LOGGER.error("Failed: In scheduler job deletion; " + e.getLocalizedMessage());
-        }
+
+    try {
+      boolean flag = scheduler.deleteJob(new JobKey(id));
+      if (flag == Boolean.FALSE) {
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+        return this;
+      }
+    } catch (SchedulerException e) {
+      handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      LOGGER.error("Failed: In scheduler job deletion; " + e.getLocalizedMessage());
     }
-    
+
+    LOGGER.debug("Info: Adaptor scheduler delete; id: "+ id);
     handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
     return this;
   }

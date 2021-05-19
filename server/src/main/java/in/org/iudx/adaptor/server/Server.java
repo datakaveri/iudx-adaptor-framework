@@ -12,6 +12,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -573,9 +574,6 @@ public class Server extends AbstractVerticle {
 
     if (id != null) {
       requestBody.put(ID, id);
-    } else {
-      requestBody.put(ID, "");
-      requestBody.put(URI, JARS);
     }
 
     jobScheduler.deleteJobs(requestBody, responseHandler ->{
@@ -611,44 +609,64 @@ public class Server extends AbstractVerticle {
     String adaptorId = username+"_"+fileName;
 
     FileSystem fileSystem = vertx.fileSystem();
-    fileSystem.writeFile(filePath, buffBody, fileHandler -> {
-      if (fileHandler.succeeded()) {
-        String path = FileSystems.getDefault()
-                                 .getPath(filePath)
-                                 .normalize()
-                                 .toAbsolutePath()
-                                 .toString();
-        
-        request.put(USERNAME, username)
-               .put(ADAPTOR_ID, adaptorId)
-               .put(DATA, jsonBody)
-               .put(NAME, fileName + ".jar")
-               .put(PATH, path)
-               .put(URI, JAR_UPLOAD_API)
-               .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
-        
-        codegenInit.mvnInit(request, handler -> {
-        });
-        response.setStatusCode(202)
-                .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                .end(new JsonObject().put(ID, adaptorId)
-                                     .put(NAME, fileName)
-                                     .put(STATUS, COMPILING)
-                                     .toString());
-      } else if (fileHandler.failed()) {
-        LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
+    request.put(ADAPTOR_ID, adaptorId).put(USERNAME, username);
+    
+    databaseService.getAdaptor(request, getHandler -> {
+      if(getHandler.succeeded()) {
+        JsonArray results = getHandler.result().getJsonArray(ADAPTORS);
+        if(results.isEmpty()) {
+          fileSystem.writeFile(filePath, buffBody, fileHandler -> {
+            if (fileHandler.succeeded()) {
+              String path = FileSystems.getDefault()
+                                       .getPath(filePath)
+                                       .normalize()
+                                       .toAbsolutePath()
+                                       .toString();
+              
+              request.put(DATA, jsonBody)
+                     .put(NAME, fileName + ".jar")
+                     .put(PATH, path)
+                     .put(URI, JAR_UPLOAD_API)
+                     .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
+              
+              codegenInit.mvnInit(request, handler -> {
+              });
+              response.setStatusCode(202)
+                      .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(new JsonObject().put(ID, adaptorId)
+                                           .put(NAME, fileName)
+                                           .put(STATUS, COMPILING)
+                                           .toString());
+            } else if (fileHandler.failed()) {
+              LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .setStatusCode(400)
+                      .end(new ResponseHandler.Builder()
+                                  .withStatus(FAILED)
+                                  .build().toJsonString());
+            }
+          });
+        } else {
+          LOGGER.error("Error: Duplicate adaptor config");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .setStatusCode(400)
+                  .end(new JsonObject().put(STATUS,DUPLICATE_ADAPTOR).toString());
+        }
       }
     });
   }
   
-  
+  /**
+   * 
+   * @param routingContext
+   */
   private void getAdaptorHandler(RoutingContext routingContext) {
     LOGGER.debug("Info: Getting adaptor status");
 
     HttpServerResponse response = routingContext.response();
     String username = routingContext.request().getHeader(USERNAME);
     String id = routingContext.pathParam(ID);
-    JsonObject requestBody = new JsonObject().put(USERNAME, username).put(ID, id);
+    JsonObject requestBody = new JsonObject().put(USERNAME, username).put(ADAPTOR_ID, id);
      
     databaseService.getAdaptor(requestBody, databaseHandler ->{
       if(databaseHandler.succeeded()) {
@@ -664,6 +682,10 @@ public class Server extends AbstractVerticle {
     });
   }
   
+  /**
+   * 
+   * @param routingContext
+   */
   private void deleteAdaptorHandler(RoutingContext routingContext) {
     LOGGER.debug("Info: Deleting a adaptor");
     
@@ -673,19 +695,28 @@ public class Server extends AbstractVerticle {
     String id = routingContext.pathParam(ID);
     
     requestBody.put(USERNAME, username)
-               .put(ID, id);
+               .put(ADAPTOR_ID, id);
     
     if(id != null) {      
       databaseService.deleteAdaptor(requestBody, databaseHandler->{
         if(databaseHandler.succeeded()) {
-          LOGGER.info("Success: Get adaptor query");
-          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                  .end(databaseHandler.result().toString());
-        } else if (databaseHandler.failed()) {
-          LOGGER.error("Error: Get adptor query failed; " + databaseHandler.cause());
+          jobScheduler.deleteJobs(requestBody, scheduleHandler ->{
+            if(scheduleHandler.succeeded()) {
+              LOGGER.info("Success: Delete adaptor query");
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(databaseHandler.result().toString());
+            } else if (databaseHandler.failed()) {
+              LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause());
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .setStatusCode(400)
+                      .end(databaseHandler.cause().getLocalizedMessage());
+            } 
+          });
+        } else {
+          LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause());
           response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                   .setStatusCode(400)
-                  .end(databaseHandler.cause().getMessage());
+                  .end(databaseHandler.cause().getLocalizedMessage());
         }
       });
     } else {

@@ -61,6 +61,15 @@ public interface DatabaseService {
   @Fluent
   DatabaseService deleteAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
+  /**
+   * Handles the synchronization requests of Flink and PotsgreSQL database.
+   * @param request
+   * @param handler
+   * @return
+   */
+  @Fluent
+  DatabaseService syncAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  
   @GenIgnore
   static DatabaseService createProxy(Vertx vertx, String address) {
     return new DatabaseServiceVertxEBProxy(vertx, address);

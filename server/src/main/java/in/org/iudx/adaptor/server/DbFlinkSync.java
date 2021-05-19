@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
-import in.org.iudx.adaptor.server.flink.FlinkClientServiceImpl;
 import io.vertx.core.json.JsonObject;
 import static in.org.iudx.adaptor.server.util.Constants.POLLING_INTEVAL;
 

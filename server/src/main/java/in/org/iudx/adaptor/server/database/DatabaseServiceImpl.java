@@ -10,7 +10,6 @@ import io.vertx.sqlclient.RowSet;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.maven.shared.utils.StringUtils;
 
 public class DatabaseServiceImpl implements DatabaseService {
 
@@ -21,12 +20,15 @@ public class DatabaseServiceImpl implements DatabaseService {
     this.client = postgresClient;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DatabaseService getAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     JsonArray response = new JsonArray();
     String username = request.getString(USERNAME);
-    String id = request.getString(ID);
+    String id = request.getString(ADAPTOR_ID);
         
     String query;
     if(id != null) {
@@ -46,7 +48,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                  .put(NAME, tempJson.getJsonObject(DATA).getString(NAME))
                  .put(JAR_ID, tempJson.getString("jar_id"))
                  .put(LASTSEEN, tempJson.getString(TIMESTAMP))
-                 .put(STATUS, null);
+                 .put(STATUS, tempJson.getString(STATUS));
           response.add(rowJson);
         }
         
@@ -61,6 +63,9 @@ public class DatabaseServiceImpl implements DatabaseService {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DatabaseService registerUser(JsonObject request,
       Handler<AsyncResult<JsonObject>> handler) {
@@ -155,11 +160,14 @@ public class DatabaseServiceImpl implements DatabaseService {
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public DatabaseService deleteAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
     
     String username = request.getString(USERNAME);
-    String id = request.getString(ID);
+    String id = request.getString(ADAPTOR_ID);
     
     String getQuery = GET_ONE_ADAPTOR.replace("$1", username).replace("$2", id);
     String deleteQuery = DELETE_ADAPTOR.replace("$1", id);
@@ -189,5 +197,35 @@ public class DatabaseServiceImpl implements DatabaseService {
       }
     });
     return this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DatabaseService syncAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    
+    JsonArray response = new JsonArray();
+    String username = request.getString(USERNAME);
+        
+    String query = null;
+    
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        RowSet<Row> result = pgHandler.result();
+        for (Row row : result) {
+          response.add(row.toJson());
+        }
+        
+        handler.handle(
+            Future.succeededFuture(
+                new JsonObject().put(STATUS, SUCCESS).put(JOBS, response)));
+      } else {
+        LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    
+    return null;
   }
 }
