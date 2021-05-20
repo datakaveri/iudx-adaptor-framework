@@ -13,8 +13,23 @@ import io.vertx.core.json.JsonObject;
 @ProxyGen
 public interface DatabaseService {
   
+  /**
+   * The registerUser creates/updates the User details with the PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return jsonObject
+   */
   @Fluent
   DatabaseService registerUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  
+  /**
+   * The getAdaptorUser lists user(s) registered with the PostgreSQL database.
+   * @param request
+   * @param handler
+   * @return jsonObject
+   */
+  @Fluent
+  DatabaseService getAdaptorUser(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
   /**
    * The authenticateUser authenticates the user with the PostgreSQL database.

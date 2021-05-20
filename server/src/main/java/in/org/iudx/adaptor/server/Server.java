@@ -3,6 +3,7 @@ package in.org.iudx.adaptor.server;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
@@ -20,6 +21,7 @@ import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
+import in.org.iudx.adaptor.server.util.AdminAuthHandler;
 import in.org.iudx.adaptor.server.util.AuthHandler;
 import in.org.iudx.adaptor.server.util.Constants;
 import in.org.iudx.adaptor.server.util.ResponseHandler;
@@ -69,7 +71,7 @@ public class Server extends AbstractVerticle {
     isSsl = config().getBoolean(IS_SSL);
     port = config().getInteger(PORT);
     flinkOptions = config().getJsonObject(FLINKOPTIONS);
-    authCred = config().getJsonObject("auth");
+    authCred = config().getJsonObject("adminAuth");
     quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
     jarOutPath = config().getString(JAR_OUT_PATH);
 
@@ -237,7 +239,7 @@ public class Server extends AbstractVerticle {
     router.get(ADAPTOR_ROUTE)
           .produces(MIME_APPLICATION_JSON)
           .handler(AuthHandler.create(databaseService))
-          .blockingHandler(routingContext -> {
+          .handler(routingContext -> {
             getAdaptorHandler(routingContext);
           });
     
@@ -245,9 +247,44 @@ public class Server extends AbstractVerticle {
     router.delete(ADAPTOR_ROUTE_ID)
           .produces(MIME_APPLICATION_JSON)
           .handler(AuthHandler.create(databaseService))
-          .blockingHandler(routingContext -> {
+          .handler(routingContext -> {
             deleteAdaptorHandler(routingContext);
           });
+    
+    /* Register a User (Admin) */
+    router.post(USER_ROUTE)
+          .consumes(MIME_APPLICATION_JSON)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            createAdaptorUser(routingContext);
+          });
+    
+    /* Update a existing User (Admin) */
+    router.put(USER_ROUTE)
+          .consumes(MIME_APPLICATION_JSON)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            createAdaptorUser(routingContext);
+          });
+    
+    /* Get all registered User (Admin) */
+    router.get(USER_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            getAdaptorUser(routingContext);
+          });
+    
+    /* Get a registered User (Admin) */
+    router.get(USER_ROUTE_ID)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            getAdaptorUser(routingContext);
+          });
+
 
     /* Start server */
     server.requestHandler(router).listen(port);
@@ -727,5 +764,83 @@ public class Server extends AbstractVerticle {
                   .withStatus(INVALID_SYNTAX)
                   .build().toJsonString());
     }
+  }
+  
+  /**
+   * 
+   * @param routingContext
+   */
+  private void createAdaptorUser(RoutingContext routingContext) {
+    LOGGER.debug("Info: Registering adaptor users");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject jsonBody = routingContext.getBodyAsJson();
+    HttpMethod methodType = routingContext.request().method();
+    
+    if (jsonBody.containsKey(USERNAME) && jsonBody.containsKey(PASSWORD)) {
+      if (methodType == HttpMethod.POST) {
+        jsonBody.put(MODE, methodType.toString());
+      } else if (methodType == HttpMethod.PUT) {
+        jsonBody.put(MODE, methodType.toString());
+        
+        if(jsonBody.containsKey(STATUS) && !ALLOWED_USER_STATUS.contains(jsonBody.getString(STATUS))){
+          LOGGER.error("Error: Invalid register query");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .setStatusCode(400)
+                  .end(new JsonObject().put(STATUS, INVALID_SYNTAX).toString());
+        }
+      } else {
+        LOGGER.error("Error: Invalid register query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(new JsonObject().put(STATUS, INVALID_SYNTAX).toString());
+      }
+    } else if (methodType == HttpMethod.PUT && jsonBody.containsKey(USERNAME)
+          && ALLOWED_USER_STATUS.contains(jsonBody.getString(STATUS))) {
+      jsonBody.put(MODE, STATUS);
+    } else {
+      LOGGER.error("Error: Invalid register query");
+      response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+              .setStatusCode(400)
+              .end(new JsonObject().put(STATUS, INVALID_SYNTAX).toString());
+    }
+        
+    databaseService.registerUser(jsonBody, databaseHandler ->{
+      if(databaseHandler.succeeded()) {
+        LOGGER.info("Success: Register user query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(databaseHandler.result().toString());
+      } else if (databaseHandler.failed()) {
+        LOGGER.error("Error: Register user query failed; " + databaseHandler.cause().getLocalizedMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(databaseHandler.cause().getLocalizedMessage());
+      }
+    });
+  }
+  
+  /**
+   * 
+   * @param routingContext
+   */
+  private void getAdaptorUser(RoutingContext routingContext) {
+    LOGGER.debug("Info: Getting registered users");
+
+    HttpServerResponse response = routingContext.response();
+    String id = routingContext.pathParam(ID);
+    JsonObject requestBody = new JsonObject().put(ID,id);
+     
+    databaseService.getAdaptorUser(requestBody, databaseHandler ->{
+      if(databaseHandler.succeeded()) {
+        LOGGER.info("Success: Get user query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(databaseHandler.result().toString());
+      } else if (databaseHandler.failed()) {
+        LOGGER.error("Error: Get user query failed; " + databaseHandler.cause().getLocalizedMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(databaseHandler.cause().getLocalizedMessage());
+      }
+    });
   }
 }

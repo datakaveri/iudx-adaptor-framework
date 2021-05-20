@@ -137,6 +137,206 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "admin-users",
+			"item": [
+				{
+					"name": "createUser",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"adaptor-user\",\n    \"password\":\"adator-user-1\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}/user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateUserStatus",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"adaptor-user\",\n    \"status\":\"inactive\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}/user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateUserPassword",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"adaptor-user\",\n    \"password\":\"adaptor-user-password\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}/user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateUserPasswordStatus",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"adaptor-user\",\n    \"password\":\"adaptor-user-password\",\n    \"status\":\"active\"\n}"
+						},
+						"url": {
+							"raw": "{{host}}:{{port}}/user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAllUsers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getOneUser",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{admin-username}}"
+							},
+							{
+								"key": "password",
+								"value": "{{admin-password}}"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/user/adaptor-user",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"user",
+								"adaptor-user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }

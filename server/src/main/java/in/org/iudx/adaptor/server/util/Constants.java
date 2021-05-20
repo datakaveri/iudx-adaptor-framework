@@ -130,6 +130,8 @@ public class Constants {
   public static final String LASTSEEN = "lastSeen";
   public static final String TIMESTAMP = "timestamp";
   public static final String ADAPTORS = "adaptors";
+  public static final Set<String> ALLOWED_USER_STATUS =
+      new HashSet<String>(Arrays.asList("active","inactive"));
   
   public static final String AUTHENTICATE_USER =
       "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
@@ -165,6 +167,16 @@ public class Constants {
       + "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id "
       + "WHERE ad.adaptor_id = '$2' AND _user.id = "
       + "(SELECT id FROM public.user WHERE username = '$1');";
+  
+  public static final String REGISTER_USER = "INSERT INTO public.user "
+      + "(username, password, status,\"timestamp\") VALUES ('$1','$2','$3',now());";
+  
+  public static final String UPDATE_USER = "UPDATE public.user SET password='$2',status='$3',\"timestamp\"=now() WHERE username = '$1'";
+  public static final String UPDATE_USER_PASSWORD = "UPDATE public.user SET password='$2',\"timestamp\"=now() WHERE username = '$1'";
+  public static final String UPDATE_USER_STATUS = "UPDATE public.user SET status = '$2',\"timestamp\"=now() where username = '$1'";
+  
+  public static final String GET_USERS = "SELECT username,password,status,\"timestamp\" FROM public.user";
+  public static final String GET_USER = "SELECT username,password,status,\"timestamp\" FROM public.user WHERE username = '$1'";
   
   public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
       "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 

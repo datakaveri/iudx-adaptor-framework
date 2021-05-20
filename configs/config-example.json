@@ -10,7 +10,7 @@
 			"keystorePassword": "password",
 			"verticleInstances": 1,
 			"jarOutPath": "../upload-jar",
-			"auth": {
+			"adminAuth": {
 				"username": "user",
 				"password": "user-password"
 			},

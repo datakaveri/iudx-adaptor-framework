@@ -69,8 +69,81 @@ public class DatabaseServiceImpl implements DatabaseService {
   @Override
   public DatabaseService registerUser(JsonObject request,
       Handler<AsyncResult<JsonObject>> handler) {
-    // TODO Auto-generated method stub
-    return null;
+    
+    String mode = request.getString(MODE);
+    String query = null;
+    if(mode.equals("POST")) {
+      query = REGISTER_USER.replace("$1", request.getString(USERNAME))
+                           .replace("$2", request.getString(PASSWORD))
+                           .replace("$3", "active");
+      
+    } else if(mode.equals("PUT")) {
+      query = UPDATE_USER_PASSWORD.replace("$1", request.getString(USERNAME))
+                                  .replace("$2", request.getString(PASSWORD));
+      
+      if(request.containsKey(STATUS)) {
+        query = UPDATE_USER.replace("$1", request.getString(USERNAME))
+                           .replace("$2", request.getString(PASSWORD))
+                           .replace("$3", request.getString(STATUS));
+      }
+      
+    } else if (mode.equals(STATUS)) {
+      query = UPDATE_USER_STATUS.replace("$1", request.getString(USERNAME))
+                                .replace("$2", request.getString(STATUS));
+    }
+    
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        if(pgHandler.result().rowCount() == 1) {
+          LOGGER.debug("Info: Database query succeeded");
+          handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS))); 
+        } else {
+          LOGGER.error("Info: Database query failed; User not registered");
+          handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+        }
+      } else {
+        LOGGER.error("Info: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    
+    return this;
+  }
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public DatabaseService getAdaptorUser(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
+    
+    JsonArray response = new JsonArray();
+    String query = null;
+    String id = request.getString(ID,"");
+    
+    if(id != null && !id.isBlank()) {
+      query = GET_USER.replace("$1", request.getString(ID));
+    } else {
+      query = GET_USERS;
+    }
+    
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        RowSet<Row> result = pgHandler.result();
+        for (Row row : result) {
+          response.add(row.toJson());
+        }
+        
+        handler.handle(
+            Future.succeededFuture(
+                new JsonObject().put(STATUS, SUCCESS).put("users", response)));
+      } else {
+        LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    
+    return this;
   }
 
   /**
