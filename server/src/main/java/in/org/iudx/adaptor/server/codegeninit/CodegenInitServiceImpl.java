@@ -54,7 +54,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
    * {@inheritDoc}
    */
   @Override
-  public CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public CodegenInitService mvnPkg(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     databaseService.createAdaptor(request, adaptorHandler -> {
       if (adaptorHandler.succeeded()) {
@@ -68,11 +68,11 @@ public class CodegenInitServiceImpl implements CodegenInitService {
         }).compose(submitConfigJarResponse -> {
           String jarPath = submitConfigJarResponse.getString("filename");
           String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
-          request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
-          request.put(ID, jarId);
-          request.put(DATA, new JsonObject());
-          request.put(MODE, START);
-          request.put(JAR_ID, jarId);
+          request.put(URI, JOB_SUBMIT_API.replace("$1", jarId))
+          .put(ID, jarId)
+          .put(DATA, new JsonObject())
+          .put(MODE, START)
+          .put(JAR_ID, jarId);
           return scheduleJobs(request);
 
         }).onComplete(composeHandler -> {

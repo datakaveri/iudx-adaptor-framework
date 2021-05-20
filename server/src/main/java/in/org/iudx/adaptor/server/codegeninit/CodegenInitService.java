@@ -24,7 +24,7 @@ public interface CodegenInitService {
    * @return
    */
   @Fluent
-  CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  CodegenInitService mvnPkg(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
   
   /**
    * Return codegen progess.

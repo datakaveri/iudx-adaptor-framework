@@ -666,7 +666,7 @@ public class Server extends AbstractVerticle {
                      .put(URI, JAR_UPLOAD_API)
                      .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
               
-              codegenInit.mvnInit(request, handler -> {
+              codegenInit.mvnPkg(request, handler -> {
               });
               response.setStatusCode(202)
                       .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
