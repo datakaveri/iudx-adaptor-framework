@@ -11,8 +11,8 @@
 			"verticleInstances": 1,
 			"jarOutPath": "../upload-jar",
 			"adminAuth": {
-				"username": "user",
-				"password": "user-password"
+				"username": "admin",
+				"password": "admin"
 			},
 			"quartzPropertiesPath": "../configs/quartz.test.properties",
 			"flinkOptions": {
@@ -40,12 +40,13 @@
 		},
 		{
 			"id": "in.org.iudx.adaptor.server.database.DatabaseVerticle",
-			"databaseUser":"",
-			"databasePassword": "db-password",
-			"databseHost":"",
-            "databasePort": 24034,
-            "databaseName":"iudx-adaptor",
-            "databasePoolSize":10
+			"verticleInstances": 1,
+			"databaseUser": "root",
+			"databasePassword": "adaptor@db",
+			"databseHost": "127.0.0.1",
+			"databasePort": 5432,
+			"databaseName": "iudx-adaptor",
+			"databasePoolSize": 5
 		}
 	]
 }

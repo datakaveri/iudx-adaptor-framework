@@ -5,14 +5,15 @@ services:
     ports:
       - 5432:5432
     environment:
+      - TZ=Asia/Kolkata
       - POSTGRES_PASSWORD=adaptor@db
       - POSTGRES_USER=root
-      - POSTGRES_DB=vertx-quartz
+      - POSTGRES_DB=iudx-adaptor
       - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - adaptor-net
     volumes:
-      - ./quartz-init.sql:/docker-entrypoint-initdb.d/quartz-init.sql
+      - ./adaptor-init.sql:/docker-entrypoint-initdb.d/adaptor-init.sql
       - db-data:/var/lib/postgresql/data/pgdata
 
   pgadmin:

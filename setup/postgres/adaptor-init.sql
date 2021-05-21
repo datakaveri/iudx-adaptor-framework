@@ -12,6 +12,11 @@ DROP TABLE IF EXISTS QRTZ_TRIGGERS;
 DROP TABLE IF EXISTS QRTZ_JOB_DETAILS;
 DROP TABLE IF EXISTS QRTZ_CALENDARS;
 
+DROP TABLE IF EXISTS public."user";
+DROP TABLE IF EXISTS public.adaptor;
+DROP TABLE IF EXISTS public.codegen_status;
+DROP TABLE IF EXISTS public.flink_job;
+
 CREATE TABLE QRTZ_JOB_DETAILS
 (
   SCHED_NAME        VARCHAR(120) NOT NULL,
@@ -156,6 +161,49 @@ CREATE TABLE QRTZ_LOCKS
   LOCK_NAME  VARCHAR(40)  NOT NULL,
   PRIMARY KEY (SCHED_NAME, LOCK_NAME)
 );
+
+CREATE TABLE public."user" (
+	id serial NOT NULL,
+	username varchar NOT NULL,
+	"password" varchar NOT NULL,
+	status varchar NOT NULL,
+	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
+	CONSTRAINT user_pk PRIMARY KEY (id),
+	CONSTRAINT user_un UNIQUE (username)
+);
+
+CREATE TABLE public.adaptor (
+	id serial NOT NULL,
+	adaptor_id varchar NOT NULL,
+	"data" json NOT NULL,
+	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
+	user_id serial NOT NULL,
+	jar_id varchar NULL,
+	CONSTRAINT adaptor_adaptor_id_key UNIQUE (adaptor_id),
+	CONSTRAINT adaptor_pk PRIMARY KEY (id),
+	CONSTRAINT adaptor_fk2 FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE public.codegen_status (
+	id serial NOT NULL,
+	status varchar NOT NULL,
+	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
+	adaptor_id varchar NOT NULL,
+	CONSTRAINT codegen_status_pk PRIMARY KEY (id),
+	CONSTRAINT codegen_status_fk FOREIGN KEY (adaptor_id) REFERENCES adaptor(adaptor_id) ON DELETE CASCADE
+);
+
+CREATE TABLE public.flink_job (
+	id serial NOT NULL,
+	job_id varchar NOT NULL,
+	adaptor_id varchar NOT NULL,
+	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
+	status varchar NOT NULL,
+	discription varchar NULL,
+	CONSTRAINT job_pk PRIMARY KEY (id),
+	CONSTRAINT flink_job_fk FOREIGN KEY (adaptor_id) REFERENCES adaptor(adaptor_id) ON DELETE CASCADE
+);
+
 
 CREATE INDEX IDX_QRTZ_J_REQ_RECOVERY
   ON QRTZ_JOB_DETAILS (SCHED_NAME, REQUESTS_RECOVERY);
