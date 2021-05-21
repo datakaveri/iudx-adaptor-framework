@@ -14,7 +14,7 @@
 				"username": "admin",
 				"password": "admin"
 			},
-			"quartzPropertiesPath": "../configs/quartz.properties",
+			"quartzPropertiesPath": "../configs/quartz.test.properties",
 			"flinkOptions": {
 				"port": 8081,
 				"host": "127.0.0.1",
