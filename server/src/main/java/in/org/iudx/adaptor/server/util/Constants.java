@@ -60,6 +60,8 @@ public class Constants {
   
   public static final String ADAPTOR_ROUTE = "/adaptor";
   public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
+  public static final String ADAPTOR_START_ROUTE = ADAPTOR_ROUTE +"/:id/start";
+  public static final String ADAPTOR_STOP_ROUTE = ADAPTOR_ROUTE +"/:id/stop";
   public static final String USER_ROUTE = "/user";
   public static final String USER_ROUTE_ID = USER_ROUTE + "/:id";
 
@@ -117,7 +119,7 @@ public class Constants {
   public static final ArrayList<String> MODES =
       new ArrayList<String>(Arrays.asList(START, STOP, RESUME));
 
-  public static final long POLLING_INTEVAL = 600000; // 1 Minute
+  public static final long POLLING_INTEVAL = 60000L; // 1 Minute
   public static final String SCHEDULE_PATTERN = "schedulePattern";
 
   /* Database query */
@@ -126,6 +128,8 @@ public class Constants {
   public static final String JOB_ID = "jobId";
   public static final String COMPILING = "compiling";
   public static final String SCHEDULED = "scheduled";
+  public static final String COMPLETED = "completed";
+  public static final String STOPPED = "stopped";
   public static final String RUNNING = "running";
   public static final String LASTSEEN = "lastSeen";
   public static final String TIMESTAMP = "timestamp";
@@ -155,13 +159,31 @@ public class Constants {
   
   public static final String INSERT_JOB =
       "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
+  public static final String SELECT_JOB ="SELECT job_id FROM flink_job WHERE adaptor_id='$1' AND status = '$2'";
+  public static final String SELECT_ALL_JOBS = "SELECT job_id FROM flink_job where status ='running'";
+  public static final String UPDATE_JOB = "update flink_job set status ='$2', timestamp = now() where job_id = '$1'";
   
-  public static final String GET_ALL_ADAPTOR =
+  public static final String GET_ALL_ADAPTOR = 
+      "SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, fj.timestamp, fj.status FROM adaptor AS ad \n" + 
+      "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id \n" + 
+      "AND _user.id = (SELECT id FROM public.user WHERE username = '$1') \n" + 
+      "LEFT JOIN flink_job AS fj ON ad.adaptor_id = fj.adaptor_id\n" + 
+      "AND fj.timestamp = (SELECT MAX(timestamp) FROM flink_job WHERE adaptor_id = ad.adaptor_id)";
+  
+  public static final String GET_ONE_ADAPTOR =
+      "SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, fj.timestamp, fj.status FROM adaptor AS ad \n" + 
+      "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id \n" + 
+      "AND _user.id = (SELECT id FROM public.user WHERE username = '$1') \n" + 
+      "LEFT JOIN flink_job AS fj ON ad.adaptor_id = fj.adaptor_id\n" + 
+      "AND fj.timestamp = (SELECT MAX(timestamp) FROM flink_job WHERE adaptor_id = ad.adaptor_id)\n" + 
+      "WHERE ad.adaptor_id = '$2'";
+  
+  public static final String GET_ALL_ADAPTOR_OLD =
       "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN codegen_status AS"
       + " cg ON ad.adaptor_id = cg.adaptor_id INNER JOIN public.\"user\" AS _user"
       + " ON ad.user_id = _user.id WHERE _user.id = (SELECT id FROM public.user WHERE username = '$1');";
   
-  public static final String GET_ONE_ADAPTOR =
+  public static final String GET_ONE_ADAPTOR_OLD =
       "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN "
       + "codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id "
       + "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id "

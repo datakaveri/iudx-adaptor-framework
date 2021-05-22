@@ -65,7 +65,6 @@ public class Server extends AbstractVerticle {
   public void start() throws Exception {
     router = Router.router(vertx);
 
-    LOGGER.debug("config" + config());
     keystore = config().getString(KEYSTORE_PATH);
     keystorePassword = config().getString(KEYSTORE_PASSWORD);
     isSsl = config().getBoolean(IS_SSL);
@@ -225,6 +224,22 @@ public class Server extends AbstractVerticle {
           .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             createAdaptorHandler(routingContext);
+          });
+    
+    /* Running a Adaptor */ 
+    router.post(ADAPTOR_START_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .handler(routingContext ->{
+            runAdaptorHandler(routingContext);
+          });
+    
+    /* Stopping a Adaptor */ 
+    router.post(ADAPTOR_STOP_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .handler(routingContext ->{
+            stopAdaptorHandler(routingContext);
           });
     
     /*Get a (one) adaptor status*/
@@ -610,7 +625,7 @@ public class Server extends AbstractVerticle {
     String id = routingContext.pathParam(ID);
 
     if (id != null) {
-      requestBody.put(ID, id);
+      requestBody.put(ADAPTOR_ID, id);
     }
 
     jobScheduler.deleteJobs(requestBody, responseHandler ->{
@@ -694,6 +709,179 @@ public class Server extends AbstractVerticle {
   }
   
   /**
+   * Handles the starting of the Job.
+   * 
+   * @param routingContext
+   */
+  private void runAdaptorHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Handling Job operations; start");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+
+    String username = routingContext.request().getHeader(USERNAME);
+    String adaptorId = routingContext.pathParam(ID);
+    requestBody.put(USERNAME, username)
+               .put(ADAPTOR_ID, adaptorId);
+
+    databaseService.getAdaptor(requestBody, databaseHandler -> {
+      if (databaseHandler.succeeded()) {
+
+        JsonArray results = databaseHandler.result().getJsonArray(ADAPTORS);
+        if (!results.isEmpty()) {
+          JsonObject adaptorDetails = results.getJsonObject(0);
+          String jarId = adaptorDetails.getString(JAR_ID);
+          String jobId = adaptorDetails.getString(JOB_ID);
+          String status = adaptorDetails.getString(STATUS, "");
+
+          requestBody.put(DATA, new JsonObject());
+          requestBody.put(MODE, START);
+
+          if (status == null || !status.equalsIgnoreCase(RUNNING)) {
+
+            requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+            String schedulePattern = adaptorDetails.getString(SCHEDULE_PATTERN);
+
+            if (adaptorDetails.containsKey(SCHEDULE_PATTERN) && schedulePattern != null) {
+
+              requestBody.put(SCHEDULE_PATTERN, schedulePattern);
+              jobScheduler.schedule(requestBody, resHandler -> {
+                if (resHandler.succeeded()) {
+                  LOGGER.info("Success: Job submitted");
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .end(resHandler.result().toString());
+                } else {
+                  LOGGER.error("Error: Job schedulling failed; " + resHandler.cause().getMessage());
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON).setStatusCode(400)
+                      .end(resHandler.cause().getMessage());
+                }
+              });
+            } else {
+              flinkClient.handleJob(requestBody, resHandler -> {
+                if (resHandler.succeeded()) {
+                  LOGGER.info("Success: Job submitted");
+
+                  String newJobId = resHandler.result().getString(JOB_ID);
+                  String query = INSERT_JOB.replace("$1", newJobId)
+                                           .replace("$2", RUNNING)
+                                           .replace("$3", adaptorId);
+
+                  databaseService.updateComplex(query, updateHandler -> {
+                    if (updateHandler.succeeded()) {
+                      LOGGER.debug("Info: database updated");
+                    } else {
+                      LOGGER.error("Error: Job running; database update failed; "
+                          + updateHandler.cause().getLocalizedMessage());
+                    }
+                  });
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(new JsonObject().put(STATUS, SUCCESS).toString());
+                } else {
+                  LOGGER.error("Error: Job starting failed; " + resHandler.cause().getMessage());
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .setStatusCode(400)
+                          .end(resHandler.cause().getMessage());
+                }
+              });
+            }
+          } else {
+            LOGGER.error("Error: Adaptor has running instance; JobId: " + jobId);
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(new JsonObject().put(STATUS, "alreadyRunning").toString());
+          }
+        } else {
+          LOGGER.error("Error: Adaptor not found");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .setStatusCode(404)
+                  .end(new JsonObject().put(STATUS, "adaptorNotFound").toString());
+        }
+      }
+    });
+  }
+  
+  /**
+   * Handles stopping of the running Job.
+   * 
+   * @param routingContext
+   */
+  private void stopAdaptorHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Handling Job operations; stop");
+
+    HttpServerResponse response = routingContext.response();
+    JsonObject requestBody = new JsonObject();
+
+    String username = routingContext.request().getHeader(USERNAME);
+    String adaptorId = routingContext.pathParam(ID);
+    requestBody.put(USERNAME, username).put(ADAPTOR_ID, adaptorId);
+
+    databaseService.getAdaptor(requestBody, databaseHandler -> {
+      if (databaseHandler.succeeded()) {
+
+        JsonArray results = databaseHandler.result().getJsonArray(ADAPTORS);
+        if (!results.isEmpty()) {
+          JsonObject adaptorDetails =
+              databaseHandler.result().getJsonArray(ADAPTORS).getJsonObject(0);
+          String jobId = adaptorDetails.getString(JOB_ID);
+          String status = adaptorDetails.getString(STATUS);
+
+          if (status == null || status.equalsIgnoreCase(RUNNING)) {
+            requestBody.put(URI, JOBS_API + jobId);
+            requestBody.put(DATA, new JsonObject());
+            requestBody.put(MODE, STOP);
+
+            flinkClient.handleJob(requestBody, resHandler -> {
+              if (resHandler.succeeded()) {
+                LOGGER.info("Success: Job stopped");
+                String query = UPDATE_JOB.replace("$1", jobId)
+                                         .replace("$2", STOPPED);
+
+                databaseService.updateComplex(query, updateHandler -> {
+                  if (updateHandler.succeeded()) {
+                    LOGGER.debug("Info: database updated");
+                    
+                    jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
+                      if (scheduleHandler.succeeded()) {
+                        LOGGER.debug("Info: Stopping job; Scheduler trigger cleared");
+                        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                                .end(new JsonObject().put(STATUS, SUCCESS).toString());
+
+                      } else if (databaseHandler.failed()) {
+                        LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause());
+                        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                                .setStatusCode(400)
+                                .end(scheduleHandler.cause().getLocalizedMessage());
+                      }
+                    });
+                  } else {
+                    LOGGER.error("Error: Stopping job; database update failed; "
+                        + updateHandler.cause().getLocalizedMessage());
+                  }
+                });
+              } else {
+                LOGGER.error("Error: Stopping job failed; " + resHandler.cause().getMessage());
+                response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                        .setStatusCode(400)
+                        .end(resHandler.cause().getMessage());
+              }
+            });
+          } else {
+            LOGGER.error("Error: Adaptor has no running instance");
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(new JsonObject().put(STATUS, "noRunningInstance").toString());
+          }
+        } else {
+          LOGGER.error("Error: Adaptor not found");
+          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                  .setStatusCode(404)
+                  .end(new JsonObject().put(STATUS, "adaptorNotFound").toString());
+        }
+      }
+    });
+  }
+  
+  /**
    * 
    * @param routingContext
    */
@@ -730,24 +918,38 @@ public class Server extends AbstractVerticle {
     JsonObject requestBody = new JsonObject();
     String username = routingContext.request().getHeader(USERNAME);
     String id = routingContext.pathParam(ID);
-    
     requestBody.put(USERNAME, username)
                .put(ADAPTOR_ID, id);
     
-    if(id != null) {      
-      databaseService.deleteAdaptor(requestBody, databaseHandler->{
-        if(databaseHandler.succeeded()) {
-          jobScheduler.deleteJobs(requestBody, scheduleHandler ->{
-            if(scheduleHandler.succeeded()) {
-              LOGGER.info("Success: Delete adaptor query");
-              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                      .end(databaseHandler.result().toString());
-            } else if (databaseHandler.failed()) {
-              LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause());
+    if (id != null) {
+      databaseService.deleteAdaptor(requestBody, databaseHandler -> {
+        if (databaseHandler.succeeded()) {
+          
+          String jarId = databaseHandler.result().getString(JAR_ID);
+          requestBody.put(ID, jarId);
+          requestBody.put(URI, JARS + "/" + jarId);
+          flinkClient.deleteItems(requestBody, deleteHandler -> {
+            if (deleteHandler.succeeded()) {
+              
+              jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
+                if (scheduleHandler.succeeded()) {
+                  LOGGER.info("Success: Delete adaptor query");
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .end(new JsonObject().put(STATUS, SUCCESS).toString());
+
+                } else if (databaseHandler.failed()) {
+                  LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause());
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .setStatusCode(400)
+                          .end(scheduleHandler.cause().getLocalizedMessage());
+                }
+              });
+            } else {
+              LOGGER.error("Error: Delete adptor query failed; " + deleteHandler.cause());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .setStatusCode(400)
                       .end(databaseHandler.cause().getLocalizedMessage());
-            } 
+            }
           });
         } else {
           LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause());
@@ -760,9 +962,7 @@ public class Server extends AbstractVerticle {
       LOGGER.error("Error: Query param missing;");
       response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
               .setStatusCode(400)
-              .end(new ResponseHandler.Builder()
-                  .withStatus(INVALID_SYNTAX)
-                  .build().toJsonString());
+              .end(new ResponseHandler.Builder().withStatus(INVALID_SYNTAX).build().toJsonString());
     }
   }
   

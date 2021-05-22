@@ -65,34 +65,26 @@ public class CodegenInitServiceImpl implements CodegenInitService {
         mvnExecuteFuture.compose(mvnExecuteResponse -> {
           return submitConfigJar(request, flinkClient);
 
-        }).compose(submitConfigJarResponse -> {
-          String jarPath = submitConfigJarResponse.getString("filename");
-          String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
-          request.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
-          request.put(ID, jarId);
-          request.put(DATA, new JsonObject());
-          request.put(MODE, START);
-          request.put(JAR_ID, jarId);
-          return scheduleJobs(request);
-
         }).onComplete(composeHandler -> {
           if (composeHandler.succeeded()) {
-            
+            LOGGER.debug("Info: Jar submitted; adaptor created");
+            String jarPath = composeHandler.result().getString("filename");
+            String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
             String query = UPDATE_COMPLEX
-                .replace("$1", request.getString(JAR_ID))
+                .replace("$1", jarId)
                 .replace("$2", request.getString(ADAPTOR_ID))
-                .replace("$3", SCHEDULED);
-            
+                .replace("$3", COMPLETED);
+
             databaseService.updateComplex(query, updateHandler -> {
-              if(updateHandler.succeeded()) {
-                LOGGER.debug("Info: Job scheduled;");
-              } else {
+              if (updateHandler.failed()) {
                 LOGGER.error("Error: Job Scheduled; Update failed");
               }
-              handler.handle(Future.succeededFuture(composeHandler.result())); 
+              
+              handler.handle(Future.succeededFuture(composeHandler.result()));
             });
           } else if (composeHandler.failed()) {
-            LOGGER.error("Error: Job scheduling failed; " + composeHandler.cause().getMessage());
+            LOGGER.error(
+                "Error: Adaptor gen/submission failed; " + composeHandler.cause().getMessage());
             handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
           }
         });
@@ -211,24 +203,6 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       }
     });
     
-    return promise.future();
-  }
-  
-  /**
-   * For scheduling jobs based on the pattern provided in the request.
-   * @param request
-   * @return promise
-   */
-  private Future<JsonObject> scheduleJobs(JsonObject request) {
-    Promise<JsonObject> promise = Promise.promise();
-
-    jobScheduler.schedule(request, resHandler -> {
-      if (resHandler.succeeded()) {
-        promise.complete(resHandler.result());
-      } else {
-        promise.fail(resHandler.cause().getMessage());
-      }
-    });
     return promise.future();
   }
   

@@ -109,7 +109,7 @@ public class JobScheduler {
 
     try {
       if (scheduler.checkExists(jobId)) {
-        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, "alreadyRunning").toString()));
         return this;
       } else {
         scheduler.getContext().put(DATA,config.encode());
@@ -142,12 +142,13 @@ public class JobScheduler {
    * @return
    */
   public JobScheduler getAllJobs(Handler<AsyncResult<JsonObject>> handler) {
-    JsonObject quartzJob = new JsonObject();
+    
     JsonArray result = new JsonArray();
     try {
       for (String groupName : scheduler.getJobGroupNames()) {
         for (JobKey jobKey : scheduler.getJobKeys(GroupMatcher.jobGroupEquals(groupName))) {
 
+         JsonObject quartzJob = new JsonObject();
          String jobName = jobKey.getName();
          String jobGroup = jobKey.getGroup();
          List<Trigger> triggers = (List<Trigger>) scheduler.getTriggersOfJob(jobKey);
@@ -189,17 +190,15 @@ public class JobScheduler {
    */
   public JobScheduler deleteJobs(JsonObject config, Handler<AsyncResult<JsonObject>> handler) {
 
-    String id = config.getString(ID, "");
-
+    String id = config.getString(ADAPTOR_ID, "");
     try {
       boolean flag = scheduler.deleteJob(new JobKey(id));
       if (flag == Boolean.FALSE) {
-        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-        return this;
+        LOGGER.warn("Info: No scheduler association found; id: "+ id);
       }
     } catch (SchedulerException e) {
-      handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
       LOGGER.error("Failed: In scheduler job deletion; " + e.getLocalizedMessage());
+      handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
     }
 
     LOGGER.debug("Info: Adaptor scheduler delete; id: "+ id);

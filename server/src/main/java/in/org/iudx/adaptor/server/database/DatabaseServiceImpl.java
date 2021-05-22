@@ -43,10 +43,13 @@ public class DatabaseServiceImpl implements DatabaseService {
         for (Row row : result) {
           JsonObject rowJson = new JsonObject();
           JsonObject tempJson = row.toJson();
+          JsonObject configData = tempJson.getJsonObject(DATA);
           
           rowJson.put(ID, tempJson.getValue("adaptor_id"))
-                 .put(NAME, tempJson.getJsonObject(DATA).getString(NAME))
+                 .put(NAME, configData.getString(NAME))
                  .put(JAR_ID, tempJson.getString("jar_id"))
+                 .put(SCHEDULE_PATTERN, configData.getString(SCHEDULE_PATTERN,null))
+                 .put(JOB_ID, tempJson.getString("job_id"))
                  .put(LASTSEEN, tempJson.getString(TIMESTAMP))
                  .put(STATUS, tempJson.getString(STATUS));
           response.add(rowJson);
@@ -249,17 +252,28 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     client.executeAsync(getQuery).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
+        JsonObject tempJson = new JsonObject();
         RowSet<Row> result = pgHandler.result();
         if(result.size() == 1) {
-          client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
-            if(deleteHandler.succeeded()) {
-              LOGGER.debug("Info: Database query succeeded");
-              handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
-            } else {
-              LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
-              handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-            }
-          });
+          for(Row row: result) {
+            tempJson.put(JAR_ID, row.toJson().getString("jar_id"));
+            tempJson.put(STATUS, row.toJson().getString(STATUS));
+          }
+          
+          if(!tempJson.getString(STATUS).equals(RUNNING)) {
+            client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
+              if(deleteHandler.succeeded()) {
+                LOGGER.debug("Info: Database query succeeded");
+                handler.handle(Future.succeededFuture(tempJson.put(STATUS, SUCCESS)));
+              } else {
+                LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+                handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+              }
+            }); 
+          } else {
+            LOGGER.error("Error: Already running instance; stop it before deletion");
+            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, "alreadyRunningJob").toString()));
+          }
         } else {
           LOGGER.error("Error: Unable to delete");
           handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
@@ -276,23 +290,20 @@ public class DatabaseServiceImpl implements DatabaseService {
    * {@inheritDoc}
    */
   @Override
-  public DatabaseService syncAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+  public DatabaseService syncAdaptorJob(String query, Handler<AsyncResult<JsonObject>> handler) {
     
     JsonArray response = new JsonArray();
-    String username = request.getString(USERNAME);
-        
-    String query = null;
     
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
         RowSet<Row> result = pgHandler.result();
         for (Row row : result) {
-          response.add(row.toJson());
+          response.add(row.toJson().getString("job_id"));
         }
         
         handler.handle(
             Future.succeededFuture(
-                new JsonObject().put(STATUS, SUCCESS).put(JOBS, response)));
+                new JsonObject().put(JOBS, response)));
       } else {
         LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
