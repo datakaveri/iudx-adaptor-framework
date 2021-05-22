@@ -21,7 +21,6 @@ public class Constants {
   public static final String TEMPLATE_PATH = "templatePath";
   public static final String JAR_OUT_PATH = "jarOutPath";
 
-
   /** Accept Headers and CORS */
   public static final String HEADER_ACCEPT = "Accept";
   public static final String HEADER_TOKEN = "token";
@@ -43,7 +42,6 @@ public class Constants {
       "application/x-www-form-urlencoded";
   public static final String MULTIPART_FORM_DATA = "multipart/form-data";
   public static final String JAVA_ARCHIVE = "application/x-java-archive";
-
 
   /** Routes */
   public static final String JARS = "/jars";
@@ -96,7 +94,6 @@ public class Constants {
   public static final String SAVEPOINT = "/savepoints";
   public static final String TASKMANAGER_API = "/taskmanagers";
   public static final String TASKMANAGER_LOGS_API = TASKMANAGER_API + "/$1/logs/";
-
 
   /** Others */
   public static final String FLINKOPTIONS = "flinkOptions";

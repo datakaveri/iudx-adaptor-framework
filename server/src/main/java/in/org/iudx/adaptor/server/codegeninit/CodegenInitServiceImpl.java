@@ -31,7 +31,6 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   FlinkClientService flinkClient;
   DatabaseService databaseService;
   JsonObject mvnProgress = new JsonObject();
-  static JobScheduler jobScheduler;
 
   private String templatePath;
   private String jarOutPath;
@@ -45,11 +44,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     this.jarOutPath = jarOutPath;
     this.databaseService = databaseService;
   }
-  
-  public static void setSchedulerInstance(JobScheduler jobScheduler1) {
-    jobScheduler = jobScheduler1;
-  }
-
+ 
   /**
    * {@inheritDoc}
    */

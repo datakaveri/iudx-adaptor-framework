@@ -18,7 +18,6 @@ import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.server.codegeninit.CodegenInitService;
-import in.org.iudx.adaptor.server.codegeninit.CodegenInitServiceImpl;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import in.org.iudx.adaptor.server.util.AdminAuthHandler;
@@ -49,7 +48,6 @@ public class Server extends AbstractVerticle {
   private String keystorePassword;
   private boolean isSsl;
   private int port;
-  private JsonObject flinkOptions = new JsonObject();
   private Validator validator;
   private JobScheduler jobScheduler;
   private CodegenInitService codegenInit;
@@ -69,7 +67,6 @@ public class Server extends AbstractVerticle {
     keystorePassword = config().getString(KEYSTORE_PASSWORD);
     isSsl = config().getBoolean(IS_SSL);
     port = config().getInteger(PORT);
-    flinkOptions = config().getJsonObject(FLINKOPTIONS);
     authCred = config().getJsonObject("adminAuth");
     quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
     jarOutPath = config().getString(JAR_OUT_PATH);
@@ -311,7 +308,6 @@ public class Server extends AbstractVerticle {
     jobScheduler = new JobScheduler(flinkClient, databaseService, quartzPropertiesPath);
     dbFlinkSync = new DbFlinkSync(flinkClient,databaseService);
     dbFlinkSync.periodicTaskScheduler();
-    CodegenInitServiceImpl.setSchedulerInstance(jobScheduler);
     LOGGER.debug("Server Initialized");
   }
 
