@@ -17,22 +17,15 @@ import io.vertx.core.json.JsonObject;
 public interface CodegenInitService {
   
   /**
-   * 
+   * Handles the initialization of the codegen process.
+   * Composed of multiple other services.
    * @param jobScheduler
    * @param request
    * @param handler
-   * @return
+   * @return jsonObject
    */
   @Fluent
   CodegenInitService mvnInit(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
-  
-  /**
-   * Return codegen progess.
-   * @param handler
-   * @return
-   */
-  @Fluent
-  CodegenInitService getMvnStatus(Handler<AsyncResult<JsonObject>> handler);
 
   /**
    * 

@@ -272,7 +272,7 @@ public class DatabaseServiceImpl implements DatabaseService {
             }); 
           } else {
             LOGGER.error("Error: Already running instance; stop it before deletion");
-            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, "alreadyRunningJob").toString()));
+            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, ALREADY_RUNNING).toString()));
           }
         } else {
           LOGGER.error("Error: Unable to delete");
@@ -293,7 +293,7 @@ public class DatabaseServiceImpl implements DatabaseService {
   public DatabaseService syncAdaptorJob(String query, Handler<AsyncResult<JsonObject>> handler) {
     
     JsonArray response = new JsonArray();
-    
+
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
         RowSet<Row> result = pgHandler.result();
@@ -309,7 +309,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
       }
     });
-    
+
     return null;
   }
 }

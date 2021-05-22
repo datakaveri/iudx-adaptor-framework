@@ -82,6 +82,9 @@ public class Constants {
   public static final String EXISTS = "exists";
   public static final String INVALID_SYNTAX = "invalidSyntax";
   public static final String DUPLICATE_ADAPTOR = "duplicateAdaptor";
+  public static final String ALREADY_RUNNING = "alreadyRunning";
+  public static final String NO_RUNNING_INS = "noRunningInstance";
+  public static final String ADAPTOR_NOT_FOUND = "adaptorNotFound";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";

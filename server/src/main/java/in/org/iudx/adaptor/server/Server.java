@@ -819,9 +819,9 @@ public class Server extends AbstractVerticle {
           JsonObject adaptorDetails =
               databaseHandler.result().getJsonArray(ADAPTORS).getJsonObject(0);
           String jobId = adaptorDetails.getString(JOB_ID);
-          String status = adaptorDetails.getString(STATUS);
+          String status = adaptorDetails.getString(STATUS,"");
 
-          if (status == null || status.equalsIgnoreCase(RUNNING)) {
+          if (status != null && status.equalsIgnoreCase(RUNNING)) {
             requestBody.put(URI, JOBS_API + jobId);
             requestBody.put(DATA, new JsonObject());
             requestBody.put(MODE, STOP);
@@ -858,26 +858,27 @@ public class Server extends AbstractVerticle {
                 LOGGER.error("Error: Stopping job failed; " + resHandler.cause().getMessage());
                 response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                         .setStatusCode(400)
-                        .end(resHandler.cause().getMessage());
+                        .end(new JsonObject().put(STATUS, FAILED).toString());
               }
             });
           } else {
             LOGGER.error("Error: Adaptor has no running instance");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                     .setStatusCode(400)
-                    .end(new JsonObject().put(STATUS, "noRunningInstance").toString());
+                    .end(new JsonObject().put(STATUS, NO_RUNNING_INS).toString());
           }
         } else {
           LOGGER.error("Error: Adaptor not found");
           response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                   .setStatusCode(404)
-                  .end(new JsonObject().put(STATUS, "adaptorNotFound").toString());
+                  .end(new JsonObject().put(STATUS, ADAPTOR_NOT_FOUND).toString());
         }
       }
     });
   }
   
   /**
+   * Get a or all the Adaptor and their details.
    * 
    * @param routingContext
    */
@@ -904,6 +905,7 @@ public class Server extends AbstractVerticle {
   }
   
   /**
+   * Delete a adaptor, its job data, status, cleans the scheduler, jars etc.
    * 
    * @param routingContext
    */
@@ -934,14 +936,14 @@ public class Server extends AbstractVerticle {
                           .end(new JsonObject().put(STATUS, SUCCESS).toString());
 
                 } else if (databaseHandler.failed()) {
-                  LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause());
+                  LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause().getLocalizedMessage());
                   response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                           .setStatusCode(400)
                           .end(scheduleHandler.cause().getLocalizedMessage());
                 }
               });
             } else {
-              LOGGER.error("Error: Delete adptor query failed; " + deleteHandler.cause());
+              LOGGER.error("Error: Delete adptor query failed; " + deleteHandler.cause().getLocalizedMessage());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .setStatusCode(400)
                       .end(databaseHandler.cause().getLocalizedMessage());
@@ -963,6 +965,7 @@ public class Server extends AbstractVerticle {
   }
   
   /**
+   * Create Adaptor users, Admin Requests.
    * 
    * @param routingContext
    */
@@ -1016,6 +1019,7 @@ public class Server extends AbstractVerticle {
   }
   
   /**
+   * Get registered users, Admin Requests.
    * 
    * @param routingContext
    */
