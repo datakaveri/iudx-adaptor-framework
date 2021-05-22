@@ -178,18 +178,6 @@ public class Constants {
       "AND fj.timestamp = (SELECT MAX(timestamp) FROM flink_job WHERE adaptor_id = ad.adaptor_id)\n" + 
       "WHERE ad.adaptor_id = '$2'";
   
-  public static final String GET_ALL_ADAPTOR_OLD =
-      "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN codegen_status AS"
-      + " cg ON ad.adaptor_id = cg.adaptor_id INNER JOIN public.\"user\" AS _user"
-      + " ON ad.user_id = _user.id WHERE _user.id = (SELECT id FROM public.user WHERE username = '$1');";
-  
-  public static final String GET_ONE_ADAPTOR_OLD =
-      "SELECT ad.* , cg.status FROM adaptor AS ad INNER JOIN "
-      + "codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id "
-      + "INNER JOIN public.\"user\" AS _user ON ad.user_id = _user.id "
-      + "WHERE ad.adaptor_id = '$2' AND _user.id = "
-      + "(SELECT id FROM public.user WHERE username = '$1');";
-  
   public static final String REGISTER_USER = "INSERT INTO public.user "
       + "(username, password, status,\"timestamp\") VALUES ('$1','$2','$3',now());";
   
@@ -199,19 +187,4 @@ public class Constants {
   
   public static final String GET_USERS = "SELECT username,password,status,\"timestamp\" FROM public.user";
   public static final String GET_USER = "SELECT username,password,status,\"timestamp\" FROM public.user WHERE username = '$1'";
-  
-  public static final String UPDATE_COMPLEX_OLD = "WITH update_adaptor AS (\n" + 
-      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
-      "  returning adaptor_id\n" + 
-      "),\n" + 
-      " update_codegen_status AS (\n" + 
-      "  UPDATE codegen_status SET STATUS = '$3', \"timestamp\" = now() \n" + 
-      "  FROM (SELECT adaptor_id FROM update_adaptor) AS adaptor\n" + 
-      "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id\n" + 
-      "  returning adaptor.adaptor_id\n" + 
-      ")\n" + 
-      "INSERT INTO flink_job(job_id, \"timestamp\",status, adaptor_id)\n" + 
-      "SELECT '$4',now(),'$5',adaptor_id from update_codegen_status";
-
-
 }
