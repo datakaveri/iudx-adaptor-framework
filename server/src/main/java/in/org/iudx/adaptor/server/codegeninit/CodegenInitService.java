@@ -22,10 +22,11 @@ public interface CodegenInitService {
    * @param jobScheduler
    * @param request
    * @param handler
-   * @return jsonObject
+   * @return
    */
   @Fluent
-  CodegenInitService mvnExec(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  CodegenInitService mvnPkg(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  
 
   /**
    * 
