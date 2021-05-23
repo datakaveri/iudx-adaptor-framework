@@ -47,7 +47,7 @@
 					"response": []
 				},
 				{
-					"name": "GetAdaptors",
+					"name": "GetAllAdaptors",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -131,6 +131,68 @@
 							"path": [
 								"adaptor",
 								"adaptor-user_FlinkTestApp2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "startAdaptor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor/adaptor-user_FlinkTestApp9/start",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor",
+								"adaptor-user_FlinkTestApp9",
+								"start"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "stopAdaptor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "username",
+								"value": "{{username}}",
+								"type": "text"
+							},
+							{
+								"key": "password",
+								"value": "{{password}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{host}}:{{port}}/adaptor/adaptor-user_FlinkTestApp9/stop",
+							"host": [
+								"{{host}}"
+							],
+							"port": "{{port}}",
+							"path": [
+								"adaptor",
+								"adaptor-user_FlinkTestApp9",
+								"stop"
 							]
 						}
 					},

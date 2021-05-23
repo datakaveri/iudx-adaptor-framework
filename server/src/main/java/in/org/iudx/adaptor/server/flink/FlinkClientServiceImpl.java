@@ -55,44 +55,27 @@ public class FlinkClientServiceImpl implements FlinkClientService{
   public FlinkClientService handleJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     RespBuilder response = new RespBuilder();
-    Future<JsonObject> future = httpPostAsync(request, HttpMethod.POST);
+    
+    HttpMethod method = null;
+    if(request.getString(MODE).equals(START)) {
+      method = HttpMethod.POST;
+    } else {
+      method = HttpMethod.PATCH;
+    }
+    
+    Future<JsonObject> future = httpPostAsync(request, method);
     future.onComplete(resHandler -> {
-      String jarId = request.getString(ID, "");
+      String jarId = request.getString(JAR_ID, "");
       if (resHandler.succeeded()) {
-        if (request.getString(MODE).equals(STOP)) {
-          request.put(URI,
-              request.getString(URI) + "/" + resHandler.result().getString("request-id"));
-          httpGetAsync(request, HttpMethod.GET).onComplete(getHandler -> {
-            if (getHandler.succeeded()) {
-              JsonObject result = getHandler.result();
-              if(result.containsKey(OPERATION) && !result.getJsonObject(OPERATION).containsKey("failure-cause")) {
-              handler.handle(Future.succeededFuture(
-                  response.withStatus(SUCCESS)
-                          .withResult(jarId,POST, SUCCESS, 
-                              getHandler.result()
-                                        .getJsonObject(OPERATION).getString("location"))
-                          .getJsonResponse()));
-              } else {
-                LOGGER.error("Error: Job operation failed; " + getHandler.result());
-                handler.handle(Future.failedFuture(
-                    response.withStatus(ERROR)
-                            .withResult(jarId,POST, ERROR, "Job operation failed.")
-                            .getResponse()));
-              }
-            }else {
-              handler.handle(Future.failedFuture(
-                  response.withStatus(ERROR)
-                          .withResult(jarId,POST,FAILED,
-                              getHandler.cause()
-                                        .getMessage())
-                          .getResponse()));
-            }
-          });
+        if (request.getString(MODE).equals(START)) {
+          handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS).put(JOB_ID,
+              resHandler.result().getString("jobid"))));
+          /*
+           * response.withStatus(SUCCESS) .withResult(jarId, POST, SUCCESS,
+           * resHandler.result().getString("jobid")) .getJsonResponse()));
+           */
         } else {
-          handler.handle(Future.succeededFuture(
-              response.withStatus(SUCCESS)
-                      .withResult(jarId, POST, SUCCESS, resHandler.result().getString("jobid"))
-                      .getJsonResponse()));
+          handler.handle(Future.succeededFuture(response.withStatus(SUCCESS).getJsonResponse()));
         }
       } else if (resHandler.failed()) {
         handler.handle(Future.failedFuture(

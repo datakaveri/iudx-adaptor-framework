@@ -10,7 +10,6 @@ import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
-import in.org.iudx.adaptor.server.JobScheduler;
 import in.org.iudx.adaptor.server.database.DatabaseService;
 import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import io.vertx.core.AsyncResult;
@@ -20,9 +19,13 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.CopyOptions;
 import io.vertx.core.file.FileSystem;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * Implementation of {@link CodegenInitService}. Handles and manages the Codegen related services.
+ * Creates the jar, and submit the jar to the Flink using {@link FlinkClientService}.
+ * 
+ */
 public class CodegenInitServiceImpl implements CodegenInitService {
 
   private static final Logger LOGGER = LogManager.getLogger(CodegenInitServiceImpl.class);
@@ -31,7 +34,6 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   FlinkClientService flinkClient;
   DatabaseService databaseService;
   JsonObject mvnProgress = new JsonObject();
-  static JobScheduler jobScheduler;
 
   private String templatePath;
   private String jarOutPath;
@@ -45,11 +47,7 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     this.jarOutPath = jarOutPath;
     this.databaseService = databaseService;
   }
-  
-  public static void setSchedulerInstance(JobScheduler jobScheduler1) {
-    jobScheduler = jobScheduler1;
-  }
-
+ 
   /**
    * {@inheritDoc}
    */
@@ -59,40 +57,31 @@ public class CodegenInitServiceImpl implements CodegenInitService {
     databaseService.createAdaptor(request, adaptorHandler -> {
       if (adaptorHandler.succeeded()) {
 
-        String path = request.getString("path");
+        String path = request.getString(PATH);
         Future<JsonObject> mvnExecuteFuture = mvnExecute(path);
 
         mvnExecuteFuture.compose(mvnExecuteResponse -> {
           return submitConfigJar(request, flinkClient);
 
-        }).compose(submitConfigJarResponse -> {
-          String jarPath = submitConfigJarResponse.getString("filename");
-          String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
-          request.put(URI, JOB_SUBMIT_API.replace("$1", jarId))
-          .put(ID, jarId)
-          .put(DATA, new JsonObject())
-          .put(MODE, START)
-          .put(JAR_ID, jarId);
-          return scheduleJobs(request);
-
         }).onComplete(composeHandler -> {
           if (composeHandler.succeeded()) {
-            
+            LOGGER.debug("Info: Jar submitted; adaptor created");
+            String jarPath = composeHandler.result().getString("filename");
+            String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
             String query = UPDATE_COMPLEX
-                .replace("$1", request.getString(JAR_ID))
+                .replace("$1", jarId)
                 .replace("$2", request.getString(ADAPTOR_ID))
-                .replace("$3", SCHEDULED);
-            
+                .replace("$3", COMPLETED);
+
             databaseService.updateComplex(query, updateHandler -> {
-              if(updateHandler.succeeded()) {
-                LOGGER.debug("Info: Job scheduled;");
-              } else {
+              if (updateHandler.failed()) {
                 LOGGER.error("Error: Job Scheduled; Update failed");
               }
-              handler.handle(Future.succeededFuture(composeHandler.result())); 
+              handler.handle(Future.succeededFuture(composeHandler.result()));
             });
           } else if (composeHandler.failed()) {
-            LOGGER.error("Error: Job scheduling failed; " + composeHandler.cause().getMessage());
+            LOGGER.error(
+                "Error: Adaptor gen/submission failed; " + composeHandler.cause().getMessage());
             handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
           }
         });
@@ -101,30 +90,14 @@ public class CodegenInitServiceImpl implements CodegenInitService {
 
     return this;
   }
-
-  /**
-   * Polling codegen progess.
-   * @param handler
-   * @return
-   */
-  @Override
-  public CodegenInitService getMvnStatus(Handler<AsyncResult<JsonObject>> handler) {
-
-    JsonObject temp = new JsonObject();
-    
-    if(mvnProgress.isEmpty()) {
-      temp.put(STATUS, SUCCESS).put(RESULTS, new JsonArray());
-    } else {
-      temp.put(STATUS, SUCCESS).put(RESULTS, new JsonArray().add(mvnProgress));
-    }
-    handler.handle(Future.succeededFuture(temp));
-    return this;
-  }
   
   /**
+   * Future to handles the temp directory creation, copy/move of files and directories, execution of
+   * maven commands for codegen.
+   * Based on Synchronous blocking of code (Vertx ExecuteBlocking).
    * 
    * @param configPath
-   * @return
+   * @return promise
    */
   private Future<JsonObject> mvnExecute(String configPath) {
     
@@ -148,13 +121,11 @@ public class CodegenInitServiceImpl implements CodegenInitService {
                                         "-Dmaven.test.skip=true"));
         
         Invoker invoker = new DefaultInvoker();
-
         vertx.executeBlocking(blockingCodeHandler -> {
           try {
             invoker.execute(mvnRequest);
             fileSystem.move(destinationDirectory + "/target/adaptor.jar",
-                             jarOutPath + "/" + fileName, options,
-                mvHandler -> {
+                jarOutPath + "/" + fileName, options, mvHandler -> {
                   if (mvHandler.succeeded()) {
                     tempCleanUp(destinationDirectory);
                     blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
@@ -167,9 +138,9 @@ public class CodegenInitServiceImpl implements CodegenInitService {
             LOGGER.error(e);
             blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
           }
-        },true, resultHandler -> {
+        }, true, resultHandler -> {
           if (resultHandler.succeeded()) {
-            promise.complete((JsonObject)resultHandler.result());
+            promise.complete((JsonObject) resultHandler.result());
           } else if (resultHandler.failed()) {
             promise.fail(resultHandler.cause());
           }
@@ -183,7 +154,9 @@ public class CodegenInitServiceImpl implements CodegenInitService {
 
 
   /**
-   * Submit jar; To submit adaptor jar generated to flink.
+   * Future to submit jar; To submit generated adaptor jar to Flink. 
+   * Based on Synchronous blocking of code (Vertx ExecuteBlocking).
+   * 
    * @param request
    * @param flinkClient
    * @return promise
@@ -191,54 +164,36 @@ public class CodegenInitServiceImpl implements CodegenInitService {
   private Future<JsonObject> submitConfigJar(JsonObject request, FlinkClientService flinkClient) {
 
     Promise<JsonObject> promise = Promise.promise();
-
     vertx.executeBlocking(blockingCodeHandler -> {
       flinkClient.submitJar(request, responseHandler -> {
         if (responseHandler.succeeded()) {
           LOGGER.info("Info: Jar submitted successfully");
-          tempCleanUp(request.getString("path"));
+          tempCleanUp(request.getString(PATH));
           blockingCodeHandler.complete(responseHandler.result());
         } else {
           LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
           blockingCodeHandler.fail(responseHandler.cause());
         }
       });
-    },true, resultHandler -> {
+    }, true, resultHandler -> {
       if (resultHandler.succeeded()) {
         promise.complete((JsonObject) resultHandler.result());
       } else if (resultHandler.failed()) {
         promise.fail(resultHandler.cause());
       }
     });
-    
-    return promise.future();
-  }
-  
-  /**
-   * For scheduling jobs based on the pattern provided in the request.
-   * @param request
-   * @return promise
-   */
-  private Future<JsonObject> scheduleJobs(JsonObject request) {
-    Promise<JsonObject> promise = Promise.promise();
 
-    jobScheduler.schedule(request, resHandler -> {
-      if (resHandler.succeeded()) {
-        promise.complete(resHandler.result());
-      } else {
-        promise.fail(resHandler.cause().getMessage());
-      }
-    });
     return promise.future();
   }
   
   /**
-   * Deleting the temp files and directories.
+   * Handle the deletion of the temp files and directories.
+   * 
    * @param path
    * @return
    */
   private boolean tempCleanUp(String path) {
-    
+
     LOGGER.debug("Info: Cleaning temp file & diretories");
     Future<Void> promise = fileSystem.deleteRecursive(path, true);
     return promise.succeeded();

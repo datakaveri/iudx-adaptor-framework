@@ -83,7 +83,7 @@ public interface DatabaseService {
    * @return
    */
   @Fluent
-  DatabaseService syncAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+  DatabaseService syncAdaptorJob(String query, Handler<AsyncResult<JsonObject>> handler);
   
   @GenIgnore
   static DatabaseService createProxy(Vertx vertx, String address) {
