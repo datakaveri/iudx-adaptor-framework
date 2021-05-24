@@ -121,7 +121,6 @@ public class JsonPathParser<T> implements Parser<T> {
             try {
               Object keyval =
                 ctx.read(trickleObjs.getJSONObject(i).getString("keyPath"));
-              LOGGER.debug(keyval);
               tmpctx.put("$", trickleObjs.getJSONObject(i).getString("keyName"), keyval);
             } catch (Exception e) {
               // Ignore errors

@@ -104,7 +104,7 @@ public class JSPathTest {
     SimpleADeduplicator dedup = new SimpleADeduplicator();
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8888/combineA")
+      new ApiConfig().setUrl("http://127.0.0.1:8888/complexA")
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
     String pathSpec;

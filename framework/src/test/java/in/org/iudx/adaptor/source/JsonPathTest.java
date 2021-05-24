@@ -82,28 +82,26 @@ public class JsonPathTest {
   void parseTrickle() throws InterruptedException {
 
     String parseSpecArr = new JSONObject()
-      .put("timestampPath", "$.time")
       .put("keyPath", "$.id")
       .put("trickle", new JSONArray()
                         .put(new JSONObject()
-                            .put("keyPath", "$.outerKey")
-                            .put("keyName", "outerKey")))
+                            .put("keyPath", "$.time")
+                            .put("keyName", "time")))
+      .put("timestampPath", "$.time")
       .put("containerPath", "$.data")
       .put("inputTimeFormat","yyyy-MM-dd HH:mm:ss")
       .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
       .toString();
 
     String arrayData = 
-      new JSONObject().put("outerKey", "outerKeyValue")
+      new JSONObject().put("time", "2021-04-01 12:00:01")
       .put("data",
       new JSONArray()
       .put(new JSONObject()
-      .put("time", "2021-04-01 12:00:01")
       .put("id", "123")
       .put("k", 1.5)
       )
       .put((new JSONObject()
-      .put("time", "2021-04-01 12:00:01")
       .put("id", "4356")
       .put("k", 2.5)
       ))).toString();

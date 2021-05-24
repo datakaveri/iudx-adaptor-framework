@@ -70,10 +70,16 @@ public class Server extends AbstractVerticle {
         simple.getSimplePacketB(routingContext);
     });
 
-    router.get("/combineA")
+    router.get("/complexA")
       .handler(routingContext -> {
         LOGGER.debug("Info: Received request");
-        complex.getCombineA(routingContext);
+        complex.getComplexA(routingContext);
+    });
+
+    router.get("/complexB")
+      .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
+        complex.getComplexB(routingContext);
     });
 
     /**
