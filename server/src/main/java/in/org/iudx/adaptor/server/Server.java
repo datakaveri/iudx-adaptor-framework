@@ -732,59 +732,66 @@ public class Server extends AbstractVerticle {
 
           requestBody.put(DATA, new JsonObject());
           requestBody.put(MODE, START);
+          
+          if(jarId != null && !jarId.isBlank()) {
+            if (status == null || !status.equalsIgnoreCase(RUNNING)) {
 
-          if (status == null || !status.equalsIgnoreCase(RUNNING)) {
+              requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
+              String schedulePattern = adaptorDetails.getString(SCHEDULE_PATTERN);
 
-            requestBody.put(URI, JOB_SUBMIT_API.replace("$1", jarId));
-            String schedulePattern = adaptorDetails.getString(SCHEDULE_PATTERN);
+              if (adaptorDetails.containsKey(SCHEDULE_PATTERN) && schedulePattern != null) {
 
-            if (adaptorDetails.containsKey(SCHEDULE_PATTERN) && schedulePattern != null) {
+                requestBody.put(SCHEDULE_PATTERN, schedulePattern);
+                jobScheduler.schedule(requestBody, resHandler -> {
+                  if (resHandler.succeeded()) {
+                    LOGGER.info("Success: Job submitted");
+                    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                            .end(resHandler.result().toString());
+                  } else {
+                    LOGGER.error("Error: Job schedulling failed; " + resHandler.cause().getMessage());
+                    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON).setStatusCode(400)
+                        .end(resHandler.cause().getMessage());
+                  }
+                });
+              } else {
+                flinkClient.handleJob(requestBody, resHandler -> {
+                  if (resHandler.succeeded()) {
+                    LOGGER.info("Success: Job submitted");
 
-              requestBody.put(SCHEDULE_PATTERN, schedulePattern);
-              jobScheduler.schedule(requestBody, resHandler -> {
-                if (resHandler.succeeded()) {
-                  LOGGER.info("Success: Job submitted");
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                          .end(resHandler.result().toString());
-                } else {
-                  LOGGER.error("Error: Job schedulling failed; " + resHandler.cause().getMessage());
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON).setStatusCode(400)
-                      .end(resHandler.cause().getMessage());
-                }
-              });
+                    String newJobId = resHandler.result().getString(JOB_ID);
+                    String query = INSERT_JOB.replace("$1", newJobId)
+                                             .replace("$2", RUNNING)
+                                             .replace("$3", adaptorId);
+
+                    databaseService.updateComplex(query, updateHandler -> {
+                      if (updateHandler.succeeded()) {
+                        LOGGER.debug("Info: database updated");
+                      } else {
+                        LOGGER.error("Error: Job running; database update failed; "
+                            + updateHandler.cause().getLocalizedMessage());
+                      }
+                    });
+                    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                        .end(new JsonObject().put(STATUS, SUCCESS).toString());
+                  } else {
+                    LOGGER.error("Error: Job starting failed; " + resHandler.cause().getMessage());
+                    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                            .setStatusCode(400)
+                            .end(resHandler.cause().getMessage());
+                  }
+                });
+              }
             } else {
-              flinkClient.handleJob(requestBody, resHandler -> {
-                if (resHandler.succeeded()) {
-                  LOGGER.info("Success: Job submitted");
-
-                  String newJobId = resHandler.result().getString(JOB_ID);
-                  String query = INSERT_JOB.replace("$1", newJobId)
-                                           .replace("$2", RUNNING)
-                                           .replace("$3", adaptorId);
-
-                  databaseService.updateComplex(query, updateHandler -> {
-                    if (updateHandler.succeeded()) {
-                      LOGGER.debug("Info: database updated");
-                    } else {
-                      LOGGER.error("Error: Job running; database update failed; "
-                          + updateHandler.cause().getLocalizedMessage());
-                    }
-                  });
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                      .end(new JsonObject().put(STATUS, SUCCESS).toString());
-                } else {
-                  LOGGER.error("Error: Job starting failed; " + resHandler.cause().getMessage());
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                          .setStatusCode(400)
-                          .end(resHandler.cause().getMessage());
-                }
-              });
+              LOGGER.error("Error: Adaptor has running instance; JobId: " + jobId);
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .setStatusCode(400)
+                      .end(new JsonObject().put(STATUS, ALREADY_RUNNING).toString());
             }
           } else {
-            LOGGER.error("Error: Adaptor has running instance; JobId: " + jobId);
+            LOGGER.error("Error: Adaptor has no compiled jar");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                     .setStatusCode(400)
-                    .end(new JsonObject().put(STATUS, "alreadyRunning").toString());
+                    .end(new JsonObject().put(STATUS, INCOMPLETE_CODEGEN).toString());
           }
         } else {
           LOGGER.error("Error: Adaptor not found");
@@ -820,53 +827,63 @@ public class Server extends AbstractVerticle {
               databaseHandler.result().getJsonArray(ADAPTORS).getJsonObject(0);
           String jobId = adaptorDetails.getString(JOB_ID);
           String status = adaptorDetails.getString(STATUS,"");
+          String jarId = adaptorDetails.getString(JAR_ID);
 
-          if (status != null && status.equalsIgnoreCase(RUNNING)) {
-            requestBody.put(URI, JOBS_API + jobId);
-            requestBody.put(DATA, new JsonObject());
-            requestBody.put(MODE, STOP);
+          jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
+            if (scheduleHandler.succeeded()) {
+              LOGGER.debug("Info: Stopping job; Scheduler trigger cleared");
+              
+              if(jarId != null && !jarId.isBlank()) {
+                if (status != null) {
+                  requestBody.put(URI, JOBS_API + jobId);
+                  requestBody.put(JOB_ID, jobId);
+                  requestBody.put(DATA, new JsonObject());
+                  requestBody.put(MODE, STOP);
 
-            flinkClient.handleJob(requestBody, resHandler -> {
-              if (resHandler.succeeded()) {
-                LOGGER.info("Success: Job stopped");
-                String query = UPDATE_JOB.replace("$1", jobId)
-                                         .replace("$2", STOPPED);
+                  flinkClient.handleJob(requestBody, resHandler -> {
+                    if (resHandler.succeeded()) {
+                      String flinkStatus = resHandler.result().getString(STATUS);
+                      LOGGER.info("Success: Job stopped");
+                      String query = UPDATE_JOB.replace("$1", jobId)
+                                               .replace("$2", flinkStatus);
 
-                databaseService.updateComplex(query, updateHandler -> {
-                  if (updateHandler.succeeded()) {
-                    LOGGER.debug("Info: database updated");
-                    
-                    jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
-                      if (scheduleHandler.succeeded()) {
-                        LOGGER.debug("Info: Stopping job; Scheduler trigger cleared");
-                        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                                .end(new JsonObject().put(STATUS, SUCCESS).toString());
-
-                      } else if (databaseHandler.failed()) {
-                        LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause());
-                        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                                .setStatusCode(400)
-                                .end(scheduleHandler.cause().getLocalizedMessage());
-                      }
-                    });
-                  } else {
-                    LOGGER.error("Error: Stopping job; database update failed; "
-                        + updateHandler.cause().getLocalizedMessage());
-                  }
-                });
+                      databaseService.updateComplex(query, updateHandler -> {
+                        if (updateHandler.succeeded()) {
+                          LOGGER.debug("Info: database updated");
+                          response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .end(new JsonObject().put(STATUS, SUCCESS).toString());
+                          
+                        } else {
+                          LOGGER.error("Error: Stopping job; database update failed; "
+                              + updateHandler.cause().getLocalizedMessage());
+                        }
+                      });
+                    } else {
+                      LOGGER.error("Error: Adaptor has running instance");
+                      response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                              .setStatusCode(400)
+                              .end(new JsonObject().put(STATUS, NO_RUNNING_INS).toString());
+                    }
+                  });
+                } else {
+                  LOGGER.error("Error: Adaptor has running instance");
+                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .setStatusCode(400)
+                          .end(new JsonObject().put(STATUS, NO_RUNNING_INS).toString());
+                }
               } else {
-                LOGGER.error("Error: Stopping job failed; " + resHandler.cause().getMessage());
+                LOGGER.error("Error: Adaptor has no compiled jar");
                 response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                         .setStatusCode(400)
-                        .end(new JsonObject().put(STATUS, FAILED).toString());
+                        .end(new JsonObject().put(STATUS, INCOMPLETE_CODEGEN).toString());
               }
-            });
-          } else {
-            LOGGER.error("Error: Adaptor has no running instance");
-            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                    .setStatusCode(400)
-                    .end(new JsonObject().put(STATUS, NO_RUNNING_INS).toString());
-          }
+            } else if (databaseHandler.failed()) {
+              LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause());
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .setStatusCode(400)
+                      .end(scheduleHandler.cause().getLocalizedMessage());
+            }
+          });
         } else {
           LOGGER.error("Error: Adaptor not found");
           response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -950,7 +967,7 @@ public class Server extends AbstractVerticle {
             }
           });
         } else {
-          LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause());
+          LOGGER.error("Error: Delete adptor query failed; " + databaseHandler.cause().getLocalizedMessage());
           response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                   .setStatusCode(400)
                   .end(databaseHandler.cause().getLocalizedMessage());
