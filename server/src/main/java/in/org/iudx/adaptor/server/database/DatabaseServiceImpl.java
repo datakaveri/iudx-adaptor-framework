@@ -260,19 +260,26 @@ public class DatabaseServiceImpl implements DatabaseService {
             tempJson.put(STATUS, row.toJson().getString(STATUS));
           }
           
-          if(!tempJson.getString(STATUS).equals(RUNNING)) {
-            client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
-              if(deleteHandler.succeeded()) {
-                LOGGER.debug("Info: Database query succeeded");
-                handler.handle(Future.succeededFuture(tempJson.put(STATUS, SUCCESS)));
-              } else {
-                LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
-                handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
-              }
-            }); 
+          String status = tempJson.getString(STATUS);
+          String jarId = tempJson.getString(JAR_ID);
+          if(jarId != null && !jarId.isBlank()) {
+            if(status == null || !status.equals(RUNNING)) {
+              client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
+                if(deleteHandler.succeeded()) {
+                  LOGGER.debug("Info: Database query succeeded");
+                  handler.handle(Future.succeededFuture(tempJson.put(STATUS, SUCCESS)));
+                } else {
+                  LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+                  handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+                }
+              }); 
+            } else {
+              LOGGER.error("Error: Already running instance; stop it before deletion");
+              handler.handle(Future.failedFuture(new JsonObject().put(STATUS, ALREADY_RUNNING).toString()));
+            }
           } else {
-            LOGGER.error("Error: Already running instance; stop it before deletion");
-            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, ALREADY_RUNNING).toString()));
+            LOGGER.error("Error: Codegen in process; Jar not submitted");
+            handler.handle(Future.failedFuture(new JsonObject().put(STATUS, INCOMPLETE_CODEGEN).toString()));
           }
         } else {
           LOGGER.error("Error: Unable to delete");

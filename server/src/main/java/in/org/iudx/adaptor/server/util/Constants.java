@@ -85,6 +85,7 @@ public class Constants {
   public static final String ALREADY_RUNNING = "alreadyRunning";
   public static final String NO_RUNNING_INS = "noRunningInstance";
   public static final String ADAPTOR_NOT_FOUND = "adaptorNotFound";
+  public static final String INCOMPLETE_CODEGEN = "incompleteCodegen";
 
   /** Flink URI */
   public static final String JAR_UPLOAD_API = "/jars/upload";

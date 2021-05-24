@@ -55,35 +55,48 @@ public class FlinkClientServiceImpl implements FlinkClientService{
   public FlinkClientService handleJob(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
 
     RespBuilder response = new RespBuilder();
-    
-    HttpMethod method = null;
-    if(request.getString(MODE).equals(START)) {
-      method = HttpMethod.POST;
-    } else {
-      method = HttpMethod.PATCH;
-    }
-    
-    Future<JsonObject> future = httpPostAsync(request, method);
-    future.onComplete(resHandler -> {
-      String jarId = request.getString(JAR_ID, "");
-      if (resHandler.succeeded()) {
-        if (request.getString(MODE).equals(START)) {
-          handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS).put(JOB_ID,
-              resHandler.result().getString("jobid"))));
-          /*
-           * response.withStatus(SUCCESS) .withResult(jarId, POST, SUCCESS,
-           * resHandler.result().getString("jobid")) .getJsonResponse()));
-           */
-        } else {
-          handler.handle(Future.succeededFuture(response.withStatus(SUCCESS).getJsonResponse()));
+
+    if (request.getString(MODE).equals(START)) {
+      httpPostAsync(request, HttpMethod.POST).onComplete(resHandler -> {
+        String jarId = request.getString(JAR_ID, "");
+        if (resHandler.succeeded()) {
+          handler.handle(Future.succeededFuture(
+              new JsonObject().put(STATUS, SUCCESS).put(JOB_ID,
+                  resHandler.result().getString("jobid"))));
+        } else if (resHandler.failed()) {
+          handler.handle(Future.failedFuture(
+              response.withStatus(ERROR).withResult(jarId, POST, FAILED).getResponse()));
         }
-      } else if (resHandler.failed()) {
-        handler.handle(Future.failedFuture(
-            response.withStatus(ERROR)
-                    .withResult(jarId, POST, FAILED)
-                    .getResponse()));
-      }
-    });
+      });
+    } else if(request.getString(MODE).equals(STOP)) {
+      JsonObject requestBody = new JsonObject().put(URI, JOBS_API + request.getString(JOB_ID));
+      
+      httpGetAsync(requestBody, HttpMethod.GET).compose(getHandler -> {
+        Future<JsonObject>future = null;
+        JsonObject resStatus = new JsonObject();
+        
+        String state = getHandler.getString("state").toLowerCase();
+        if(state !=null && state.equals(RUNNING)) {
+          httpPostAsync(request, HttpMethod.PATCH);
+          return Future.succeededFuture(resStatus.put(STATUS, STOPPED));
+        } else if(state !=null && !state.equals("errors")) {
+          resStatus.put(STATUS, state); 
+          future= Future.succeededFuture(resStatus);
+        }else {
+          future = Future.failedFuture(resStatus.put(STATUS, FAILED).toString());
+        }
+        return future;
+      }).onComplete(resultHandler -> {
+        if (resultHandler.succeeded() && !resultHandler.result().isEmpty()) {
+          handler.handle(resultHandler);
+        } else {
+          handler.handle(resultHandler);
+        }
+      });
+    } else {
+      handler.handle(Future.failedFuture(
+          new JsonObject().put(STATUS, FAILED).toString()));
+    }
     return this;
   }
 
@@ -354,7 +367,7 @@ public class FlinkClientServiceImpl implements FlinkClientService{
           promise.complete(new JsonObject().put(DATA, reqHandler.result().bodyAsString()));
           return;
         } else {
-          LOGGER.error("Error: Flink request failed; " + reqHandler.result().bodyAsString());
+          LOGGER.error("Error: Flink request failed; ");
           promise.fail(reqHandler.result().bodyAsString());
           return;
         }
