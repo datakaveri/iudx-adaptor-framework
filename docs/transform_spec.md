@@ -51,8 +51,9 @@ The schema of the transformSpec for **jsPath** is as shown below. **Bold** impli
 - **template**(String): Template json of the output message
 - **jsonPathSpec**(Array[Object]): An array of transformation operations which extract a key from the original json and place it in the path as specified in the template.  
   - **inputKeyPath**(String): Json Path from where the specific value must be extracted. Any java/script primitive type maybe extracted.
-  - **outputKeyPath**(String): Json Path on which the extracted value must be placed into
+  - **outputKeyPath**(String): Json Path on which the extracted value must be placed into.
   - valueModifierScript(String): Javascript inline function with the input variable being `value`.
+  - regexFilter(String): For String values of key-value pairs, an optional regexFilter can be provided to reject messages which contain this value.
 
 Example
 ``` 
@@ -67,6 +68,11 @@ Example
             {
                 "outputKeyPath": "$.co2.avgOverTime",
                 "inputValuePath": "$.k1"
+            },
+            {
+                "outputKeyPath": "$.name",
+                "inputValuePath": "$.k2",
+                "regexFilter": "^(?!.*reject).*"
             },
             {
                 "outputKeyPath": "$.id",

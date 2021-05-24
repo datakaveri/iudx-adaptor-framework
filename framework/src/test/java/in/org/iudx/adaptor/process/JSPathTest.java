@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import java.nio.file.*;
+import java.util.List;
 
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
@@ -21,6 +22,7 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
+import in.org.iudx.adaptor.codegen.SimpleBTestParser;
 import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.source.HttpSource;
@@ -95,5 +97,40 @@ public class JSPathTest {
 
   }
 
+  @Test
+  void processRegexFilter() throws InterruptedException {
+
+    SimpleBTestParser parser = new SimpleBTestParser();
+    SimpleADeduplicator dedup = new SimpleADeduplicator();
+
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8888/combineA")
+                                          .setRequestType("GET")
+                                          .setPollingInterval(1000L);
+    String pathSpec;
+    try {
+      pathSpec = new String(
+                            Files.readAllBytes(
+                            Paths.get(
+                              "src/test/java/in/org/iudx/adaptor/process/pathSpec2.json")));
+
+    } catch (Exception e) {
+      return;
+    }
+
+    
+   env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
+       .keyBy((Message msg) -> msg.key)
+       .process(new GenericProcessFunction(dedup))
+       .flatMap(new JSPathProcessFunction(pathSpec.toString()))
+       .addSink(new DumbSink());
+
+    try {
+      env.execute("test");
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+  }
 }
 

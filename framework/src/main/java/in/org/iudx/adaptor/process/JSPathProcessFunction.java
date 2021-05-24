@@ -107,6 +107,13 @@ public class JSPathProcessFunction
           transform(docCtx, rCtx, obj.getString("outputKeyPath"),
                               obj.getString("inputValuePath"));
         }
+
+        if (obj.has("regexFilter")) {
+          String val = docCtx.read(obj.getString("outputKeyPath"));
+          if(val.matches(obj.getString("regexFilter"))) {
+            return;
+          }
+        }
       } catch (Exception e) {
         LOGGER.debug("Failed");
         LOGGER.debug(e);

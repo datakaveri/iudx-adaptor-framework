@@ -27,6 +27,7 @@ public class Server extends AbstractVerticle {
   private HttpServer server;
 
   private Simple simple;
+  private Complex complex;
 
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
@@ -44,6 +45,7 @@ public class Server extends AbstractVerticle {
     router = Router.router(vertx);
 
     simple = new Simple();
+    complex = new Complex();
 
 
     LOGGER.debug("Info: Starting server");
@@ -66,6 +68,12 @@ public class Server extends AbstractVerticle {
       .handler(routingContext -> {
         LOGGER.debug("Info: Received request");
         simple.getSimplePacketB(routingContext);
+    });
+
+    router.get("/combineA")
+      .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
+        complex.getCombineA(routingContext);
     });
 
     /**
