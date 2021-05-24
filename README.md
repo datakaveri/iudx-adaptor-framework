@@ -130,16 +130,15 @@ The entire API specification can be found [here](./docs/openapi.yml).
 
 
 ## Starting a local development/deployment environment
-1. Build the server and mockserver (for development) docker images 
-   `./setup/server/setup_server.sh` 
-   `./setup/mockserver/setup_mockserver.sh`  
-2. Modify `./configs/config-example.json` and make the server config. 
+1. Build all required images 
+   `./setup/build.sh`
+3. Modify `./configs/config-example.json` and make the server config. 
    Modify `./configs/quartz.properties` and make the quartz config.
-3. Modify `./setup/*/docker-compose` to take up the correct config files.
-4. Bring up the local environment 
+4. Modify `./setup/*/docker-compose` to take up the correct config files.
+5. Bring up the local environment 
    `./setup/start_local_dev_env.sh` 
    This brings up flink, rabbitmq, the apiserver and a mockserver.
-5. Use the apis to submit the above example config
+6. Use the apis to submit the above example config
 
 
 
