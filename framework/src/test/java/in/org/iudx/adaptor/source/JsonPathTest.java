@@ -78,5 +78,43 @@ public class JsonPathTest {
   }
 
 
+  @Test
+  void parseTrickle() throws InterruptedException {
+
+    String parseSpecArr = new JSONObject()
+      .put("timestampPath", "$.time")
+      .put("keyPath", "$.id")
+      .put("trickle", new JSONArray()
+                        .put(new JSONObject()
+                            .put("keyPath", "$.outerKey")
+                            .put("keyName", "outerKey")))
+      .put("containerPath", "$.data")
+      .put("inputTimeFormat","yyyy-MM-dd HH:mm:ss")
+      .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
+      .toString();
+
+    String arrayData = 
+      new JSONObject().put("outerKey", "outerKeyValue")
+      .put("data",
+      new JSONArray()
+      .put(new JSONObject()
+      .put("time", "2021-04-01 12:00:01")
+      .put("id", "123")
+      .put("k", 1.5)
+      )
+      .put((new JSONObject()
+      .put("time", "2021-04-01 12:00:01")
+      .put("id", "4356")
+      .put("k", 2.5)
+      ))).toString();
+
+    JsonPathParser<List<Message>> parser = new JsonPathParser<List<Message>>(parseSpecArr);
+
+    List<Message> m = parser.parse(arrayData);
+    for (int i=0; i<m.size(); i++) {
+      System.out.println(m.get(i).toString());
+    }
+
+  }
 
 }

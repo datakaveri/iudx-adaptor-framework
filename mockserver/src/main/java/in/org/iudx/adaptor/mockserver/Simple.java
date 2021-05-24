@@ -34,7 +34,7 @@ public class Simple {
   private JsonObject simpleA = new JsonObject(
           " {\"deviceId\": \"abc-123\", \"k1\": 1, \"time\": \"\" }" );
 
-  private JsonObject simpleB = new JsonObject("{ \"data\": [] }");
+  private JsonObject simpleB = new JsonObject("{ \"outerkey\": \"outerkeyval\", \"data\": [] }");
 
   public Simple() {
   }

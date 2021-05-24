@@ -1,11 +1,13 @@
 package in.org.iudx.adaptor.source;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.time.Instant;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.ReadContext;
+import com.jayway.jsonpath.DocumentContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import java.util.List;
@@ -33,6 +35,8 @@ public class JsonPathParser<T> implements Parser<T> {
   private DateFormat fromFormat;
   private DateFormat toFormat;
 
+  private boolean hasTrickleKeys;
+  private JSONArray trickleObjs;
 
   private static final Logger LOGGER = LogManager.getLogger(JsonPathParser.class);
 
@@ -58,7 +62,13 @@ public class JsonPathParser<T> implements Parser<T> {
      toFormat = new SimpleDateFormat(outputTimeFormat); 
      fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
      toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
-      
+    }
+    // Trickle paths
+    if(parseSpec.has("trickle")) {
+      hasTrickleKeys = true;
+      trickleObjs = parseSpec.getJSONArray("trickle");
+    } else {
+      hasTrickleKeys = false;
     }
   }
 
@@ -93,14 +103,39 @@ public class JsonPathParser<T> implements Parser<T> {
       return (T) msg;
     }
     else {
+
+
       List<Object> container = ctx.read(containerPath);
       List<Message> msgArray = new ArrayList<Message>();
+
+
       for (int i=0; i<container.size(); i++){
         // TODO: Improve
         Message tmpmsg = new Message();
-        ReadContext tmpctx = JsonPath.parse(container.get(i));
+        DocumentContext tmpctx = JsonPath.parse(container.get(i));
+
+        // Add the trickle keys
+        // TODO: This is pretty inefficient
+        if (hasTrickleKeys == true) {
+          for (int j=0; i<trickleObjs.length(); i++) {
+            try {
+              Object keyval =
+                ctx.read(trickleObjs.getJSONObject(i).getString("keyPath"));
+              LOGGER.debug(keyval);
+              tmpctx.put("$", trickleObjs.getJSONObject(i).getString("keyName"), keyval);
+            } catch (Exception e) {
+              // Ignore errors
+            }
+          }
+        }
+
+
         String msgBody = tmpctx.jsonString();
         String key = tmpctx.read(keyPath);
+
+
+
+
         if (inputTimeFormat.isEmpty() || outputTimeFormat.isEmpty()) {
           tmpmsg.setEventTimeAsString(tmpctx.read(timestampPath));
           tmpmsg.setEventTimestamp(Instant.parse(tmpctx.read(timestampPath)));
