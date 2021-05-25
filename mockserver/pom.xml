@@ -197,6 +197,11 @@
             <version>2.0.2-beta</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+        	<groupId>io.vertx</groupId>
+        	<artifactId>vertx-auth-properties</artifactId>
+        	<version>${vertx.version}</version>
+        </dependency>       
 
     </dependencies>
 

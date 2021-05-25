@@ -5,10 +5,15 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.auth.properties.PropertyFileAuthentication;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BasicAuthHandler;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.core.http.HttpServerResponse;
 
 import org.apache.logging.log4j.LogManager;
@@ -57,6 +62,10 @@ public class Server extends AbstractVerticle {
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
+    AuthenticationProvider authProvider = PropertyFileAuthentication.create(vertx, "basic-login.properties");
+    router.route("/auth/*").handler(BasicAuthHandler.create(authProvider));
+
+
 
     router.get("/simpleA")
       .handler(routingContext -> {
@@ -80,6 +89,12 @@ public class Server extends AbstractVerticle {
       .handler(routingContext -> {
         LOGGER.debug("Info: Received request");
         complex.getComplexB(routingContext);
+    });
+    
+    router.get("/auth/simpleA")
+      .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
+        simple.getSimplePacketA(routingContext);
     });
 
     /**
