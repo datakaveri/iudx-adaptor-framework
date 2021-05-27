@@ -1,0 +1,15 @@
+{
+    "type": "jsPath",
+    "template": "{ 'co2': { 'avgOverTime': 100}, 'nk4': 'abc'}",
+    "jsonPathSpec": [
+        {
+            "outputKeyPath": "$.co2.avgOverTime",
+            "inputValuePath": "$.k1"
+        },
+        {
+            "outputKeyPath": "$.nk4",
+            "inputValuePath": "$.k4",
+            "regexFilter": "^(?=.*reject).*"
+        }
+    ]
+}

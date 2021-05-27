@@ -92,5 +92,19 @@ public class JSEvalTest {
 
   }
 
+  @Test
+  void fixedAttributes() throws InterruptedException {
+
+    String  script = "output = [parseFloat(input.split(\" \")[0])];";
+
+    ScriptableObject.putProperty(scope, "input", stringedNum);
+    Object obj = context.evaluateString(scope,
+                                    script, "test", 1, null);
+    System.out.println("Result is");
+    System.out.println(obj);
+    System.out.println(obj.getClass().getName());
+
+  }
+
 }
 

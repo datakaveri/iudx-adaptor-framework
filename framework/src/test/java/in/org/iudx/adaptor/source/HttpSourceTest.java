@@ -23,6 +23,7 @@ import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
@@ -90,13 +91,16 @@ public class HttpSourceTest {
 
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
+      new ApiConfig().setUrl("http://127.0.0.1:8888/auth/simpleA")
                                           .setRequestType("GET")
+                                          .setHeader("Authorization",
+                                                    "Basic YWRtaW46YWRtaW4=")
                                           .setPollingInterval(1000L);
 
 
+    DataStreamSource<Message> so = env.addSource(new HttpSource<Message>(apiConfig, parser));
     /* Include process */
-    env.addSource(new HttpSource<Message>(apiConfig, parser))
+    so
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());

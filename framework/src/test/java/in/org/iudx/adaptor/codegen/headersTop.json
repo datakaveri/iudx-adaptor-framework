@@ -1,0 +1,40 @@
+{
+    "name": "test",
+
+    "inputSpec": {
+        "type": "http",
+        "url": "http://mockserver:8080/simpleB",
+        "requestType": "GET",
+        "headers": [ {"key": "Authorization", "value": "abcdefg"},
+                        {"key": "Content-Type", "value": "application/json"}],
+        "pollingInterval": 1000
+    },
+
+    "parseSpec": {
+        "type": "json",
+        "messageContainer": "array",
+        "containerPath": "$.data",
+        "keyPath": "$.deviceId",
+        "timestampPath": "$.time"
+    },
+    
+    "deduplicationSpec": {
+        "type": "timeBased"
+    },
+    
+    "transformSpec": {
+        "type": "js",
+        "script": "function tx(obj) { var out = {}; var inp = JSON.parse(obj); out[\"id\"] = \"datakaveri.org/a/b\" + inp[\"id\"]; out[\"k1\"] = inp[\"k1\"]; out[\"observationDateTime\"] = inp[\"time\"]; return JSON.stringify(out); }"
+    },
+
+    "publishSpec": {
+        "type": "rmq",
+        "url": "amqp://mockrmq",
+        "port": 5672,
+        "uname": "guest",
+        "password": "guest",
+        "sinkName": "adaptor-test",
+        "tagName": "test"
+    }
+}
+

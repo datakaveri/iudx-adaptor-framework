@@ -132,5 +132,41 @@ public class JSPathTest {
     }
 
   }
+
+  @Test
+  void processCombineKeys() throws InterruptedException {
+
+    SimpleBTestParser parser = new SimpleBTestParser();
+    SimpleADeduplicator dedup = new SimpleADeduplicator();
+
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8888/complexA")
+                                          .setRequestType("GET")
+                                          .setPollingInterval(1000L);
+    String pathSpec;
+    try {
+      pathSpec = new String(
+                            Files.readAllBytes(
+                            Paths.get(
+                              "src/test/java/in/org/iudx/adaptor/process/pathSpec3.json")));
+
+    } catch (Exception e) {
+      return;
+    }
+
+    
+   env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
+       .keyBy((Message msg) -> msg.key)
+       .process(new GenericProcessFunction(dedup))
+       .flatMap(new JSPathProcessFunction(pathSpec.toString()))
+       .addSink(new DumbSink());
+
+    try {
+      env.execute("test");
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+  }
 }
 

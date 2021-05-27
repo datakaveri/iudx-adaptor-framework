@@ -16,6 +16,20 @@ import java.lang.ClassLoader;
 
 public class TopologyBuilderTest {
 
+  @Test
+  void singleContainerTopology() throws Exception {
+
+    
+    TopologyConfig top = new TopologyConfig(
+                          new String(
+                            Files.readAllBytes(
+                              Paths.get(
+                                "src/test/java/in/org/iudx/adaptor/codegen/single.json"))));
+
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+
+  }
 
   @Test
   void buildJSTopology() throws Exception {
@@ -26,6 +40,21 @@ public class TopologyBuilderTest {
                             Files.readAllBytes(
                               Paths.get(
                                 "src/test/java/in/org/iudx/adaptor/codegen/jstop.json"))));
+
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+
+  }
+
+  @Test
+  void headersTop() throws Exception {
+
+    
+    TopologyConfig top = new TopologyConfig(
+                          new String(
+                            Files.readAllBytes(
+                              Paths.get(
+                                "src/test/java/in/org/iudx/adaptor/codegen/headersTop.json"))));
 
     TopologyBuilder builder = new TopologyBuilder(top);
     builder.gencode();

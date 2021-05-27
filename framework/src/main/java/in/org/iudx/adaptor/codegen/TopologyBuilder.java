@@ -2,6 +2,7 @@ package in.org.iudx.adaptor.codegen;
 
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import com.squareup.javapoet.MethodSpec;
 import javax.lang.model.element.Modifier; 
@@ -15,6 +16,7 @@ import com.squareup.javapoet.MethodSpec.Builder;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.source.HttpSource;
@@ -39,9 +41,11 @@ public class TopologyBuilder {
   private TopologyConfig tc;
   private Filer filer;
 
-  private boolean hasNonGenericTransformer;
+  private boolean hasGenericTransformer;
   private boolean hasJSTransformer;
   private boolean hasJSPathTransformer;
+
+  private String containerType;
 
   public TopologyBuilder(TopologyConfig config, Filer filer) {
     this.tc = config;
@@ -92,6 +96,7 @@ public class TopologyBuilder {
   }
 
 
+  // TODO: Why are we building api config like this instead of directly passing json
   private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
 
     if ("http".equals(inputSpec.getString("type"))) {
@@ -101,6 +106,20 @@ public class TopologyBuilder {
           ApiConfig.class, ApiConfig.class,
           inputSpec.getString("url"), inputSpec.getString("requestType"),
           inputSpec.getLong("pollingInterval"));
+
+      if (inputSpec.has("headers")) {
+        JSONArray headers = inputSpec.getJSONArray("headers");
+        for (int i=0; i<headers.length(); i++) {
+          JSONObject header = headers.getJSONObject(i);
+          mainBuilder.addStatement(
+              "apiConfig.setHeader($S, $S)",
+              header.getString("key"), header.getString("value"));
+        }
+      }
+
+      if (inputSpec.has("postBody")) {
+        mainBuilder.addStatement("apiConfig.setBody($S)", inputSpec.getString("postBody"));
+      }
     }
   }
 
@@ -112,15 +131,24 @@ public class TopologyBuilder {
     if ("json".equals(messageType)) {
       String containerType = parseSpec.getString("messageContainer");
       if ("array".equals(containerType)) {
-
+        containerType = "array";
         mainBuilder.addStatement("$T<$T[]> parser = new $T<$T[]>(parseSpec)",
                                   JsonPathParser.class, Message.class,
                                   JsonPathParser.class, Message.class);
+        mainBuilder.addStatement(
+            "$T<$T[]> so = env.addSource(new $T<$T[]>(apiConfig, parser))",
+              DataStreamSource.class, Message.class,
+              HttpSource.class, Message.class);
 
       } else if ("single".equals(containerType)) {
+        containerType = "single";
         mainBuilder.addStatement("$T<$T> parser = new $T<$T>(parseSpec)",
                                   JsonPathParser.class, Message.class,
                                   JsonPathParser.class, Message.class);
+        mainBuilder.addStatement(
+            "$T<$T> so = env.addSource(new $T<$T>(apiConfig, parser))",
+              DataStreamSource.class, Message.class,
+              HttpSource.class, Message.class);
       }
     }
   }
@@ -141,17 +169,17 @@ public class TopologyBuilder {
     mainBuilder.addStatement("String transformSpec = $S", transformSpec.toString());
 
     if ("jolt".equals(transformType)) {
-      hasNonGenericTransformer = true;
+      hasGenericTransformer = true;
       mainBuilder.addStatement("$T trans = new $T(transformSpec)",
                                   JoltTransformer.class, JoltTransformer.class);
     }
     if ("js".equals(transformType)) {
       hasJSTransformer = true;
-      hasNonGenericTransformer = false;
+      hasGenericTransformer = false;
     }
     if ("jsPath".equals(transformType)) {
       hasJSPathTransformer = true;
-      hasNonGenericTransformer = false;
+      hasGenericTransformer = false;
     }
   }
 
@@ -182,31 +210,28 @@ public class TopologyBuilder {
     /* TODO: Parse and perform 
      * TODO: Break this construction logic further
      **/
-    if (hasNonGenericTransformer) {
-      mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+    if (hasGenericTransformer) {
+      mainBuilder.addStatement("$T<$T> ds = so"
                                   + ".keyBy(($T msg) -> msg.key)"
                                   + ".process(new $T(trans, dedup))",
                                 SingleOutputStreamOperator.class, Message.class,
-                                HttpSource.class, Message.class,
                                 Message.class, GenericProcessFunction.class);
     } else {
       if (hasJSTransformer) {
-        mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+        mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
                                     + ".process(new $T(dedup))"
                                     + ".flatMap(new $T(transformSpec))",
                                   SingleOutputStreamOperator.class, Message.class,
-                                  HttpSource.class, Message.class,
                                   Message.class, GenericProcessFunction.class,
                                   JSProcessFunction.class);
       }
       if (hasJSPathTransformer) {
-        mainBuilder.addStatement("$T<$T> ds = env.addSource(new $T<$T[]>(apiConfig, parser))"
+        mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
                                     + ".process(new $T(dedup))"
                                     + ".flatMap(new $T(transformSpec))",
                                   SingleOutputStreamOperator.class, Message.class,
-                                  HttpSource.class, Message.class,
                                   Message.class, GenericProcessFunction.class,
                                   JSPathProcessFunction.class);
       }
