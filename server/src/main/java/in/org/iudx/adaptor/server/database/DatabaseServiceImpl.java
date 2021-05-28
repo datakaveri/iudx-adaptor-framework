@@ -262,7 +262,7 @@ public class DatabaseServiceImpl implements DatabaseService {
           
           String status = tempJson.getString(STATUS);
           String jarId = tempJson.getString(JAR_ID);
-          if(jarId != null && !jarId.isBlank()) {
+          if((jarId != null && !jarId.isBlank()) || !status.equals(COMPILING)) {
             if(status == null || !status.equals(RUNNING)) {
               client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
                 if(deleteHandler.succeeded()) {
