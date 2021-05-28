@@ -957,7 +957,7 @@ public class Server extends AbstractVerticle {
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .end(new JsonObject().put(STATUS, SUCCESS).toString());
 
-            } else if (databaseHandler.failed()) {
+            } else if (scheduleHandler.failed()) {
               LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause().getLocalizedMessage());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .setStatusCode(400)
