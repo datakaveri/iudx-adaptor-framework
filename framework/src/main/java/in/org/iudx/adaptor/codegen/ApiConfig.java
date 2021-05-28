@@ -28,9 +28,12 @@ public class ApiConfig implements Serializable {
   public String timeIndexingProperty;
   public long pollingInterval;
   public String[] headersArray;
+  public boolean hasScript = false;
 
 
   public Map<String,String> headers = new HashMap<String,String>();
+  public ArrayList<HashMap<String, String>> scripts 
+    = new ArrayList<HashMap<String, String>>();
 
   private static final long serialVersionUID = 2L;
 
@@ -71,6 +74,17 @@ public class ApiConfig implements Serializable {
     });
     headersArray = headerList.toArray(new String[0]);
     return headersArray;
+  }
+
+  public ApiConfig setParamGenScript(String in, String pattern, String script) {
+    hasScript = true;
+
+    HashMap<String, String> mp = new HashMap<String, String>();
+    mp.put("in", in);
+    mp.put("pattern", pattern);
+    mp.put("script", script);
+    scripts.add(mp);
+    return this;
   }
 
   public ApiConfig buildConfig() {

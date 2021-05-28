@@ -4,6 +4,8 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +13,12 @@ import org.apache.logging.log4j.Logger;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Parser;
+
+import org.mozilla.javascript.Context;
+import org.mozilla.javascript.ContextAction;
+import org.mozilla.javascript.ContextFactory;
+import org.mozilla.javascript.Function;
+import org.mozilla.javascript.ScriptableObject;
 
 import in.org.iudx.adaptor.utils.HttpEntity;
 
@@ -35,6 +43,11 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
   private HttpEntity httpEntity;
   private ApiConfig apiConfig;
   private Parser<PO> parser;
+
+
+  private ContextFactory contextFactory;
+  private org.mozilla.javascript.Context jscontext;
+  private ScriptableObject scope;
 
   private static final Logger LOGGER = LogManager.getLogger(HttpSource.class);
   /**
@@ -62,9 +75,11 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
   public void open(Configuration config) throws Exception {
     super.open(config);
     httpEntity = new HttpEntity(apiConfig);
+
   }
 
   public void emitMessage(SourceContext<Message> ctx) {
+    
     String smsg = httpEntity.getSerializedMessage();
     if (smsg.isEmpty()) {
       return;
@@ -99,20 +114,49 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
    */
   @Override
   public void run(SourceContext<Message> ctx) throws Exception {
-    /** TODO:
-     *    - Configure delays
-     **/
 
+    // TODO: See if this breaks during runtime
+    // TODO: See why getting current context doesn't work here
+    contextFactory = ContextFactory.getGlobal();
+    jscontext = contextFactory.enterContext();
+    jscontext.setOptimizationLevel(9);
+    scope = jscontext.initStandardObjects();
+    
     /* TODO: Better way of figuring out batch jobs */
     if (apiConfig.pollingInterval == -1) {
+      makeApi(jscontext);
       emitMessage(ctx);
     }
 
     else {
       while (running) {
+        makeApi(jscontext);
         emitMessage(ctx);
         Thread.sleep(apiConfig.pollingInterval);
       }
+    }
+  }
+
+  private void makeApi(Context cx) {
+    if (apiConfig.hasScript == true) {
+      for(int i=0; i<apiConfig.scripts.size(); i++) {
+        HashMap<String, String> mp = apiConfig.scripts.get(i);
+        if (mp.get("in").equals("url")) {
+
+          String val = Context.toString(cx.evaluateString(scope, 
+                                                mp.get("script"),
+                                                "script", 1, null));
+          httpEntity.setUrl(apiConfig.url.replace(mp.get("pattern"), val));
+        }
+        if (mp.get("in").equals("body")) {
+          String val = Context.toString(cx.evaluateString(scope, 
+                                                mp.get("script"),
+                                                "script", 1, null));
+
+          httpEntity.setUrl(apiConfig.body.replace(mp.get("pattern"), val));
+        }
+      }
+
     }
   }
 

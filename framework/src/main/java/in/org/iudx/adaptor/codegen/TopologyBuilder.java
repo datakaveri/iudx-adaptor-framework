@@ -117,6 +117,17 @@ public class TopologyBuilder {
         }
       }
 
+      if (inputSpec.has("requestGenerationScripts")) {
+        JSONArray scripts = inputSpec.getJSONArray("requestGenerationScripts");
+        for (int i=0; i<scripts.length(); i++) {
+          JSONObject script = scripts.getJSONObject(i);
+          mainBuilder.addStatement(
+              "apiConfig.setParamGenScript($S, $S, $S)",
+              script.getString("in"), script.getString("pattern"),
+              script.getString("script"));
+        }
+      }
+
       if (inputSpec.has("postBody")) {
         mainBuilder.addStatement("apiConfig.setBody($S)", inputSpec.getString("postBody"));
       }

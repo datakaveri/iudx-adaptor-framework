@@ -106,5 +106,17 @@ public class JSEvalTest {
 
   }
 
+  @Test
+  void getTime() throws InterruptedException {
+
+    String  script = "var d = new Date(); datestring = d.getDate()  + '-' + (d.getMonth()+1) + '-' + d.getFullYear();";
+    ScriptableObject.putProperty(scope, "input", stringedNum);
+    Object obj = context.evaluateString(scope,
+                                    script, "test", 1, null);
+    System.out.println("Result is");
+    System.out.println(obj);
+    System.out.println(obj.getClass().getName());
+
+  }
 }
 

@@ -200,8 +200,37 @@ public class HttpSourceTest {
   }
 
 @Test
-void genTest() throws InterruptedException {
+void dynUrl() throws InterruptedException {
 
+    SimpleATestTransformer trans = new SimpleATestTransformer();
+    SimpleATestParser parser = new SimpleATestParser();
+    SimpleADeduplicator dedup = new SimpleADeduplicator();
+
+
+    String script = "val = 'simpleA'";
+
+    ApiConfig apiConfig = 
+      new ApiConfig().setUrl("http://127.0.0.1:8888/auth/path")
+                                          .setRequestType("GET")
+                                          .setHeader("Authorization",
+                                                    "Basic YWRtaW46YWRtaW4=")
+                                          .setPollingInterval(1000L)
+                                          .setParamGenScript("url", "path", script);
+
+
+    DataStreamSource<Message> so = env.addSource(new HttpSource<Message>(apiConfig, parser));
+    /* Include process */
+    so
+        .keyBy((Message msg) -> msg.key)
+        .process(new GenericProcessFunction(trans,dedup))
+        .addSink(new DumbSink());
+
+
+    try {
+      env.execute("Simple Get");
+    } catch (Exception e) {
+      System.out.println(e);
+    }
 }
 
 

@@ -10,6 +10,9 @@ import java.time.Duration;
 import java.net.URI;
 import java.net.http.HttpRequest.BodyPublishers;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import in.org.iudx.adaptor.codegen.ApiConfig;
 
 /**
@@ -35,6 +38,9 @@ public class HttpEntity {
   private HttpClient httpClient;
   private HttpRequest httpRequest;
 
+  private String body;
+
+  private static final Logger LOGGER = LogManager.getLogger(HttpEntity.class);
 
 
   /**
@@ -67,6 +73,15 @@ public class HttpEntity {
     httpClient = clientBuilder.build();
   }
 
+  public HttpEntity setUrl(String url) {
+    requestBuilder.uri(URI.create(url));
+    return this;
+  }
+
+  public HttpEntity setBody(String body) {
+    this.body = body;
+    return this;
+  }
 
   public ApiConfig getApiConfig() {
     return this.apiConfig;
@@ -81,24 +96,21 @@ public class HttpEntity {
    */
   public String getSerializedMessage() {
 
-    httpRequest = requestBuilder.build();
-    switch (this.apiConfig.requestType) {
-      case "GET": {
-        try {
-          HttpResponse<String> resp =
-            httpClient.send(httpRequest, BodyHandlers.ofString());
-          return resp.body();
-        } catch (Exception e) {
-          return "";
-        }
-      }
-      case "POST":
-        break;
-
-      default:
-        break;
+    if (apiConfig.requestType.equals("GET")) {
+      httpRequest = requestBuilder.build();
     }
-    return "";
+    else if (apiConfig.requestType.equals("POST")) {
+      httpRequest = requestBuilder.POST(BodyPublishers.ofString(body))
+                                        .build();
+    }
+    try {
+      HttpResponse<String> resp =
+        httpClient.send(httpRequest, BodyHandlers.ofString());
+      return resp.body();
+    } catch (Exception e) {
+      LOGGER.debug(e);
+      return "";
+    }
   }
 
 
