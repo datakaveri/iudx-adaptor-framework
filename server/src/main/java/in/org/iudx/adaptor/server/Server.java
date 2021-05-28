@@ -963,7 +963,7 @@ public class Server extends AbstractVerticle {
               LOGGER.error("Error: Delete adptor query failed; " + deleteHandler.cause().getLocalizedMessage());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .setStatusCode(400)
-                      .end(databaseHandler.cause().getLocalizedMessage());
+                      .end(new JsonObject().put(STATUS, FAILED).toString());
             }
           });
         } else {

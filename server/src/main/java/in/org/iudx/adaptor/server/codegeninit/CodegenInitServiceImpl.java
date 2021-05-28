@@ -64,26 +64,31 @@ public class CodegenInitServiceImpl implements CodegenInitService {
           return submitConfigJar(request, flinkClient);
 
         }).onComplete(composeHandler -> {
+          String query = null;
           if (composeHandler.succeeded()) {
             LOGGER.debug("Info: Jar submitted; adaptor created");
             String jarPath = composeHandler.result().getString("filename");
             String jarId = jarPath.substring(jarPath.lastIndexOf("/") + 1);
-            String query = UPDATE_COMPLEX
+            query = UPDATE_COMPLEX
                 .replace("$1", jarId)
                 .replace("$2", request.getString(ADAPTOR_ID))
                 .replace("$3", COMPLETED);
-
-            databaseService.updateComplex(query, updateHandler -> {
-              if (updateHandler.failed()) {
-                LOGGER.error("Error: Job Scheduled; Update failed");
-              }
-              handler.handle(Future.succeededFuture(composeHandler.result()));
-            });
           } else if (composeHandler.failed()) {
+            query = UPDATE_COMPLEX
+                .replace("$1", "")
+                .replace("$2", request.getString(ADAPTOR_ID))
+                .replace("$3", CG_FAILED);
+            
             LOGGER.error(
                 "Error: Adaptor gen/submission failed; " + composeHandler.cause().getMessage());
-            handler.handle(Future.failedFuture(composeHandler.cause().getMessage()));
           }
+
+          databaseService.updateComplex(query, updateHandler -> {
+            if (updateHandler.failed()) {
+              LOGGER.error("Error: Db Update failed");
+            }
+            handler.handle(Future.succeededFuture(composeHandler.result()));
+          });
         });
       }
     });
@@ -127,11 +132,11 @@ public class CodegenInitServiceImpl implements CodegenInitService {
             fileSystem.move(destinationDirectory + "/target/adaptor.jar",
                 jarOutPath + "/" + fileName, options, mvHandler -> {
                   if (mvHandler.succeeded()) {
-                    tempCleanUp(destinationDirectory);
                     blockingCodeHandler.complete(new JsonObject().put(STATUS, SUCCESS));
                   } else if (mvHandler.failed()) {
                     blockingCodeHandler.fail(new JsonObject().put(STATUS, FAILED).toString());
                   }
+                  tempCleanUp(destinationDirectory);
                 });
 
           } catch (MavenInvocationException e) {
@@ -168,12 +173,12 @@ public class CodegenInitServiceImpl implements CodegenInitService {
       flinkClient.submitJar(request, responseHandler -> {
         if (responseHandler.succeeded()) {
           LOGGER.info("Info: Jar submitted successfully");
-          tempCleanUp(request.getString(PATH));
           blockingCodeHandler.complete(responseHandler.result());
         } else {
           LOGGER.error("Error: Jar submission failed; " + responseHandler.cause().getMessage());
           blockingCodeHandler.fail(responseHandler.cause());
         }
+        tempCleanUp(request.getString(PATH));
       });
     }, true, resultHandler -> {
       if (resultHandler.succeeded()) {
