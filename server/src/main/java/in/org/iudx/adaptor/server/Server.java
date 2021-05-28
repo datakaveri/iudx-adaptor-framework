@@ -941,29 +941,27 @@ public class Server extends AbstractVerticle {
         if (databaseHandler.succeeded()) {
           
           String jarId = databaseHandler.result().getString(JAR_ID);
-          requestBody.put(ID, jarId);
-          requestBody.put(URI, JARS + "/" + jarId);
-          flinkClient.deleteItems(requestBody, deleteHandler -> {
-            if (deleteHandler.succeeded()) {
-              
-              jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
-                if (scheduleHandler.succeeded()) {
-                  LOGGER.info("Success: Delete adaptor query");
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                          .end(new JsonObject().put(STATUS, SUCCESS).toString());
+          if(jarId != null) {
+            requestBody.put(ID, jarId);
+            requestBody.put(URI, JARS + "/" + jarId);
+            flinkClient.deleteItems(requestBody, deleteHandler -> {
+              if (deleteHandler.failed()) {
+                LOGGER.error("Error: Delete Flink jar query failed; " + deleteHandler.cause().getLocalizedMessage());
+              }
+            });
+          }
+          
+          jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
+            if (scheduleHandler.succeeded()) {
+              LOGGER.info("Success: Delete adaptor query");
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(new JsonObject().put(STATUS, SUCCESS).toString());
 
-                } else if (databaseHandler.failed()) {
-                  LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause().getLocalizedMessage());
-                  response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                          .setStatusCode(400)
-                          .end(scheduleHandler.cause().getLocalizedMessage());
-                }
-              });
-            } else {
-              LOGGER.error("Error: Delete adptor query failed; " + deleteHandler.cause().getLocalizedMessage());
+            } else if (databaseHandler.failed()) {
+              LOGGER.error("Error: Delete adptor query failed; " + scheduleHandler.cause().getLocalizedMessage());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                       .setStatusCode(400)
-                      .end(databaseHandler.cause().getLocalizedMessage());
+                      .end(scheduleHandler.cause().getLocalizedMessage());
             }
           });
         } else {
