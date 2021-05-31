@@ -128,9 +128,9 @@ public class HttpSourceTest {
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 
-
+    DataStreamSource<Message> so = env.addSource(new HttpSource<List<Message>>(apiConfig, parser));
     /* Include process */
-    env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
+    so
         .keyBy((Message msg) -> msg.key)
         .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());

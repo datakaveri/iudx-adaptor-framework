@@ -32,6 +32,8 @@ import in.org.iudx.adaptor.sink.AMQPSink;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.process.JSTransformSpec;
 import in.org.iudx.adaptor.sink.StaticStringPublisher;
+
+import java.util.List;
 import javax.annotation.processing.Filer;
 import java.io.IOException;
 
@@ -143,13 +145,13 @@ public class TopologyBuilder {
       String containerType = parseSpec.getString("messageContainer");
       if ("array".equals(containerType)) {
         containerType = "array";
-        mainBuilder.addStatement("$T<$T[]> parser = new $T<$T[]>(parseSpec)",
-                                  JsonPathParser.class, Message.class,
-                                  JsonPathParser.class, Message.class);
+        mainBuilder.addStatement("$T<$T<$T>> parser = new $T<$T<$T>>(parseSpec)",
+                                  JsonPathParser.class, List.class, Message.class,
+                                  JsonPathParser.class, List.class, Message.class);
         mainBuilder.addStatement(
-            "$T<$T[]> so = env.addSource(new $T<$T[]>(apiConfig, parser))",
+            "$T<$T> so = env.addSource(new $T<$T<$T>>(apiConfig, parser))",
               DataStreamSource.class, Message.class,
-              HttpSource.class, Message.class);
+              HttpSource.class, List.class, Message.class);
 
       } else if ("single".equals(containerType)) {
         containerType = "single";

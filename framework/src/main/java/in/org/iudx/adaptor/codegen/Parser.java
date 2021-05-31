@@ -6,4 +6,5 @@ import java.io.Serializable;
 
 public interface Parser<PO> extends Serializable {
   public PO parse(String data);
+  public Parser<PO> initialize();
 }

@@ -105,7 +105,7 @@ the Api of relevance to get started with are
    Header: {"username": "uname", "password": "password"}
    Body: Spec File
    Content-Type: application/json
-   Response: 203 (Accepted and generating jar), 401 (Unauthorized), 400 (Bad spec file) 
+   Response: 202 (Accepted and generating jar), 401 (Unauthorized), 400 (Bad spec file) 
    ```
 
 2. **getAdaptors**: List all the adaptors and their running state (including recently submitted ones) and their ids
@@ -114,9 +114,26 @@ the Api of relevance to get started with are
    Header: {"username": "uname", "password": "password"}
    Content-Type: application/json
    Response: 200 (List of adaptors and their running state)
+   ``` 
+  
+3. **startAdaptor**: Start and adaptor given its id. Starts even scheduled adaptors. 
+   ```
+   POST /adaptor/{id}/start
+   Header: {"username": "uname", "password": "password"}
+   Content-Type: application/json
+   Response: 200 (Success), 404 (No such adaptor), 401 (Unauthorized)
    ```
 
-3. **deleteAdaptors**: Delete an adaptor given its id
+4. **stopAdaptor**: Stop and adaptor given its id. Stops even scheduled adaptors. 
+   ```
+   POST /adaptor/{id}/stop
+   Header: {"username": "uname", "password": "password"}
+   Content-Type: application/json
+   Response: 200 (Success), 404 (No such adaptor), 401 (Unauthorized)
+   ```
+   
+
+5. **deleteAdaptors**: Delete an adaptor given its id
    ```
    DELETE /adaptor/{id}
    Header: {"username": "uname", "password": "password"}

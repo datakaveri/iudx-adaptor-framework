@@ -75,4 +75,19 @@ public class TopologyBuilderTest {
     builder.gencode();
 
   }
+
+  @Test
+  void trickle() throws Exception {
+
+    
+    TopologyConfig top = new TopologyConfig(
+                          new String(
+                            Files.readAllBytes(
+                              Paths.get(
+                                "src/test/java/in/org/iudx/adaptor/codegen/trickle.json"))));
+
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+
+  }
 }

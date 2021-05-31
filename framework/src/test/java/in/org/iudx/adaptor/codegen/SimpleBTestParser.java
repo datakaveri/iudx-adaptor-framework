@@ -24,6 +24,9 @@ public class SimpleBTestParser implements Parser<List<Message>> {
   public SimpleBTestParser() {
   }
 
+  public SimpleBTestParser initialize() {
+    return this;
+  }
 
   public List<Message> parse(String message) {
     // Try catch around this

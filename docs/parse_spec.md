@@ -20,7 +20,7 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
 
 &nbsp; 
     
-- **keyPath**(String): Path to the **primary key** of the message. This is an essential component of the stream processing pipeline and is used for deduplication, keyed process functions, etc. If the `{ "messageContainer": "array" } ` then treat each object in the array as the root json and define the key json path here. 
+- **keyPath**(String): Path to the **primary key** of the message. Primary key should be a string. This is an essential component of the stream processing pipeline and is used for deduplication, keyed process functions, etc. If the `{ "messageContainer": "array" } ` then treat each object in the array as the root json and define the key json path here.
 
 &nbsp; 
   
@@ -28,7 +28,7 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
 
 - inputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages coming from the source 
   
-- outputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages emitted to the sink 
+- outputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages emitted to the sink. Note: the input time string is replaced with this format.
 
 &nbsp; 
   

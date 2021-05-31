@@ -109,6 +109,7 @@ public class JsonPathTest {
     JsonPathParser<List<Message>> parser = new JsonPathParser<List<Message>>(parseSpecArr);
 
     List<Message> m = parser.parse(arrayData);
+    System.out.println("Parse done");
     for (int i=0; i<m.size(); i++) {
       System.out.println(m.get(i).toString());
     }

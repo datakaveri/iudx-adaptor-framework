@@ -13,6 +13,10 @@ public class SimpleStringParser implements Parser<String> {
   public SimpleStringParser() {
   }
 
+  public SimpleStringParser initialize() {
+    return this;
+  }
+
 
   public String parse(String message) {
     // Try catch around this

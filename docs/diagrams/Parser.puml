@@ -5,6 +5,7 @@ interface Parser  {
   String getKey()
   String getTimeIndex()
   Message parse(String message)
+  Parser initialize()
   byte[] serialize(Message body)
 }
 @enduml

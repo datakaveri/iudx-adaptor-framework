@@ -25,6 +25,7 @@ public class JsonPathParser<T> implements Parser<T> {
 
   private transient JSONObject parseSpec;
 
+  private String trickleObjsString;
   private String timestampPath;
   private String keyPath;
   private String containerPath;
@@ -36,13 +37,13 @@ public class JsonPathParser<T> implements Parser<T> {
   private DateFormat toFormat;
 
   private boolean hasTrickleKeys;
-  private JSONArray trickleObjs;
 
   private static final Logger LOGGER = LogManager.getLogger(JsonPathParser.class);
 
   public JsonPathParser(String parseSpecString) {
 
     this.parseSpec = new JSONObject(parseSpecString);
+
 
     try {
       this.timestampPath = parseSpec.getString("timestampPath");
@@ -63,13 +64,21 @@ public class JsonPathParser<T> implements Parser<T> {
      fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
      toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
     }
+
+    initialize();
+
+  }
+
+  // TODO: Improve, currently wasteful
+  public JsonPathParser<T> initialize() {
     // Trickle paths
     if(parseSpec.has("trickle")) {
       hasTrickleKeys = true;
-      trickleObjs = parseSpec.getJSONArray("trickle");
+      trickleObjsString = parseSpec.getJSONArray("trickle").toString();
     } else {
       hasTrickleKeys = false;
     }
+    return this;
   }
 
 
@@ -108,6 +117,11 @@ public class JsonPathParser<T> implements Parser<T> {
       List<Object> container = ctx.read(containerPath);
       List<Message> msgArray = new ArrayList<Message>();
 
+      JSONArray trickleObjs = new JSONArray();
+
+      if (hasTrickleKeys == true) {
+        trickleObjs = new JSONArray(trickleObjsString);
+      }
 
       for (int i=0; i<container.size(); i++){
         // TODO: Improve
@@ -117,12 +131,13 @@ public class JsonPathParser<T> implements Parser<T> {
         // Add the trickle keys
         // TODO: This is pretty inefficient
         if (hasTrickleKeys == true) {
-          for (int j=0; i<trickleObjs.length(); i++) {
+          for (int j=0; j<trickleObjs.length(); j++) {
             try {
               Object keyval =
-                ctx.read(trickleObjs.getJSONObject(i).getString("keyPath"));
-              tmpctx.put("$", trickleObjs.getJSONObject(i).getString("keyName"), keyval);
+                ctx.read(trickleObjs.getJSONObject(j).getString("keyPath"));
+              tmpctx.put("$", trickleObjs.getJSONObject(j).getString("keyName"), keyval);
             } catch (Exception e) {
+              LOGGER.debug(e);
               // Ignore errors
             }
           }

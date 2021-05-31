@@ -57,6 +57,9 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
    *
    * Note: 
    *   - Only set configuration here. Don't initialize {@link HttpEntity}.
+   *
+   * TODO: 
+   *  - Parser is prone to non-serializable params
    */
   public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
     this.apiConfig = apiConfig;

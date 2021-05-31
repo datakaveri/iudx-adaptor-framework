@@ -28,4 +28,8 @@ public class SimpleATestParser implements Parser<Message> {
     msg.setResponseBody(message);
     return msg;
   }
+
+  public SimpleATestParser initialize() {
+    return this;
+  }
 }
