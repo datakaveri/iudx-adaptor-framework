@@ -6,7 +6,6 @@ import java.time.Instant;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Parser;
 import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.ReadContext;
 import com.jayway.jsonpath.DocumentContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +28,7 @@ public class JsonPathParser<T> implements Parser<T> {
   private String timestampPath;
   private String keyPath;
   private String containerPath;
+  private String defaultTimePath = "observationDateTime";
 
   private String inputTimeFormat;
   private String outputTimeFormat;
@@ -46,22 +46,27 @@ public class JsonPathParser<T> implements Parser<T> {
 
 
     try {
-      this.timestampPath = parseSpec.getString("timestampPath");
+      this.timestampPath = parseSpec.optString("timestampPath");
       this.keyPath = parseSpec.getString("keyPath");
 
       this.containerPath = parseSpec.optString("containerPath");
       this.inputTimeFormat = parseSpec.optString("inputTimeFormat");
       this.outputTimeFormat = parseSpec.optString("outputTimeFormat");
+      // Default
+      toFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     } catch (Exception e) {
       LOGGER.error("Unable to process with JsonPathParser");
       // TODO: Exit
     }
 
-    if (!inputTimeFormat.isEmpty() && !outputTimeFormat.isEmpty()) {
+    if (!inputTimeFormat.isEmpty()) {
      fromFormat = new SimpleDateFormat(inputTimeFormat); 
-     toFormat = new SimpleDateFormat(outputTimeFormat); 
      fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+    }
+
+    if(!outputTimeFormat.isEmpty()) {
+     toFormat = new SimpleDateFormat(outputTimeFormat); 
      toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
     }
 
@@ -82,52 +87,72 @@ public class JsonPathParser<T> implements Parser<T> {
   }
 
 
+
+  public Message parseTime(DocumentContext ctx, Message outMsg) {
+    String message = ctx.jsonString();
+    if (timestampPath.isEmpty() || inputTimeFormat.isEmpty()) {
+      Date now = new Date();
+      String parsedDate = toFormat.format(now);
+
+      ctx.put("$", defaultTimePath, parsedDate);
+
+      message = ctx.jsonString();
+
+      outMsg.setEventTimeAsString(parsedDate);
+      outMsg.setEventTimestamp(now.toInstant());
+      outMsg.setResponseBody(message);
+    } 
+    else if  
+      (!timestampPath.isEmpty() 
+       && !inputTimeFormat.isEmpty() 
+       && outputTimeFormat.isEmpty()) {
+        outMsg.setEventTimeAsString(ctx.read(timestampPath));
+        outMsg.setEventTimestamp(Instant.parse(ctx.read(timestampPath)));
+        outMsg.setResponseBody(message);
+      }
+    else {
+      try {
+        Date date = fromFormat.parse(ctx.read(timestampPath));
+        String parsedDate = toFormat.format(date);
+        outMsg.setEventTimeAsString(parsedDate);
+        outMsg.setEventTimestamp(date.toInstant());
+        message = JsonPath.parse(message).set(timestampPath, parsedDate).jsonString();
+        outMsg.setResponseBody(message);
+      } catch (Exception e) {
+        LOGGER.debug(e);
+        // TODO: Handle this
+      }
+    }
+    return outMsg;
+  }
+
   /* TODO:
    *  - Abstract out parsing time
    */
   public T parse(String message) {
 
-    ReadContext ctx = JsonPath.parse(message);
+    DocumentContext ctx = JsonPath.parse(message);
 
     /* Parse into Message */
     if (containerPath.isEmpty()) {
       Message msg = new Message();
       msg.setKey(ctx.read(keyPath));
-      msg.setResponseBody(message);
-      if (inputTimeFormat.isEmpty() || outputTimeFormat.isEmpty()) {
-        msg.setEventTimeAsString(ctx.read(timestampPath));
-        msg.setEventTimestamp(Instant.parse(ctx.read(timestampPath)));
-      }
-      else {
-        try {
-          Date date = fromFormat.parse(ctx.read(timestampPath));
-          String parsedDate = toFormat.format(date);
-          msg.setEventTimeAsString(parsedDate);
-          msg.setEventTimestamp(date.toInstant());
-          message = JsonPath.parse(message).set(timestampPath, parsedDate).jsonString();
-        } catch (Exception e) {
-          // TODO: Handle this
-        }
-      }
+      msg = parseTime(ctx, msg);
       return (T) msg;
     }
+
     else {
-
-
       List<Object> container = ctx.read(containerPath);
       List<Message> msgArray = new ArrayList<Message>();
 
       JSONArray trickleObjs = new JSONArray();
-
       if (hasTrickleKeys == true) {
         trickleObjs = new JSONArray(trickleObjsString);
       }
-
       for (int i=0; i<container.size(); i++){
         // TODO: Improve
         Message tmpmsg = new Message();
         DocumentContext tmpctx = JsonPath.parse(container.get(i));
-
         // Add the trickle keys
         // TODO: This is pretty inefficient
         if (hasTrickleKeys == true) {
@@ -135,7 +160,9 @@ public class JsonPathParser<T> implements Parser<T> {
             try {
               Object keyval =
                 ctx.read(trickleObjs.getJSONObject(j).getString("keyPath"));
-              tmpctx.put("$", trickleObjs.getJSONObject(j).getString("keyName"), keyval);
+              tmpctx.put("$",
+                          trickleObjs.getJSONObject(j).getString("keyName"),
+                          keyval);
             } catch (Exception e) {
               LOGGER.debug(e);
               // Ignore errors
@@ -143,30 +170,9 @@ public class JsonPathParser<T> implements Parser<T> {
           }
         }
 
-
-        String msgBody = tmpctx.jsonString();
         String key = tmpctx.read(keyPath);
-
-
-
-
-        if (inputTimeFormat.isEmpty() || outputTimeFormat.isEmpty()) {
-          tmpmsg.setEventTimeAsString(tmpctx.read(timestampPath));
-          tmpmsg.setEventTimestamp(Instant.parse(tmpctx.read(timestampPath)));
-        }
-        else {
-          try {
-            Date date = fromFormat.parse(tmpctx.read(timestampPath));
-            String parsedDate = toFormat.format(date);
-            tmpmsg.setEventTimeAsString(parsedDate);
-            tmpmsg.setEventTimestamp(date.toInstant());
-            msgBody = JsonPath.parse(msgBody).set(timestampPath, parsedDate).jsonString();
-          } catch (Exception e) {
-            // TODO: Handle this
-          }
-        }
+        tmpmsg = parseTime(tmpctx, tmpmsg);
         tmpmsg.setKey(key);
-        tmpmsg.setResponseBody(msgBody);
         msgArray.add(tmpmsg);
       }
       return (T) msgArray;

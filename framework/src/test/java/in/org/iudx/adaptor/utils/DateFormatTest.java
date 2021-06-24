@@ -15,11 +15,34 @@ import java.time.Instant;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.TimeZone;
+import java.util.Date;
 
 public class DateFormatTest {
 
+
+  DateFormat fromFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+  DateFormat toFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+
+  @Test
+  void getDate() throws InterruptedException {
+
+  toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+
+    try {
+      System.out.println(toFormat.format(new Date()));
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+  }
+
+
   @Test
   void parseA() throws InterruptedException {
+
+    fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+    toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
 
     String testTime = "2021-03-01 13:10:10";
 

@@ -24,9 +24,9 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
 
 &nbsp; 
   
-- **timestampPath**(String): A [Json Path](https://github.com/json-path/JsonPath) to the property in the message containing the timestamp for the message. This is an essential component of the stream processing pipeline and is used for deduplication, watermarking, late arrival message rejection, etc. If the `{ "messageContainer": "array" } ` then treat each object as the root json and define the timestamp json path here.
+- timestampPath(String): A [Json Path](https://github.com/json-path/JsonPath) to the property in the message containing the timestamp for the message. This is an essential component of the stream processing pipeline and is used for deduplication, watermarking, late arrival message rejection, etc. If the `{ "messageContainer": "array" } ` then treat each object as the root json and define the timestamp json path here. If this property is not provided then the current system timestamp will be added with the key `observationDateTime`.
 
-- inputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages coming from the source 
+- inputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages coming from the source. If this property is not provided then the current system timestamp will be added with the key `observationDateTime`.
   
 - outputTimeFormat(String): A ISO8601 styled string format specifier for the time format in messages emitted to the sink. Note: the input time string is replaced with this format.
 

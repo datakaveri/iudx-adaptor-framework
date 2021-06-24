@@ -63,7 +63,7 @@ public class JsonPathTest {
       .put("k", 1.5)
       )
       .put((new JSONObject()
-      .put("time", "2021-04-01 12:00:01")
+      .put("time", "2021-05-01 12:00:01")
       .put("id", "4356")
       .put("k", 2.5)
       ))).toString();
@@ -116,4 +116,35 @@ public class JsonPathTest {
 
   }
 
+
+  @Test
+  void noTimePath() throws InterruptedException {
+
+    String parseSpecArr = new JSONObject()
+      .put("timestampPath", "$.time")
+      .put("keyPath", "$.id")
+      .put("containerPath", "$.data")
+      .toString();
+
+    String arrayData = 
+      new JSONObject().put("data",
+      new JSONArray()
+      .put(new JSONObject()
+      .put("time", "2021-04-01 12:00:01")
+      .put("id", "123")
+      .put("k", 1.5)
+      )
+      .put((new JSONObject()
+      .put("time", "2021-05-01 12:00:01")
+      .put("id", "4356")
+      .put("k", 2.5)
+      ))).toString();
+
+    JsonPathParser<List<Message>> parser = new JsonPathParser<List<Message>>(parseSpecArr);
+
+    List<Message> m = parser.parse(arrayData);
+    for (int i=0; i<m.size(); i++) {
+      System.out.println(m.get(i).toString());
+    }
+  }
 }
