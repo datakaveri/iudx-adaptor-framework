@@ -48,12 +48,19 @@ Using this, one can extract json keys using [json path](https://github.com/json-
 The schema of the transformSpec for **jsPath** is as shown below. **Bold** implies that the property is **required**.  
 
 - **type**(String): jsPath
-- **template**(String): Template json of the output message
+- **template**(String): Template json of the output message. The values in the template are dummy placeholders but the type of the value should 
+    be exactly as required in output data For e.g `{'co2': 123.1} ` would mean `co2` output format will be `float`, `{'co2': 1}` will mean output format is `int`
+    and `{'co2': '123'}` will mean output format is string.
+    If there is no timestamp in [parseSpec](./parse_spec.md) and you would like to use the 
+      system generated `observationDateTime` then mention ` { 'observationDateTime': 'abc', ..... } ` in template.  
 - **jsonPathSpec**(Array[Object]): An array of transformation operations which extract a key from the original json and place it in the path as specified in the template.  
   - **inputKeyPath**(String): Json Path from where the specific value must be extracted. Any java/script primitive type maybe extracted.
   - **outputKeyPath**(String): Json Path on which the extracted value must be placed into.
   - valueModifierScript(String): Javascript inline function with the input variable being `value`.
   - regexFilter(String): For String values of key-value pairs, an optional regexFilter can be provided to reject messages which contain this value.
+
+**Note**: Only keys mentioned in jsonPathSpec Array and template string will be present in the resulting json objects. For static key values you can 
+hardcode it in template string.
 
 Example
 ``` 
