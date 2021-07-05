@@ -1,8 +1,8 @@
 # FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager"
 
-FLINK_PROPERTIES="\
-jobmanager.rpc.address: jobmanager
+FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager
 taskmanager.numberOfTaskSlots: 3
+web.upload.dir: /opt/flink/jars
 
 state.backend: filesystem
 s3.endpoint: http://minio1:9000
@@ -15,4 +15,7 @@ presto.s3.secret-key: minio123
 presto.s3.endpoint: http://minio1:9000   
 presto.s3.path-style-access: true
 
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
 "
