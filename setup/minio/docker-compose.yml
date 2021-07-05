@@ -5,7 +5,7 @@ version: '3.7'
 # it through port 9000.
 #
 networks:
-  adaptor-net:
+  analytics-net:
     external: true
 
 services:
@@ -13,7 +13,7 @@ services:
     image: minio/minio:RELEASE.2021-06-17T00-10-46Z
     hostname: minio1
     networks: 
-      - adaptor-net
+      - analytics-net
     volumes:
       - data1-1:/data1
     expose:
@@ -27,18 +27,20 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    restart: always
 
   nginx:
     image: nginx:1.19.2-alpine
     hostname: nginx
     networks: 
-      - adaptor-net
+      - analytics-net
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "9000:9000"
     depends_on:
       - minio1
+    restart: always
 
 ## By default this config uses default local driver,
 ## For custom volumes replace with volume driver configuration.
