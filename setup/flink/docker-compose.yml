@@ -1,12 +1,13 @@
 version: '3.7'
 
 networks:
-  adaptor-net:
+  analytics-net:
     external: true
 
 services:
 
   jobmanager:
+    # image: flink:1.12.2-scala_2.12-java11
     build: 
       dockerfile: ./Dockerfile
       context: .
@@ -16,11 +17,15 @@ services:
     env_file:
       - ./env
     networks:
-      - adaptor-net
+      - analytics-net
     command: "jobmanager"
+    volumes:
+      - ./jars:/jars
+    restart: always
 
 
   taskmanager:
+    # image: flink:1.12.2-scala_2.12-java11 
     build: 
       dockerfile: ./Dockerfile
       context: .
@@ -28,6 +33,9 @@ services:
     env_file:
       - ./env
     networks:
-      - adaptor-net
+      - analytics-net
     command: "taskmanager"
+    restart: always
 
+volumes:
+  jars:
