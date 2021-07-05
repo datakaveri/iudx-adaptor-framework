@@ -1,4 +1,18 @@
 # FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager"
 
-FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager
-taskmanager.numberOfTaskSlots: 3"
+FLINK_PROPERTIES="\
+jobmanager.rpc.address: jobmanager
+taskmanager.numberOfTaskSlots: 3
+
+state.backend: filesystem
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+"

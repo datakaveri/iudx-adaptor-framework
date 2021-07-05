@@ -7,7 +7,9 @@ networks:
 services:
 
   jobmanager:
-    image: flink:1.12.2-scala_2.12-java11 
+    build: 
+      dockerfile: ./Dockerfile
+      context: .
     hostname: jobmanager
     ports:
       - 8081:8081
@@ -19,7 +21,9 @@ services:
 
 
   taskmanager:
-    image: flink:1.12.2-scala_2.12-java11 
+    build: 
+      dockerfile: ./Dockerfile
+      context: .
     hostname: taskmanager
     env_file:
       - ./env
