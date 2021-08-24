@@ -1,7 +1,7 @@
 version: '3.7'
 
 networks:
-  analytics-net:
+  adaptor-net:
     external: true
 
 services:
@@ -16,11 +16,13 @@ services:
       - 8081:8081
     env_file:
       - ./env
+    environment:
+      - "TZ=Asia/Kolkata"
     networks:
-      - analytics-net
+      - adaptor-net
     command: "jobmanager"
     volumes:
-      - ./jars:/jars
+      - jars:/jars/flink-web-upload
     restart: always
 
 
@@ -32,8 +34,10 @@ services:
     hostname: taskmanager
     env_file:
       - ./env
+    environment:
+      - "TZ=Asia/Kolkata"
     networks:
-      - analytics-net
+      - adaptor-net
     command: "taskmanager"
     restart: always
 

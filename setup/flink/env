@@ -2,7 +2,7 @@
 
 FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager
 taskmanager.numberOfTaskSlots: 3
-web.upload.dir: /opt/flink/jars
+# web.upload.dir: /jars
 
 state.backend: filesystem
 s3.endpoint: http://minio1:9000

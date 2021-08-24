@@ -1,7 +1,7 @@
 version: "3.7"
 
 networks:
-  analytics-net:
+  adaptor-net:
     external: true
 
 volumes:
@@ -11,6 +11,7 @@ volumes:
 services:
   zook:
     image: zookeeper:3.4.9
+    container_name: zook
     hostname: zook
     ports:
       - "2181:2181"
@@ -22,6 +23,5 @@ services:
       - zkdata:/data
       - zkdatalog:/datalog
     networks: 
-      - analytics-net
+      - adaptor-net
     restart: always
-

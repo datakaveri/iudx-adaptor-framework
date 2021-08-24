@@ -5,7 +5,7 @@ version: '3.7'
 # it through port 9000.
 #
 networks:
-  analytics-net:
+  adaptor-net:
     external: true
 
 services:
@@ -13,7 +13,7 @@ services:
     image: minio/minio:RELEASE.2021-06-17T00-10-46Z
     hostname: minio1
     networks: 
-      - analytics-net
+      - adaptor-net
     volumes:
       - data1-1:/data1
     expose:
@@ -33,7 +33,7 @@ services:
     image: nginx:1.19.2-alpine
     hostname: nginx
     networks: 
-      - analytics-net
+      - adaptor-net
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
