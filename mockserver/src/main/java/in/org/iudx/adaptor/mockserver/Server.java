@@ -66,6 +66,11 @@ public class Server extends AbstractVerticle {
     router.route("/auth/*").handler(BasicAuthHandler.create(authProvider));
 
 
+    router.get("/constantA")
+      .handler(routingContext -> {
+        LOGGER.debug("Info: Received request");
+        simple.getConstantA(routingContext);
+    });
 
     router.get("/simpleA")
       .handler(routingContext -> {

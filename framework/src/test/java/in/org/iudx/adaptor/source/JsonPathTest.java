@@ -121,7 +121,6 @@ public class JsonPathTest {
   void noTimePath() throws InterruptedException {
 
     String parseSpecArr = new JSONObject()
-      .put("timestampPath", "$.time")
       .put("keyPath", "$.id")
       .put("containerPath", "$.data")
       .toString();

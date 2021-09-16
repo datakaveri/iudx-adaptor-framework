@@ -130,4 +130,17 @@ public class Simple {
     response.setStatusCode(200).end(simpleB.toString());
 
   }
+
+
+  /*Constant message*/
+  public void getConstantA(RoutingContext routingContext) {
+
+    HttpServerResponse response = routingContext.response();
+
+    String resp = "{\"k1\":677,\"time\":\"2021-07-08T11:33:13Z\",\"deviceId\":\"abc-456\"}";
+
+    response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON);
+    response.setStatusCode(200).end(resp);
+  }
+
 }
