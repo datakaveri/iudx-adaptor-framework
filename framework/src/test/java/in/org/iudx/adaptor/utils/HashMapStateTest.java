@@ -16,6 +16,9 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.util.HashMap;
 
 public class HashMapStateTest {
@@ -71,12 +74,22 @@ public class HashMapStateTest {
                     LOGGER.info(" Updated state ");
 
                     byte[] byteStream = hashMapState.serialize();
+                    FileOutputStream fileOutputStream = new FileOutputStream("./hashmapstate");
+                    fileOutputStream.write(byteStream);
                     LOGGER.info(" Serialized state ");
 
-                    HashMap<?,?> result = hashMapState.deserialize(byteStream);
+                    File file = new File("./hashmapstate");
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    byte[] fileContent = new byte[(int) file.length()];
+                    fileInputStream.read(fileContent);
+
+                    HashMap<?, ?> result = hashMapState.deserialize(fileContent);
                     LOGGER.info(" Deserialized state -> " + result);
 
                     hashMapState.removeMessage(message);
+
+                    // Delte the file
+                    file.delete();
                 }
 
             });
