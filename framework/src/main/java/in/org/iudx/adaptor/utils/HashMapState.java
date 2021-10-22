@@ -28,16 +28,17 @@ public class HashMapState {
         return this.map.containsKey(msg.key);
     }
 
-    public ObjectOutputStream serialize() throws Exception {
+    public byte[] serialize() throws Exception {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(outBytes);
         out.writeObject(this.map);
-        return out;
+        return outBytes.toByteArray();
     }
 
-    public void deserialize(byte[] bytes) throws Exception {
+    public HashMap<String, Message> deserialize(byte[] bytes) throws Exception {
         ByteArrayInputStream inBytes = new ByteArrayInputStream(bytes);
         ObjectInputStream in = new ObjectInputStream(inBytes);
         this.map = (HashMap<String, Message>) in.readObject();
+        return map;
     }
 }
