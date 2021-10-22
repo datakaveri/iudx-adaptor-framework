@@ -1,10 +1,10 @@
 FROM maven:latest as deps
 RUN git clone https://github.com/rraks/bahir-flink.git \
     && cd bahir-flink \
-    && mvn -DskipTests clean install
+    && mvn -DskipTests clean install -Denforcer.skip=true
 
 
-FROM flink:1.13.1-scala_2.12-java11
+FROM flink:1.13.3-scala_2.12-java11
 
 RUN mkdir /opt/flink/plugins/s3 \
     && curl https://repo1.maven.org/maven2/org/apache/flink/flink-s3-fs-presto/1.13.1/flink-s3-fs-presto-1.13.1.jar --output /opt/flink/plugins/s3/flink-s3-fs-presto-1.13.1.jar 
