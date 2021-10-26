@@ -12,12 +12,16 @@ public class HashMapState {
 
     private HashMap<String, Message> map;
 
-    HashMapState() {
+    public HashMapState() {
         this.map = new HashMap<>();
     }
 
     public void addMessage(Message msg) {
         this.map.put(msg.key, msg);
+    }
+
+    public Message getMessage(Message msg) {
+        return this.map.get(msg.key);
     }
 
     public Message removeMessage(Message msg) {
