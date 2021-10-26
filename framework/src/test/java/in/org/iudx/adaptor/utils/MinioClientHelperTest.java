@@ -1,13 +1,12 @@
 package in.org.iudx.adaptor.utils;
 
-import in.org.iudx.adaptor.datatypes.Message;
+import in.org.iudx.adaptor.codegen.MinioConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
-import java.util.HashMap;
 
 public class MinioClientHelperTest {
 
@@ -19,10 +18,13 @@ public class MinioClientHelperTest {
     public static void initialize() {
         LOGGER.debug("Info: Testing Minio Client Helper");
 
-        client = new MinioClientHelper.Builder()
+        MinioConfig minioConfig = new MinioConfig.Builder("http://localhost:9000")
                 .bucket("custom-state")
-                .endpoint("http://localhost:9000")
+                .object("test_state")
+                .credentials("minio", "minio123")
                 .build();
+
+        client = new MinioClientHelper(minioConfig);
     }
 
     @Test
@@ -32,7 +34,7 @@ public class MinioClientHelperTest {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(outBytes);
         out.writeObject(sampleInput);
-        client.putObject("test_state", outBytes.toByteArray());
+        client.putObject(outBytes.toByteArray(), "test_state");
         LOGGER.info("MinioClient: Object uploaded successfully");
 
         LOGGER.info("MinioClient: Testing get object");

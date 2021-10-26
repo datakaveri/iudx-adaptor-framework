@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.utils;
 
+import in.org.iudx.adaptor.codegen.MinioConfig;
 import io.minio.*;
 import io.minio.messages.Item;
 import java.io.*;
@@ -14,22 +15,30 @@ public class MinioClientHelper {
     private final String accessKey;
     private final String secretKey;
     private final String bucketName;
+    private final String objectName;
 
     private static final Logger LOGGER = LogManager.getLogger(MinioClientHelper.class);
 
 
-    private MinioClientHelper(Builder builder) {
-        this.endpoint = builder.endpoint;
-        this.accessKey = builder.accessKey;
-        this.secretKey = builder.secretKey;
-        this.bucketName = builder.bucketName;
+    public MinioClientHelper(MinioConfig minioConfig) {
+        this.endpoint = minioConfig.getEndpoint();
+        this.accessKey = minioConfig.getAccessKey();
+        this.secretKey = minioConfig.getSecretKey();
+        this.bucketName = minioConfig.getBucketName();
+        this.objectName = minioConfig.getObjectName();
 
-        minioClient = MinioClient.builder()
-                .endpoint(endpoint)
-                .credentials(accessKey, secretKey)
-                .build();
+        if(this.accessKey != null && this.secretKey != null) {
+            minioClient = MinioClient.builder()
+                    .endpoint(endpoint)
+                    .credentials(accessKey, secretKey)
+                    .build();
+        }
+        else {
+            minioClient = MinioClient.builder().endpoint(endpoint).build();
+        }
 
         makeBucket();
+        makeObject();
     }
 
     private void makeBucket() {
@@ -38,14 +47,27 @@ public class MinioClientHelper {
 
             if (!found) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
-                LOGGER.info(" Bucket: " + bucketName + " created.");
+                LOGGER.info("MinioClient: Bucket " + bucketName + " created.");
             }
-        }catch (Exception e) {
+        }
+        catch (Exception e) {
             LOGGER.error(e);
         }
     }
 
-    public void putObject(String objectName, byte[] object) {
+    private void makeObject() {
+        try {
+            if (!isObjectPresent()) {
+                putObject(new byte[]{}); // creates empty object
+                LOGGER.info("MinioClient: Object " + objectName + " created.");
+            }
+        }
+        catch (Exception e) {
+            LOGGER.error(e);
+        }
+    }
+
+    public void putObject(byte[] object) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -59,6 +81,31 @@ public class MinioClientHelper {
         }
     }
 
+    public void putObject(byte[] object, String objectName) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .stream(new ByteArrayInputStream(object), object.length, -1)
+                            .build());
+        }
+        catch(Exception e){
+            LOGGER.error(e);
+        }
+    }
+
+    public byte[] getObject() {
+        try (InputStream stream1 = minioClient.getObject(
+                GetObjectArgs.builder().bucket(bucketName).object(objectName).build())) {
+            return stream1.readAllBytes();
+        }
+        catch (Exception e) {
+            LOGGER.error(e);
+            return null;
+        }
+    }
+
     public byte[] getObject(String objectName) {
         try (InputStream stream1 = minioClient.getObject(
                 GetObjectArgs.builder().bucket(bucketName).object(objectName).build())) {
@@ -67,6 +114,16 @@ public class MinioClientHelper {
         catch (Exception e) {
             LOGGER.error(e);
             return null;
+        }
+    }
+
+    public void removeObject() {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
+        }
+        catch (Exception e) {
+            LOGGER.error(e);
         }
     }
 
@@ -94,32 +151,22 @@ public class MinioClientHelper {
         }
     }
 
-    public static class Builder {
+    public boolean isObjectPresent() {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder().bucket(bucketName).build());
 
-        private String endpoint = "http://minio1:9000";
-        private String accessKey = "minio";
-        private String secretKey = "minio123";
-        private String bucketName = "custom-state";
-
-        public Builder endpoint(String endpoint) {
-            this.endpoint = endpoint;
-            return this;
+            for(Result<Item> temp: results) {
+                if(temp.get().objectName().equals(objectName)) {
+                    return true;
+                }
+            }
+        }
+        catch (Exception e){
+            LOGGER.error(e);
         }
 
-        public Builder credentials(String accessKey, String secretKey) {
-            this.accessKey = accessKey;
-            this.secretKey = secretKey;
-            return this;
-        }
-
-        public Builder bucket(String bucketName) {
-            this.bucketName = bucketName;
-            return this;
-        }
-
-        public MinioClientHelper build() {
-            return new MinioClientHelper(this);
-        }
+        return false;
     }
 
 }
