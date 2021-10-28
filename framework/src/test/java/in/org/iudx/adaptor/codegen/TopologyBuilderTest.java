@@ -21,10 +21,10 @@ public class TopologyBuilderTest {
 
     
     TopologyConfig top = new TopologyConfig(
-                          new String(
-                            Files.readAllBytes(
-                              Paths.get(
-                                "src/test/java/in/org/iudx/adaptor/codegen/sched.json"))));
+            new String(
+                    Files.readAllBytes(
+                            Paths.get(
+                                    "src/test/java/in/org/iudx/adaptor/codegen/single.json"))));
 
     TopologyBuilder builder = new TopologyBuilder(top);
     builder.gencode();

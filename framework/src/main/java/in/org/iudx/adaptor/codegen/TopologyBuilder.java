@@ -97,7 +97,7 @@ public class TopologyBuilder {
 
     // TODO: Why are we building api config like this instead of directly passing json
     private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
-        if (inputSpec.getBoolean("boundedJob")) {
+        if (inputSpec.has("boundedJob") && inputSpec.getBoolean("boundedJob")) {
             isBoundedJob = true;
         }
 
