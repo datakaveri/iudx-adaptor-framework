@@ -89,6 +89,7 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String,Message,
     @Override
     public void close() {
         try{
+            LOGGER.info("Saving state");
             minioClientHelper.putObject(streamState.serialize());
         }
         catch(Exception e) {

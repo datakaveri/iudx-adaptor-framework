@@ -79,12 +79,26 @@ public class TopologyBuilderTest {
   @Test
   void trickle() throws Exception {
 
-    
+
     TopologyConfig top = new TopologyConfig(
-                          new String(
-                            Files.readAllBytes(
-                              Paths.get(
-                                "src/test/java/in/org/iudx/adaptor/codegen/trickle.json"))));
+            new String(
+                    Files.readAllBytes(
+                            Paths.get(
+                                    "src/test/java/in/org/iudx/adaptor/codegen/trickle.json"))));
+
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+
+  }
+
+  @Test
+  void boundedJob() throws Exception {
+
+    TopologyConfig top = new TopologyConfig(
+            new String(
+                    Files.readAllBytes(
+                            Paths.get(
+                                    "src/test/java/in/org/iudx/adaptor/codegen/bounded.json"))));
 
     TopologyBuilder builder = new TopologyBuilder(top);
     builder.gencode();

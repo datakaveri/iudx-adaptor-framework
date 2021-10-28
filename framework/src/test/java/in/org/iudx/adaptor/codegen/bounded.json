@@ -1,0 +1,54 @@
+{
+  "name": "FlinkTestApp7.1",
+  "inputSpec": {
+    "type": "http",
+    "url": "http://mockserver:8080/constantA",
+    "requestType": "GET",
+    "pollingInterval": -1,
+    "boundedJob": true,
+    "minioConfig": {
+      "url": "http://minio1:9000",
+      "bucket": "custom-state",
+      "stateName": "testState1",
+      "accessKey": "minio",
+      "secretKey": "minio123"
+    }
+  },
+  "parseSpec": {
+    "type": "json",
+    "messageContainer": "single",
+    "keyPath": "$.deviceId",
+    "timestampPath": "$.time"
+  },
+  "deduplicationSpec": {
+    "type": "timeBased"
+  },
+  "transformSpec": {
+    "type": "jolt",
+    "joltSpec": [
+      {
+        "operation": "shift",
+        "spec": {
+          "time": "observationDateTime",
+          "deviceId": "id",
+          "k1": "k1"
+        }
+      },
+      {
+        "operation": "modify-overwrite-beta",
+        "spec": {
+          "id": "=concat('datakaveri.org/123/', id)"
+        }
+      }
+    ]
+  },
+  "publishSpec": {
+    "type": "rmq",
+    "url": "amqp://mockrmq",
+    "port": 5672,
+    "uname": "guest",
+    "password": "guest",
+    "sinkName": "adaptor-test",
+    "tagName": "test"
+  }
+}

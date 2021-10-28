@@ -50,7 +50,7 @@ public class BoundedProcessTest {
                         .setRequestType("GET")
                         .setHeader("Authorization",
                                 "Basic YWRtaW46YWRtaW4=")
-                        .setPollingInterval(1000L);
+                        .setPollingInterval(-1);
 
         MinioConfig minioConfig =
                 new MinioConfig.Builder("http://localhost:9000")
