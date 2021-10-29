@@ -16,19 +16,29 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
   - **in**(String): Enum `[url, body]`
   - **pattern**(String): Pattern whose value will be replaced by output of script
   - **script**(String): Javascript to generate the parameter. Note: currently this script doesn't accept any input parameters.
-- **requestType**(String): 
+- **requestType**(String):
   - If `{ "type": "http" }`
     - GET
     - POST
-- **pollingInterval**(Long): Interval in *milliseconds*To be used mostly for short interval calls to the source. For scheduler (Long interval polling), use this field as `-1`.
+- **pollingInterval**(Long): Interval in *milliseconds*To be used mostly for short interval calls to the source. For
+  scheduler (Long interval polling), use this field as `-1`.
   - `> 0` : Polls the source with time interval
   - `-1`: Long interval polling, use scheduler api
-- headers(Array[Object]): Headers to be supplied with the api call. Authorization credentials may be provided here. This is a Map between a String key and a String value. Each object of the array contains 
+- headers(Array[Object]): Headers to be supplied with the api call. Authorization credentials may be provided here. This
+  is a Map between a String key and a String value. Each object of the array contains
   - **key**(String): Key of the header
   - **value**(String): Value of the header
+- boundedJob(Boolean): Set the value to be true for scheduled jobs (bounded jobs)
+- minioConfig(Object): For scheduled jobs state will be maintained in minio
+  - **url**(String) : Minio host URL
+  - **bucket**(String) : Bucket Name to store objects
+  - **stateName**(String) : Unique name which will be used as file name while saving state
+  - **accessKey**(String) : Minio access key
+  - **secretKey**(String) : Minio secret key
 
 Example:
-``` 
+
+``` json
 {
     "type": "http",
     "url": "https://rs.iudx.org.in/ngsi-ld/v1/entity/abc",
@@ -37,5 +47,27 @@ Example:
     "headers": {
         "content-type": "application/json"
     }
+}
+```
+
+Example (Scheduled Job):
+
+```json
+{
+  "type": "http",
+  "url": "https://rs.iudx.org.in/ngsi-ld/v1/entity/abc",
+  "requestType": "GET",
+  "pollingInterval": -1,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "boundedJob": true,
+  "minioConfig": {
+    "url": "http://minio1:9000",
+    "bucket": "custom-state",
+    "stateName": "test-state-job",
+    "accessKey": "minio",
+    "secretKey": "minio123"
+  }
 }
 ```
