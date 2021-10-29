@@ -32,13 +32,6 @@
             <artifactId>maven-compiler-plugin</artifactId>
             <version>3.8.1</version>
             <configuration>
-                <annotationProcessorPaths>
-                    <path>
-                        <groupId>com.google.auto.service</groupId>
-                        <artifactId>auto-service</artifactId>
-                        <version>1.0</version>
-                    </path>
-                </annotationProcessorPaths>
                 <source>${target.java.version}</source>
                 <target>${target.java.version}</target>
             </configuration>
