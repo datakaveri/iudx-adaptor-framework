@@ -1,7 +1,9 @@
 ### Input spec
 Define the input downstream datasource with the polling interval.
 The framework will periodically poll the api and obtain data from the downstream server.
-For long interval jobs, use the schedule api and set `pollingInterval` as `-1`.
+For long interval jobs, use the schedule api and set `pollingInterval` as `-1` and set `boundedJob` to `true`. If state of the scheduled job needs to be maintained after 
+the job has completed, state can be maintained in minio by providing 
+credentials to it in `minioConfig`.
 
 The schema of the inputSpec is as shown below. **Bold** implies that the property is **required**.  
 
@@ -29,7 +31,7 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
   - **key**(String): Key of the header
   - **value**(String): Value of the header
 - boundedJob(Boolean): Set the value to be true for scheduled jobs (bounded jobs)
-- minioConfig(Object): For scheduled jobs state will be maintained in minio
+- minioConfig(Object): For scheduled bounded jobs state will be maintained in minio
   - **url**(String) : Minio host URL
   - **bucket**(String) : Bucket Name to store objects
   - **stateName**(String) : Unique name which will be used as file name while saving state
