@@ -258,6 +258,7 @@ public class DatabaseServiceImpl implements DatabaseService {
           for(Row row: result) {
             tempJson.put(JAR_ID, row.toJson().getString("jar_id"));
             tempJson.put(STATUS, row.toJson().getString(STATUS));
+            tempJson.put(DATA, row.toJson().getJsonObject(DATA));
           }
           
           String status = tempJson.getString(STATUS);

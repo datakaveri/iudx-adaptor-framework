@@ -99,6 +99,14 @@ public class Constants {
   public static final String TASKMANAGER_API = "/taskmanagers";
   public static final String TASKMANAGER_LOGS_API = TASKMANAGER_API + "/$1/logs/";
 
+  /** Minio config params */
+  public static final String MINIO_CONFIG = "minioConfig";
+  public static final String MINIO_URL = "url";
+  public static final String BUCKET = "bucket";
+  public static final String STATE_NAME = "stateName";
+  public static final String ACCESS_KEY = "accessKey";
+  public static final String SECRET_KEY = "secretKey";
+
   /** Others */
   public static final String FLINKOPTIONS = "flinkOptions";
   public static final String QUARTZ_PROPERTIES_PATH = "quartzPropertiesPath";
@@ -112,6 +120,7 @@ public class Constants {
   public static final String OPERATION = "operation";
   public static final String TM_ID = "tId";
   public static final String L_ID = "lId";
+  public static final String INPUT_SPEC = "inputSpec";
 
   /* Modes */
   public static final String START = "start";

@@ -173,6 +173,11 @@
 			<version>${vertx.version}</version>
 		</dependency>
 
+		<dependency>
+			<groupId>io.minio</groupId>
+			<artifactId>minio</artifactId>
+			<version>8.3.1</version>
+		</dependency>
     </dependencies>
 
     <build>
