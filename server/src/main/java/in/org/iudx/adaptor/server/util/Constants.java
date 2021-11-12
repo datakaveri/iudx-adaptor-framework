@@ -121,6 +121,7 @@ public class Constants {
   public static final String TM_ID = "tId";
   public static final String L_ID = "lId";
   public static final String INPUT_SPEC = "inputSpec";
+  public static final String BOUNDED_JOB = "boundedJob";
 
   /* Modes */
   public static final String START = "start";

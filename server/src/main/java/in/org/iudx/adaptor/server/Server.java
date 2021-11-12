@@ -957,9 +957,10 @@ public class Server extends AbstractVerticle {
 
           if(adapterData != null) {
             JsonObject inputSpec = adapterData.getJsonObject(INPUT_SPEC);
+            Boolean isBoundedJob = inputSpec.getBoolean(BOUNDED_JOB);
             JsonObject minioConfigObject = inputSpec.getJsonObject(MINIO_CONFIG);
 
-            if(minioConfigObject != null) {
+            if(isBoundedJob != null && isBoundedJob && minioConfigObject != null) {
               MinioConfig minioConfig =
                       new MinioConfig.Builder(minioConfigObject.getString(MINIO_URL))
                               .bucket(minioConfigObject.getString(BUCKET))
