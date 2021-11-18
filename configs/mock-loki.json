@@ -7,7 +7,6 @@
                     "flinkhttp": "test-sideoutput"
                 },
                 "values": [
-                    //to be empty; managed by server;
                     ["$1","$2"]
                 ]
             }

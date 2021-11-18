@@ -1,0 +1,45 @@
+version: '3.7'
+
+networks:
+  adaptor-net:
+    external: true
+
+services:
+
+  jobmanager:
+    # image: flink:1.12.2-scala_2.12-java11
+    build: 
+      dockerfile: ./Dockerfile114
+      context: .
+    hostname: jobmanager
+    ports:
+      - 8081:8081
+    environment:
+      - "TZ=Asia/Kolkata"
+    networks:
+      - adaptor-net
+    command: "/opt/flink/bin/jobmanager.sh start-foreground"
+    env_file:
+      - ./env
+    volumes:
+      - jars:/jars/flink-web-upload
+    restart: always
+
+
+  taskmanager:
+    # image: flink:1.12.2-scala_2.12-java11 
+    build: 
+      dockerfile: ./Dockerfile114
+      context: .
+    hostname: taskmanager
+    env_file:
+      - ./env
+    environment:
+      - "TZ=Asia/Kolkata"
+    networks:
+      - adaptor-net
+    command: "/opt/flink/bin/taskmanager.sh start-foreground"
+    restart: always
+
+volumes:
+  jars:
