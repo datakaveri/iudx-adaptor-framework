@@ -25,6 +25,8 @@ import in.org.iudx.adaptor.server.util.AuthHandler;
 import in.org.iudx.adaptor.server.util.Constants;
 import in.org.iudx.adaptor.server.util.ResponseHandler;
 import in.org.iudx.adaptor.server.util.Validator;
+import in.org.iudx.adaptor.server.util.MinioClientHelper;
+import in.org.iudx.adaptor.server.util.MinioConfig;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import java.nio.file.FileSystems;
 import java.util.Set;
@@ -941,6 +943,8 @@ public class Server extends AbstractVerticle {
         if (databaseHandler.succeeded()) {
           
           String jarId = databaseHandler.result().getString(JAR_ID);
+          JsonObject adapterData = databaseHandler.result().getJsonObject(DATA);
+
           if(jarId != null) {
             requestBody.put(ID, jarId);
             requestBody.put(URI, JARS + "/" + jarId);
@@ -950,7 +954,27 @@ public class Server extends AbstractVerticle {
               }
             });
           }
-          
+
+          if(adapterData != null) {
+            JsonObject inputSpec = adapterData.getJsonObject(INPUT_SPEC);
+            Boolean isBoundedJob = inputSpec.getBoolean(BOUNDED_JOB);
+            JsonObject minioConfigObject = inputSpec.getJsonObject(MINIO_CONFIG);
+
+            if(isBoundedJob != null && isBoundedJob && minioConfigObject != null) {
+              MinioConfig minioConfig =
+                      new MinioConfig.Builder(minioConfigObject.getString(MINIO_URL))
+                              .bucket(minioConfigObject.getString(BUCKET))
+                              .object(minioConfigObject.getString(STATE_NAME))
+                              .credentials(minioConfigObject.getString(ACCESS_KEY),
+                                      minioConfigObject.getString(SECRET_KEY))
+                              .build();
+
+              MinioClientHelper minioClientHelper = new MinioClientHelper(minioConfig);
+              minioClientHelper.removeObject();
+              LOGGER.debug("Info: Job State cleared");
+            }
+          }
+
           jobScheduler.deleteJobs(requestBody, scheduleHandler -> {
             if (scheduleHandler.succeeded()) {
               LOGGER.info("Success: Delete adaptor query");
