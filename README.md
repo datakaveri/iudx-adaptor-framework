@@ -53,6 +53,9 @@ It maybe possible for a developer to pass their own implementation of the interf
 
 Using the framework as an ordinary consumer involves writing a specification file for the entire pipeline (source -> transform -> sink)
 and using a hosted instances api to publish the spec and perform the pipeline operations.
+There are two fundamental modes of operation - 
+1. Bounded mode - The pipeline runs once based on the specified schedule
+2. Unbounded mode - The pipeline is always running
 
 ### Pipeline Specification file
 
