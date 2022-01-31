@@ -8,6 +8,7 @@ public class TopologyConfig {
   private JSONObject config;
 
   public String name;
+  public JSONObject failureRecoverySpec;
   public JSONObject inputSpec;
   public JSONObject parseSpec;
   public JSONObject deduplicationSpec;
@@ -20,6 +21,7 @@ public class TopologyConfig {
     name = config.getString("name");
     
     // TODO: Run validations
+    failureRecoverySpec = config.getJSONObject("failureRecoverySpec");
     inputSpec = config.getJSONObject("inputSpec");
     parseSpec = config.getJSONObject("parseSpec");
     deduplicationSpec = config.getJSONObject("deduplicationSpec");

@@ -16,7 +16,8 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.MethodSpec.Builder;
 
-
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -33,6 +34,7 @@ import in.org.iudx.adaptor.sink.StaticStringPublisher;
 import java.util.List;
 import javax.annotation.processing.Filer;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 
 public class TopologyBuilder {
@@ -44,6 +46,9 @@ public class TopologyBuilder {
     private boolean hasJSTransformer;
     private boolean hasJSPathTransformer;
     private boolean isBoundedJob;
+
+    private static final int DEFAULT_RESTART_ATTEMPTS = 10;
+    private static final long DEFAULT_RESTART_DELAY = 10000L;
 
     private String containerType;
 
@@ -71,6 +76,7 @@ public class TopologyBuilder {
                         StreamExecutionEnvironment.class,
                         StreamExecutionEnvironment.class);
 
+        failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
         inputSpecBuilder(mainBuilder, tc.inputSpec);
         parseSpecBuilder(mainBuilder, tc.parseSpec);
         deduplicationSpecBuilder(mainBuilder, tc.deduplicationSpec);
@@ -94,6 +100,56 @@ public class TopologyBuilder {
         }
     }
 
+    private void failureRecoverySpecBuilder(Builder mainBuilder, JSONObject failureRecoverySpec, JSONObject inputSpec) {
+
+        if(failureRecoverySpec != null) {
+
+            if ("fixed-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+                mainBuilder.addStatement(
+                        "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+                        RestartStrategies.class,
+                        failureRecoverySpec.getInt("attempts"),
+                        Time.class,
+                        failureRecoverySpec.getLong("delay"),
+                        TimeUnit.class);
+            } else if("exponential-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+                mainBuilder.addStatement(
+                        "env.setRestartStrategy($T.exponentialDelayRestart($T.of($L, $T.MILLISECONDS), $T.of($L, $T.MILLISECONDS), $L, $T.of($L, $T.MILLISECONDS), $L))",
+                        RestartStrategies.class,
+                        Time.class,
+                        failureRecoverySpec.getLong("initial-backoff"),
+                        TimeUnit.class,
+                        Time.class,
+                        failureRecoverySpec.getLong("max-backoff"),
+                        TimeUnit.class,
+                        failureRecoverySpec.getDouble("backoff-multiplier"),
+                        Time.class,
+                        failureRecoverySpec.getLong("reset-backoff-threshold"),
+                        TimeUnit.class,
+                        failureRecoverySpec.getDouble("jitter-factor"));
+            }
+
+        } else {
+
+            // if failure recovery strategy not specified, use fixed-delay strategy
+            // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
+
+            long delay = inputSpec.getLong("pollingInterval");
+            if (delay == -1L) {
+                delay = DEFAULT_RESTART_DELAY;
+            }
+
+            mainBuilder.addStatement(
+                    "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+                    RestartStrategies.class,
+                    DEFAULT_RESTART_ATTEMPTS,
+                    Time.class,
+                    delay,
+                    TimeUnit.class);
+
+        }
+
+    }
 
     // TODO: Why are we building api config like this instead of directly passing json
     private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
