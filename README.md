@@ -68,6 +68,9 @@ The following is the spec outline to be followed in making a configuration file.
 {
     "name": "<unique name for this adaptor",
     "schedulePattern": "<cron like schedule pattern >",
+
+    "failureRecoverySpec": {
+    },
     
     "inputSpec": {
     },
@@ -88,6 +91,7 @@ The following is the spec outline to be followed in making a configuration file.
 
 Detailed explanation of the individual specs are given below.  
 - [Meta spec](docs/meta_spec.md)  
+- [Failure Recovery Spec](docs/failurerecovery_spec.md)  
 - [Input Spec](docs/input_spec.md)  
 - [Parse Spec](docs/parse_spec.md)  
 - [Deduplication Spec](docs/parse_spec.md)  
