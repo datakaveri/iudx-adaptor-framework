@@ -47,6 +47,8 @@ import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 
 import in.org.iudx.adaptor.process.JoltTransformer;
+import in.org.iudx.adaptor.process.JSProcessFunction;
+import in.org.iudx.adaptor.process.JSPathProcessFunction;
 import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 
 

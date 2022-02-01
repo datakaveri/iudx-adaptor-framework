@@ -50,4 +50,5 @@ public class HttpEntityTest {
     HttpEntity httpEntity = new HttpEntity(apiConfig);
     LOGGER.error("invalidAuthSimpleGet :"+httpEntity.getSerializedMessage());
   }
+
 }

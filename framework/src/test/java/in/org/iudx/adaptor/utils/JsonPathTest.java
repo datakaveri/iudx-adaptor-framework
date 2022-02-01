@@ -28,6 +28,17 @@ public class JsonPathTest {
   }
 
   @Test
+  void testReadIntToString() throws InterruptedException {
+
+    ReadContext ctx = JsonPath.parse(template1);
+    String val = ctx.read("$.metaB").toString();
+    String val2 = ctx.read("$.metaA").toString();
+    System.out.println(val);
+    System.out.println(val2);
+
+  }
+
+  @Test
   void testWrite() throws InterruptedException {
 
 

@@ -136,7 +136,7 @@ public class JsonPathParser<T> implements Parser<T> {
     /* Parse into Message */
     if (containerPath.isEmpty()) {
       Message msg = new Message();
-      msg.setKey(ctx.read(keyPath));
+      msg.setKey(ctx.read(keyPath).toString());
       msg = parseTime(ctx, msg);
       return (T) msg;
     }
@@ -159,7 +159,7 @@ public class JsonPathParser<T> implements Parser<T> {
           for (int j=0; j<trickleObjs.length(); j++) {
             try {
               Object keyval =
-                ctx.read(trickleObjs.getJSONObject(j).getString("keyPath"));
+                ctx.read(trickleObjs.getJSONObject(j).getString("keyPath").toString());
               tmpctx.put("$",
                           trickleObjs.getJSONObject(j).getString("keyName"),
                           keyval);
@@ -170,7 +170,7 @@ public class JsonPathParser<T> implements Parser<T> {
           }
         }
 
-        String key = tmpctx.read(keyPath);
+        String key = tmpctx.read(keyPath).toString();
         tmpmsg = parseTime(tmpctx, tmpmsg);
         tmpmsg.setKey(key);
         msgArray.add(tmpmsg);
