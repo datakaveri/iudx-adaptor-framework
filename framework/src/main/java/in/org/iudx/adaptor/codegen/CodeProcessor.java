@@ -66,6 +66,7 @@ public class CodeProcessor extends AbstractProcessor {
   return annotations;
   }
 
+
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
     //  String env = System.getenv("ADAPTOR_CONFIG_PATH");      

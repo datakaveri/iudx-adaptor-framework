@@ -76,7 +76,11 @@ public class TopologyBuilder {
                         StreamExecutionEnvironment.class,
                         StreamExecutionEnvironment.class);
 
-        failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
+        if (tc.hasFailureRecovery){ 
+          failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
+        } else {
+          failureRecoverySpecBuilder(mainBuilder, tc.inputSpec);
+        }
         inputSpecBuilder(mainBuilder, tc.inputSpec);
         parseSpecBuilder(mainBuilder, tc.parseSpec);
         deduplicationSpecBuilder(mainBuilder, tc.deduplicationSpec);
@@ -102,53 +106,49 @@ public class TopologyBuilder {
 
     private void failureRecoverySpecBuilder(Builder mainBuilder, JSONObject failureRecoverySpec, JSONObject inputSpec) {
 
-        if(failureRecoverySpec != null) {
+      if ("fixed-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+        mainBuilder.addStatement(
+            "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+            RestartStrategies.class,
+            failureRecoverySpec.getInt("attempts"),
+            Time.class,
+            failureRecoverySpec.getLong("delay"),
+            TimeUnit.class);
+      } else if("exponential-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+        mainBuilder.addStatement(
+            "env.setRestartStrategy($T.exponentialDelayRestart($T.of($L, $T.MILLISECONDS), $T.of($L, $T.MILLISECONDS), $L, $T.of($L, $T.MILLISECONDS), $L))",
+            RestartStrategies.class,
+            Time.class,
+            failureRecoverySpec.getLong("initial-backoff"),
+            TimeUnit.class,
+            Time.class,
+            failureRecoverySpec.getLong("max-backoff"),
+            TimeUnit.class,
+            failureRecoverySpec.getDouble("backoff-multiplier"),
+            Time.class,
+            failureRecoverySpec.getLong("reset-backoff-threshold"),
+            TimeUnit.class,
+            failureRecoverySpec.getDouble("jitter-factor"));
+      }
+    }
 
-            if ("fixed-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
-                mainBuilder.addStatement(
-                        "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
-                        RestartStrategies.class,
-                        failureRecoverySpec.getInt("attempts"),
-                        Time.class,
-                        failureRecoverySpec.getLong("delay"),
-                        TimeUnit.class);
-            } else if("exponential-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
-                mainBuilder.addStatement(
-                        "env.setRestartStrategy($T.exponentialDelayRestart($T.of($L, $T.MILLISECONDS), $T.of($L, $T.MILLISECONDS), $L, $T.of($L, $T.MILLISECONDS), $L))",
-                        RestartStrategies.class,
-                        Time.class,
-                        failureRecoverySpec.getLong("initial-backoff"),
-                        TimeUnit.class,
-                        Time.class,
-                        failureRecoverySpec.getLong("max-backoff"),
-                        TimeUnit.class,
-                        failureRecoverySpec.getDouble("backoff-multiplier"),
-                        Time.class,
-                        failureRecoverySpec.getLong("reset-backoff-threshold"),
-                        TimeUnit.class,
-                        failureRecoverySpec.getDouble("jitter-factor"));
-            }
+    private void failureRecoverySpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
 
-        } else {
+      // if failure recovery strategy not specified, use fixed-delay strategy
+      // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
 
-            // if failure recovery strategy not specified, use fixed-delay strategy
-            // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
+      long delay = inputSpec.getLong("pollingInterval");
+      if (delay == -1L) {
+        delay = DEFAULT_RESTART_DELAY;
+      }
 
-            long delay = inputSpec.getLong("pollingInterval");
-            if (delay == -1L) {
-                delay = DEFAULT_RESTART_DELAY;
-            }
-
-            mainBuilder.addStatement(
-                    "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
-                    RestartStrategies.class,
-                    DEFAULT_RESTART_ATTEMPTS,
-                    Time.class,
-                    delay,
-                    TimeUnit.class);
-
-        }
-
+      mainBuilder.addStatement(
+          "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+          RestartStrategies.class,
+          DEFAULT_RESTART_ATTEMPTS,
+          Time.class,
+          delay,
+          TimeUnit.class);
     }
 
     // TODO: Why are we building api config like this instead of directly passing json

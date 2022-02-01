@@ -26,7 +26,6 @@ import in.org.iudx.adaptor.codegen.ApiConfig;
  * Todos: 
  *  - Make connection/etc closeable
  *  - Configurable timeouts
- *  - Handle post requests
  *  - Parse response bodies
  *
  */
@@ -51,7 +50,6 @@ public class HttpEntity {
    * Note: This is called from context open() methods of the Source Function
    *
    * TODO: 
-   *  - Manage post 
    *  - Modularize/cleanup
    *  - Handle timeouts from ApiConfig
    */
