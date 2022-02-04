@@ -98,7 +98,17 @@ public class HttpEntity {
       httpRequest = requestBuilder.build();
     }
     else if (apiConfig.requestType.equals("POST")) {
-      httpRequest = requestBuilder.POST(BodyPublishers.ofString(body))
+      String reqBody = "";
+      if (this.body == null) {
+        if (apiConfig.body == null) {
+          return "";
+        } else {
+          reqBody = apiConfig.body;
+        }
+      } else {
+        reqBody = apiConfig.body;
+      }
+      httpRequest = requestBuilder.POST(BodyPublishers.ofString(reqBody))
                                         .build();
     }
     try {

@@ -59,4 +59,26 @@ public class DateFormatTest {
     }
 
   }
+
+  @Test
+  void parseB() throws InterruptedException {
+
+    fromFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SS");
+    fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+    toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+
+    String testTime = "2022-02-02T11:28:18";
+
+    fromFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+
+    DateFormat toFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+    toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+
+    try {
+      System.out.println(toFormat.format(fromFormat.parse(testTime)));
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+  }
 }
