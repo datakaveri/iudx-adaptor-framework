@@ -4,7 +4,9 @@ FLINK_PROPERTIES="jobmanager.rpc.address: jobmanager
 taskmanager.numberOfTaskSlots: 3
 # web.upload.dir: /jars
 
-state.backend: filesystem
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
 s3.endpoint: http://minio1:9000
 s3.path.style.access: true
 s3.access-key: minio
