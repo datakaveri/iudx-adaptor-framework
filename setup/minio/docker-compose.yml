@@ -29,6 +29,21 @@ services:
       retries: 3
     restart: always
 
+  mc:
+    image: minio/mc
+    networks: 
+      - adaptor-net
+    depends_on:
+      - minio1
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc config host add minio http://minio1:9000 minio minio123;
+      /usr/bin/mc mb minio/recovery;
+      /usr/bin/mc policy set public minio/recovery;
+      exit 0;
+      "
+
   nginx:
     image: nginx:1.19.2-alpine
     hostname: nginx
