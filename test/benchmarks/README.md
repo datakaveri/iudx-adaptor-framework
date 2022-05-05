@@ -39,6 +39,24 @@ Same code run in plain language scope
 | Python   | 4 seconds  |
 | NodeJS   | 46 ms      |
 
+## Script execution CDN vs Local
+
+Following result is based on running days javascript library in local and CDN scripts with nashron engine
+
+| Script Type | Total Time |
+|-------------|------------|
+| Local       | 900 ms     |
+| CDN Script  | 2200 ms    |
+
+Profiling result as follows
+
+- Local
+  ![local profile result](docs/images/local-script.png "dayjs script run via local")
+
+
+- CDN
+  ![local profile result](docs/images/cdn-script.png "dayjs script run via cdn")
+
 Above result are run on following machine
 
 - CPU: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz 4 core

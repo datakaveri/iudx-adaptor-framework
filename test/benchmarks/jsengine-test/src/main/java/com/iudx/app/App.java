@@ -6,6 +6,8 @@ import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.*;
 
 public class App {
@@ -105,7 +107,7 @@ public class App {
     static void testinJava() {
         int ITERATIONS = 100;
         List<Long> resultTime = new ArrayList<Long>();
-        for(int i=0; i < ITERATIONS; i++) {
+        for (int i = 0; i < ITERATIONS; i++) {
             float resTime = generatePrime();
             resultTime.add((long) resTime);
             primes = new ArrayList<Integer>();
@@ -115,12 +117,13 @@ public class App {
         System.out.println("Plain JAVA :: Time took to run == " + res);
     }
 
-    static void loadCustomScriptNashorn() throws ScriptException, NoSuchMethodException {
+    static void loadCustomScriptCDNNashorn() throws ScriptException, NoSuchMethodException {
+        long startTime = System.currentTimeMillis();
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
         String url = "https://unpkg.com/dayjs@1.8.21/dayjs.min.js";
-        engine.eval("load('"+url+"')");
+        engine.eval("load('" + url + "')");
 
-        engine.eval( "function main() {\n"+
+        engine.eval("function main() {\n" +
                 "var d = new Date();\n" +
                 "var res = dayjs(d).format('YYYY-MM-DDTHH:mm:ssZ[Z]');\n" +
                 "return res" +
@@ -131,13 +134,36 @@ public class App {
         Object result = invocable.invokeFunction("main");
 
         System.out.println(result);
+        long stopTime = System.currentTimeMillis();
+        System.out.println("Loading 3rd party library CDN :: Time took to run == " + (stopTime - startTime));
     }
 
-    public static void main(String[] args) throws ScriptException, NoSuchMethodException {
+    static void loadCustomScriptLocalNashorn() throws ScriptException, NoSuchMethodException, FileNotFoundException {
+        long startTime = System.currentTimeMillis();
+        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+        engine.eval(new FileReader("src/main/resources/dayjs.min.js"));
+
+        engine.eval("function main() {\n" +
+                "var d = new Date();\n" +
+                "var res = dayjs(d).format('YYYY-MM-DDTHH:mm:ssZ[Z]');\n" +
+                "return res" +
+                "}\n");
+
+        Invocable invocable = (Invocable) engine;
+
+        Object result = invocable.invokeFunction("main");
+
+        System.out.println(result);
+        long stopTime = System.currentTimeMillis();
+        System.out.println("Loading 3rd party library Local :: Time took to run == " + (stopTime - startTime));
+    }
+
+    public static void main(String[] args) throws ScriptException, NoSuchMethodException, FileNotFoundException {
         testRhino();
         testNashorn();
         testGraalVM();
         testinJava();
-        loadCustomScriptNashorn();
+        loadCustomScriptCDNNashorn();
+        loadCustomScriptLocalNashorn();
     }
 }
