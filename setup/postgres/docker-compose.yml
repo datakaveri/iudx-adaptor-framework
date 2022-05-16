@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:13
     ports:
-      - 5432:5432
+      - 15432:5432
     environment:
       - TZ=Asia/Kolkata
       - POSTGRES_PASSWORD=adaptor@db

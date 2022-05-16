@@ -85,7 +85,7 @@ public class JSPathTest {
     
    env.addSource(new HttpSource<Message>(apiConfig, parser))
        .keyBy((Message msg) -> msg.key)
-       .process(new GenericProcessFunction(dedup))
+       .process(new GenericProcessFunction(dedup, "test"))
        .flatMap(new JSPathProcessFunction(pathSpec.toString()))
        .addSink(new DumbSink());
 
@@ -121,7 +121,7 @@ public class JSPathTest {
     
    env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
        .keyBy((Message msg) -> msg.key)
-       .process(new GenericProcessFunction(dedup))
+       .process(new GenericProcessFunction(dedup, "test"))
        .flatMap(new JSPathProcessFunction(pathSpec.toString()))
        .addSink(new DumbSink());
 
@@ -157,7 +157,7 @@ public class JSPathTest {
     
    env.addSource(new HttpSource<List<Message>>(apiConfig, parser))
        .keyBy((Message msg) -> msg.key)
-       .process(new GenericProcessFunction(dedup))
+       .process(new GenericProcessFunction(dedup, "test"))
        .flatMap(new JSPathProcessFunction(pathSpec.toString()))
        .addSink(new DumbSink());
 

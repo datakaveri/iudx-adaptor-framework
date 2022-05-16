@@ -22,8 +22,11 @@ services:
       - adaptor-net
     command: "jobmanager"
     volumes:
-      - jars:/jars/flink-web-upload
+      - ./flink-jobmanager:/opt/flink/conf
     restart: always
+    logging:
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
 
   taskmanager:
@@ -32,6 +35,8 @@ services:
       dockerfile: ./Dockerfile
       context: .
     hostname: taskmanager
+    volumes:
+      - ./flink-jobmanager:/opt/flink/conf
     env_file:
       - ./env
     environment:
@@ -40,6 +45,10 @@ services:
       - adaptor-net
     command: "taskmanager"
     restart: always
+    logging:
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
+## TODO: REMOVE VOLUME
 volumes:
   jars:

@@ -75,7 +75,7 @@ public class JSProcessTest {
     
     env.addSource(new HttpSource<Message>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(dedup))
+        .process(new GenericProcessFunction(dedup, "test"))
         .flatMap(new JSProcessFunction(transformSpec))
         .addSink(new DumbSink());
 

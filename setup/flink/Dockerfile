@@ -1,8 +1,4 @@
 FROM maven:latest as deps
-RUN git clone https://github.com/rraks/bahir-flink.git \
-    && cd bahir-flink \
-    && mvn -DskipTests clean install -Denforcer.skip=true
-
 
 FROM flink:1.13.3-scala_2.12-java11
 
@@ -11,10 +7,6 @@ RUN mkdir /opt/flink/plugins/s3 \
 
 RUN mkdir /opt/flink/plugins/rmq \
     && curl https://repo1.maven.org/maven2/org/apache/flink/flink-connector-rabbitmq_2.12/1.13.1/flink-connector-rabbitmq_2.12-1.13.1.jar --output /opt/flink/plugins/rmq/flink-connector-rabbitmq_2.12-1.13.1.jar 
-
-RUN mkdir /opt/flink/plugins/kudu \
-    && curl https://repo1.maven.org/maven2/org/apache/kudu/kudu-client/1.14.0/kudu-client-1.14.0.jar --output /opt/flink/plugins/kudu/kudu-client-1.14.0.jar
-COPY --from=deps /root/.m2/repository/org/apache/bahir/flink-connector-kudu_2.11/1.1-SNAPSHOT/flink-connector-kudu_2.11-1.1-SNAPSHOT.jar /opt/flink/plugins/kudu/
 
 RUN mkdir /opt/flink/plugins/fasterxml \
     && curl https://repo1.maven.org/maven2/com/fasterxml/uuid/java-uuid-generator/4.0/java-uuid-generator-4.0.jar --output /opt/flink/plugins/fasterxml/java-uuid-generator-4.0.jar

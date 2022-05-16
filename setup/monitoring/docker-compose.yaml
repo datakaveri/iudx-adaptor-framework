@@ -24,17 +24,6 @@ services:
     networks:
       - adaptor-net
 
-  prometheus:
-    image: prom/prometheus:v2.22.1
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/flink.rules.yml:/etc/prometheus/flink.rules.yml
-    networks:
-      - adaptor-net
-
   grafana:
     image: grafana/grafana:latest
     ports:
