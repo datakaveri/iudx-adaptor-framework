@@ -22,76 +22,78 @@ import in.org.iudx.adaptor.codegen.Deduplicator;
 /* Primarily used for stateless transformation and deduplication
  * Avoid transforming here if you use a library with heavy initialization*/
 
-public class GenericProcessFunction 
-  extends KeyedProcessFunction<String,Message,Message> {
+public class GenericProcessFunction
+        extends KeyedProcessFunction<String, Message, Message> {
 
 
-  /* Something temporary for now */
-  private String STATE_NAME = "api state";
+    /* Something temporary for now */
+    private String STATE_NAME = "api state";
 
-  private ValueState<Message> streamState;
+    private ValueState<Message> streamState;
 
-  private Transformer transformer;
-  private Deduplicator deduplicator;
-  static CustomLogger LOGGER;
-  private String appName;
+    private Transformer transformer;
+    private Deduplicator deduplicator;
+    static CustomLogger LOGGER;
+    private String appName;
 
-  public static final OutputTag<String> errorStream 
-    = new OutputTag<String>("error") {};
+    public static final OutputTag<String> errorStream
+            = new OutputTag<String>("error") {
+    };
 
 
-  private static final long serialVersionUID = 43L;
+    private static final long serialVersionUID = 43L;
 
-  public GenericProcessFunction(Transformer transformer,
-      Deduplicator deduplicator, String adaptorD) {
-    this.transformer = transformer;
-    this.deduplicator = deduplicator;
+    public GenericProcessFunction(Transformer transformer,
+                                  Deduplicator deduplicator, String adaptorD) {
+        this.transformer = transformer;
+        this.deduplicator = deduplicator;
 
-  }
-
-  public GenericProcessFunction(Deduplicator deduplicator, String adaptorD) {
-    this.transformer = null;
-    this.deduplicator = deduplicator;
-  }
-
-  @Override
-  public void open(Configuration config) {
-    ValueStateDescriptor<Message> stateDescriptor =
-      new ValueStateDescriptor<>(STATE_NAME, Message.class);
-    streamState = getRuntimeContext().getState(stateDescriptor);
-    LOGGER = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class);
-    ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-    this.appName = parameters.getRequired("appName");
-
-  }
-
-  @Override
-  public void processElement(Message msg,
-      Context context, Collector<Message> out) throws Exception {
-        LOGGER.info(appName + ": " + "processsELemenntt");
-    Message previousMessage = streamState.value();
-    /* Update state with current message if not done */
-    if (previousMessage == null) {
-      streamState.update(msg);
-    } else {
-      if(deduplicator.isDuplicate(previousMessage, msg) == true) {
-        return;
-      }
     }
-    try {
-      if (transformer == null) {
-        out.collect(msg);
-      } else {
-        Message transformedMessage = transformer.transform(msg);
-        out.collect(transformedMessage);
-      }
-    } catch (Exception e) {
-      /* TODO */
-      String tmpl = 
-        "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\"" 
-        + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
-      context.output(errorStream, tmpl) ;
+
+    public GenericProcessFunction(Deduplicator deduplicator, String adaptorD) {
+        this.transformer = null;
+        this.deduplicator = deduplicator;
     }
-    streamState.update(msg);
-  }
+
+    @Override
+    public void open(Configuration config) {
+        ValueStateDescriptor<Message> stateDescriptor =
+                new ValueStateDescriptor<>(STATE_NAME, Message.class);
+        streamState = getRuntimeContext().getState(stateDescriptor);
+
+        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        this.appName = parameters.getRequired("appName");
+        LOGGER = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class, this.appName);
+
+    }
+
+    @Override
+    public void processElement(Message msg,
+                               Context context, Collector<Message> out) throws Exception {
+        LOGGER.info("processsELemenntt");
+        Message previousMessage = streamState.value();
+        /* Update state with current message if not done */
+        if (previousMessage == null) {
+            streamState.update(msg);
+        } else {
+            if (deduplicator.isDuplicate(previousMessage, msg) == true) {
+                return;
+            }
+        }
+        try {
+            if (transformer == null) {
+                out.collect(msg);
+            } else {
+                Message transformedMessage = transformer.transform(msg);
+                out.collect(transformedMessage);
+            }
+        } catch (Exception e) {
+            /* TODO */
+            String tmpl =
+                    "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\""
+                            + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
+            context.output(errorStream, tmpl);
+        }
+        streamState.update(msg);
+    }
 }
