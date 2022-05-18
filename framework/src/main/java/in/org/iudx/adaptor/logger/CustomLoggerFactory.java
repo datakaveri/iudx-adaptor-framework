@@ -4,13 +4,21 @@ import org.apache.log4j.spi.LoggerFactory;
 
 public class CustomLoggerFactory implements LoggerFactory {
 
-    private static String adaptorID;
+    private String adaptorID;
 
+    public CustomLoggerFactory() {
+        // when no adaptor id is passed
+    }
     public CustomLoggerFactory(String adaptorID) {
         this.adaptorID = adaptorID;
     }
 
     public Logger makeNewLoggerInstance(String name) {
-        return new CustomLogger(name, this.adaptorID);
+        if (this.adaptorID != null) {
+            return new CustomLogger(name, this.adaptorID);
+        } else {
+            return new CustomLogger(name);
+        }
+
     }
 }

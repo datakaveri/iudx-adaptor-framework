@@ -1,14 +1,21 @@
 package in.org.iudx.adaptor.logger;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 class LoggerTest {
     @Test
-    void loggerInfoMethod() throws InterruptedException {
+    void loggerMethodsWithAppName() throws InterruptedException {
         CustomLogger logger = (CustomLogger) CustomLogger.getLogger(LoggerTest.class, "jobID goes here");
         logger.info("It is info message");
-        logger.error("It is error message");
+        logger.error("It is error message", new Throwable("error message"));
+        logger.debug("It is debug message");
+    }
+
+    @Test
+    void loggerMethodsWithoutAppName() throws InterruptedException {
+        CustomLogger logger = (CustomLogger) CustomLogger.getLogger(LoggerTest.class);
+        logger.info("It is info message");
+        logger.error("It is error message", new Throwable("error message"));
         logger.debug("It is debug message");
     }
 }
