@@ -11,11 +11,13 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
+import org.apache.flink.api.java.utils.ParameterTool;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Deduplicator;
+
 
 /* Primarily used for stateless transformation and deduplication
  * Avoid transforming here if you use a library with heavy initialization*/
@@ -32,7 +34,7 @@ public class GenericProcessFunction
   private Transformer transformer;
   private Deduplicator deduplicator;
   static CustomLogger LOGGER;
-
+  private String appName;
 
   public static final OutputTag<String> errorStream 
     = new OutputTag<String>("error") {};
@@ -58,12 +60,15 @@ public class GenericProcessFunction
       new ValueStateDescriptor<>(STATE_NAME, Message.class);
     streamState = getRuntimeContext().getState(stateDescriptor);
     LOGGER = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class);
+    ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+    this.appName = parameters.getRequired("appName");
+
   }
 
   @Override
   public void processElement(Message msg,
       Context context, Collector<Message> out) throws Exception {
-        LOGGER.info("processsELemenntt");
+        LOGGER.info(appName + ": " + "processsELemenntt");
     Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {

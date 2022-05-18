@@ -70,7 +70,7 @@ public class JSProcessTest {
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 
-    String  script = "function tx(obj) { var out = {}; var inp = JSON.parse(obj); out[\"id\"] = \"datakaveri.org/a/b\" + inp[\"id\"]; out[\"k1\"] = inp[\"k1\"]; out[\"observationDateTime\"] = inp[\"time\"]; return JSON.stringify(out); }";
+    String script = "function main(obj) { var out = {}; var inp = JSON.parse(obj); out[\"id\"] = \"datakaveri.org/a/b\" + inp[\"id\"]; out[\"k1\"] = inp[\"k1\"]; out[\"observationDateTime\"] = inp[\"time\"]; return JSON.stringify(out); }";
     String transformSpec = new JSONObject().put("script", script).toString();
     
     env.addSource(new HttpSource<Message>(apiConfig, parser))
