@@ -21,6 +21,7 @@ import org.apache.flink.api.common.time.Time;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.api.java.utils.ParameterTool;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.source.HttpSource;
@@ -32,6 +33,8 @@ import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.processing.Filer;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +72,15 @@ public class TopologyBuilder {
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC)
                 .returns(void.class)
                 .addParameter(String[].class, "args");
+
+        HashMap<String,String> propertyMap = new HashMap<String, String>();
+
+        // TODO: Replace this with unique app name
+        mainBuilder.addStatement("$T<String,String> propertyMap = new $T<String,String>()",
+                                    HashMap.class, HashMap.class);
+        mainBuilder.addStatement("propertyMap.put($S, $S)", "appName", tc.name);
+        mainBuilder.addStatement("$T parameters = $T.fromMap(propertyMap)", ParameterTool.class,
+                                                                      ParameterTool.class);
 
         /* Variables */
         mainBuilder
@@ -298,9 +310,9 @@ public class TopologyBuilder {
             } else {
                 mainBuilder.addStatement("$T<$T> ds = so"
                                 + ".keyBy(($T msg) -> msg.key)"
-                                + ".process(new $T(trans, dedup))",
+                                + ".process(new $T(trans, dedup, $S))",
                         SingleOutputStreamOperator.class, Message.class,
-                        Message.class, GenericProcessFunction.class);
+                        Message.class, GenericProcessFunction.class, tc.name);
             }
         } else {
             if (hasJSTransformer) {
@@ -315,10 +327,10 @@ public class TopologyBuilder {
                 } else {
                     mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
-                                    + ".process(new $T(dedup))"
+                                    + ".process(new $T(dedup, $S))"
                                     + ".flatMap(new $T(transformSpec))",
                             SingleOutputStreamOperator.class, Message.class,
-                            Message.class, GenericProcessFunction.class,
+                            Message.class, GenericProcessFunction.class, tc.name, 
                             JSProcessFunction.class);
                 }
             }
@@ -353,6 +365,7 @@ public class TopologyBuilder {
         mainBuilder.addStatement("ds.addSink(new $T(rmqConfig))", AMQPSink.class);
 
         mainBuilder.beginControlFlow("try");
+        mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");
         mainBuilder.addStatement("env.execute($S)", tc.name);
         mainBuilder.nextControlFlow("catch (Exception e)");
         mainBuilder.endControlFlow();

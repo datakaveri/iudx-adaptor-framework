@@ -10,16 +10,22 @@ import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
+import org.apache.flink.api.java.utils.ParameterTool;
+
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Deduplicator;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /* Primarily used for stateless transformation and deduplication
  * Avoid transforming here if you use a library with heavy initialization*/
 
 public class GenericProcessFunction 
   extends KeyedProcessFunction<String,Message,Message> {
+
 
   /* Something temporary for now */
   private String STATE_NAME = "api state";
@@ -28,6 +34,8 @@ public class GenericProcessFunction
 
   private Transformer transformer;
   private Deduplicator deduplicator;
+  private static final Logger LOGGER = LogManager.getLogger(GenericProcessFunction.class);
+  private String appName;
 
   public static final OutputTag<String> errorStream 
     = new OutputTag<String>("error") {};
@@ -36,12 +44,13 @@ public class GenericProcessFunction
   private static final long serialVersionUID = 43L;
 
   public GenericProcessFunction(Transformer transformer,
-      Deduplicator deduplicator) {
+      Deduplicator deduplicator, String adaptorD) {
     this.transformer = transformer;
     this.deduplicator = deduplicator;
+
   }
 
-  public GenericProcessFunction(Deduplicator deduplicator) {
+  public GenericProcessFunction(Deduplicator deduplicator, String adaptorD) {
     this.transformer = null;
     this.deduplicator = deduplicator;
   }
@@ -51,11 +60,15 @@ public class GenericProcessFunction
     ValueStateDescriptor<Message> stateDescriptor =
       new ValueStateDescriptor<>(STATE_NAME, Message.class);
     streamState = getRuntimeContext().getState(stateDescriptor);
+    ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+    this.appName = parameters.getRequired("appName");
+
   }
 
   @Override
   public void processElement(Message msg,
       Context context, Collector<Message> out) throws Exception {
+        LOGGER.info(appName + ": " + "processsELemenntt");
     Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {
