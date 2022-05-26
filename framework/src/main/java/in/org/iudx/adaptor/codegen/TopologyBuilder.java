@@ -310,9 +310,9 @@ public class TopologyBuilder {
             } else {
                 mainBuilder.addStatement("$T<$T> ds = so"
                                 + ".keyBy(($T msg) -> msg.key)"
-                                + ".process(new $T(trans, dedup, $S))",
+                                + ".process(new $T(trans, dedup))",
                         SingleOutputStreamOperator.class, Message.class,
-                        Message.class, GenericProcessFunction.class, tc.name);
+                        Message.class, GenericProcessFunction.class);
             }
         } else {
             if (hasJSTransformer) {
@@ -327,10 +327,10 @@ public class TopologyBuilder {
                 } else {
                     mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
-                                    + ".process(new $T(dedup, $S))"
+                                    + ".process(new $T(dedup))"
                                     + ".flatMap(new $T(transformSpec))",
                             SingleOutputStreamOperator.class, Message.class,
-                            Message.class, GenericProcessFunction.class, tc.name, 
+                            Message.class, GenericProcessFunction.class, 
                             JSProcessFunction.class);
                 }
             }

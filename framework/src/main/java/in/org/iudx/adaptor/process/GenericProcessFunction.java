@@ -39,13 +39,13 @@ public class GenericProcessFunction
     private static final long serialVersionUID = 43L;
 
     public GenericProcessFunction(Transformer transformer,
-                                  Deduplicator deduplicator, String adaptorD) {
+                                  Deduplicator deduplicator) {
         this.transformer = transformer;
         this.deduplicator = deduplicator;
 
     }
 
-    public GenericProcessFunction(Deduplicator deduplicator, String adaptorD) {
+    public GenericProcessFunction(Deduplicator deduplicator) {
         this.transformer = null;
         this.deduplicator = deduplicator;
     }
