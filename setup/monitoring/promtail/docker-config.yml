@@ -26,20 +26,23 @@ scrape_configs:
         stream: stream
         attrs: attrs
         tag: attrs.tag
-  - regex:
-      expression: ^(?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) (?P<level>.*?) (?P<class>.*?) (?P<braces>.*?)
+
+
   - regex:
       expression: (?P<image_name>(?:[^|]*[^|])).(?P<container_name>(?:[^|]*[^|])).(?P<image_id>(?:[^|]*[^|])).(?P<container_id>(?:[^|]*[^|]))
-      source: "tag"
-
+      source: tag
   - labels:
-      tag:
-      stream:
       image_name:
       container_name:
       image_id:
       container_id:
-      class:
+
+  - regex:
+      expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[(?P<level>.*?)\] (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (?P<messageID>.*)
+
+  - labels:
+      context:
+      adaptor_id:
       level:
 
   - timestamp:
