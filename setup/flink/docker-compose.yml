@@ -17,15 +17,15 @@ services:
       - 9251:9251
     expose:
       - "9251"
-#    env_file:
-#      - ./env
+    env_file:
+      - ./env
     environment:
       - "TZ=Asia/Kolkata"
     networks:
       - adaptor-net
     command: "jobmanager"
     volumes:
-      - ./flink-jobmanager:/opt/flink/conf
+      - ./flink-jobmanager/log4j-console.properties:/opt/flink/conf/log4j-console.properties
     restart: always
     logging:
       options:
@@ -39,13 +39,13 @@ services:
       context: .
     hostname: taskmanager
     volumes:
-      - ./flink-taskmanager:/opt/flink/conf
+      - ./flink-taskmanager/log4j-console.properties:/opt/flink/conf/log4j-console.properties
     ports:
       - 9252:9252
     expose:
       - "9252"
-#    env_file:
-#      - ./env
+    env_file:
+      - ./env
     environment:
       - "TZ=Asia/Kolkata"
     networks:
