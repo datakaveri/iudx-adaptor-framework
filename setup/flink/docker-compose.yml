@@ -41,9 +41,9 @@ services:
     volumes:
       - ./flink-taskmanager/log4j-console.properties:/opt/flink/conf/log4j-console.properties
     ports:
-      - 9252:9252
+      - 9252:9251
     expose:
-      - "9252"
+      - "9251"
     env_file:
       - ./env
     environment:

@@ -22,5 +22,5 @@ high-availability.storageDir: s3://recovery/
 high-availability.zookeeper.quorum: zook:2181
 
 metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
-metrics.reporter.prom.port: 9252
+metrics.reporter.prom.port: 9251
 "
