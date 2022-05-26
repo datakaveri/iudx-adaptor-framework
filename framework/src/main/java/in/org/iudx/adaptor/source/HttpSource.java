@@ -6,8 +6,10 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -55,8 +57,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
      *                  Note:
      *                  - Only set configuration here. Don't initialize {@link HttpEntity}.
      *                  <p>
-     *                                   TODO:
-     *                                    - Parser is prone to non-serializable params
+     *                                                                                                       TODO:
+     *                                                                                                        - Parser is prone to non-serializable params
      */
     public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
         this.apiConfig = apiConfig;
@@ -74,17 +76,16 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     @Override
     public void open(Configuration config) throws Exception {
         super.open(config);
-        httpEntity = new HttpEntity(apiConfig);
-
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.getRequired("appName");
         logger = (CustomLogger) CustomLogger.getLogger(HttpSource.class, appName);
+        httpEntity = new HttpEntity(apiConfig, appName);
     }
 
     public void emitMessage(SourceContext<Message> ctx) {
         logger.info("[HttpSource] Emitting source data");
         String serializedMessage = httpEntity.getSerializedMessage();
-        if (serializedMessage.isEmpty()) {
+        if (Objects.equals(serializedMessage, "") || serializedMessage.isEmpty()) {
             return;
         }
         try {
@@ -147,15 +148,11 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
                 HashMap<String, String> mp = apiConfig.scripts.get(i);
                 if (mp.get("in").equals("url")) {
 
-                    String val = Context.toString(cx.evaluateString(scope,
-                            mp.get("script"),
-                            "script", 1, null));
+                    String val = Context.toString(cx.evaluateString(scope, mp.get("script"), "script", 1, null));
                     httpEntity.setUrl(apiConfig.url.replace(mp.get("pattern"), val));
                 }
                 if (mp.get("in").equals("body")) {
-                    String val = Context.toString(cx.evaluateString(scope,
-                            mp.get("script"),
-                            "script", 1, null));
+                    String val = Context.toString(cx.evaluateString(scope, mp.get("script"), "script", 1, null));
 
                     httpEntity.setUrl(apiConfig.body.replace(mp.get("pattern"), val));
                 }

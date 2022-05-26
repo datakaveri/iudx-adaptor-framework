@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.sink;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import in.org.iudx.adaptor.datatypes.Message;
 import org.apache.flink.configuration.Configuration;
@@ -17,12 +18,13 @@ import org.apache.flink.api.common.serialization.SerializationSchema;
 public class DumbSink implements SinkFunction<Message> {
 
 
-  private static final Logger LOGGER = LogManager.getLogger(DumbSink.class);
+  static CustomLogger logger;
 
   private StaticStringPublisher publisher;
 
   public DumbSink() {
     publisher = new StaticStringPublisher("test", "test");
+    logger = (CustomLogger) CustomLogger.getLogger(DumbSink.class, "unit_test");
   }
 
   /** Statefulness for dumb things */
@@ -35,7 +37,8 @@ public class DumbSink implements SinkFunction<Message> {
    */
   @Override
   public void invoke(Message msg) {
-    LOGGER.info(new String(publisher.serialize(msg)));
+    System.out.println(new String(publisher.serialize(msg)));
+    logger.info(new String(publisher.serialize(msg)));
   }
 
 }
