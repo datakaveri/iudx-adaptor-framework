@@ -28,7 +28,7 @@ public class CustomLogger extends Logger {
     @Override
     public void info(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.INFO, this.jobID + " - " + message, null);
+            super.log(fqcn, Level.INFO, "[" + this.jobID + "] - " + message, null);
         } else {
             super.log(fqcn, Level.INFO, message, null);
         }
@@ -37,7 +37,7 @@ public class CustomLogger extends Logger {
     @Override
     public void info(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.INFO, this.jobID + " - " + message, t);
+            super.log(fqcn, Level.INFO, "[" + this.jobID + "] - " + message, t);
         } else {
             super.log(fqcn, Level.INFO, message, t);
         }
@@ -46,7 +46,7 @@ public class CustomLogger extends Logger {
     @Override
     public void error(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.ERROR, this.jobID + " - " + message, null);
+            super.log(fqcn, Level.ERROR, "[" + this.jobID + "] - " + message, null);
         } else {
             super.log(fqcn, Level.ERROR, message, null);
         }
@@ -55,7 +55,7 @@ public class CustomLogger extends Logger {
     @Override
     public void error(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.ERROR, this.jobID + " - " + message, t);
+            super.log(fqcn, Level.ERROR, "[" + this.jobID + "] - " + message, t);
         } else {
             super.log(fqcn, Level.ERROR, message, t);
         }
@@ -64,7 +64,7 @@ public class CustomLogger extends Logger {
     @Override
     public void debug(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.DEBUG, this.jobID + " - " + message, null);
+            super.log(fqcn, Level.DEBUG, "[" + this.jobID + "] - " + message, null);
         } else {
             super.log(fqcn, Level.DEBUG, message, null);
         }
@@ -73,7 +73,7 @@ public class CustomLogger extends Logger {
     @Override
     public void debug(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.DEBUG, this.jobID + " - " + message, t);
+            super.log(fqcn, Level.DEBUG, "[" + this.jobID + "] - " + message, t);
         } else {
             super.log(fqcn, Level.DEBUG, message, t);
         }

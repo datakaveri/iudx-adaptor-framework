@@ -1,13 +1,13 @@
 package in.org.iudx.adaptor.process;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
+import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.json.JSONObject;
 import org.json.JSONArray;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import in.org.iudx.adaptor.datatypes.Message;
 
@@ -28,8 +28,7 @@ import javax.script.ScriptException;
 
 /* NOTE: Can't apply Transformer interface here because of serialization requirement */
 
-public class JSPathProcessFunction
-        extends RichFlatMapFunction<Message, Message> {
+public class JSPathProcessFunction extends RichFlatMapFunction<Message, Message> {
 
     /* Something temporary for now */
     private String STATE_NAME = "api state";
@@ -39,11 +38,10 @@ public class JSPathProcessFunction
     private ScriptEngine engine;
     private JSONArray pathSpecArray;
 
-    public static final OutputTag<String> errorStream
-            = new OutputTag<String>("error") {
+    public static final OutputTag<String> errorStream = new OutputTag<String>("error") {
     };
 
-    private static final Logger LOGGER = LogManager.getLogger(JSPathProcessFunction.class);
+    CustomLogger logger;
 
     private static final long serialVersionUID = 49L;
 
@@ -56,6 +54,10 @@ public class JSPathProcessFunction
 
     @Override
     public void open(Configuration config) {
+        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.getRequired("appName");
+        this.logger = (CustomLogger) CustomLogger.getLogger(JSPathProcessFunction.class, appName);
+
         pathSpecArray = new JSONArray(pathSpec.getPathSpec());
         engine = new ScriptEngineManager().getEngineByName("nashorn");
     }
@@ -64,7 +66,7 @@ public class JSPathProcessFunction
     public void flatMap(Message msg, Collector<Message> out) throws Exception {
         /* Update state with current message if not done */
 
-
+        logger.info("[JSPathProcessFunction] transforming data");
         // JsonPath context
         ReadContext rCtx = JsonPath.parse(msg.body);
         DocumentContext docCtx = JsonPath.parse(pathSpec.getTemplate());
@@ -78,12 +80,9 @@ public class JSPathProcessFunction
             JSONObject obj = pathSpecArray.getJSONObject(i);
             try {
                 if (obj.has("valueModifierScript")) {
-                    transform(jsContext, docCtx, rCtx, obj.getString("outputKeyPath"),
-                            obj.getString("inputValuePath"),
-                            obj.getString("valueModifierScript"));
+                    transform(jsContext, docCtx, rCtx, obj.getString("outputKeyPath"), obj.getString("inputValuePath"), obj.getString("valueModifierScript"));
                 } else {
-                    transform(docCtx, rCtx, obj.getString("outputKeyPath"),
-                            obj.getString("inputValuePath"));
+                    transform(docCtx, rCtx, obj.getString("outputKeyPath"), obj.getString("inputValuePath"));
                 }
 
                 if (obj.has("regexFilter")) {
@@ -93,8 +92,7 @@ public class JSPathProcessFunction
                     }
                 }
             } catch (Exception e) {
-                LOGGER.debug("Failed");
-                LOGGER.debug(e);
+                logger.error("[JSPathProcessFunction] failed to transform data", e);
             }
         }
         String output = docCtx.jsonString();
@@ -102,8 +100,7 @@ public class JSPathProcessFunction
         out.collect(msg);
     }
 
-    private void transform(ScriptContext cx, DocumentContext docCtx, ReadContext rCtx,
-                           String outputKeyPath, String inputValuePath, String valueModifierScript) throws ScriptException {
+    private void transform(ScriptContext cx, DocumentContext docCtx, ReadContext rCtx, String outputKeyPath, String inputValuePath, String valueModifierScript) throws ScriptException {
         Object param = rCtx.read(inputValuePath);
         Bindings engineScope = cx.getBindings(ScriptContext.ENGINE_SCOPE);
         engineScope.put("value", param);
@@ -112,8 +109,7 @@ public class JSPathProcessFunction
         docCtx.set(outputKeyPath, obj);
     }
 
-    private void transform(DocumentContext docCtx, ReadContext rCtx,
-                           String outputKeyPath, String inputValuePath) {
+    private void transform(DocumentContext docCtx, ReadContext rCtx, String outputKeyPath, String inputValuePath) {
         Object param = rCtx.read(inputValuePath);
         docCtx.set(outputKeyPath, param);
     }

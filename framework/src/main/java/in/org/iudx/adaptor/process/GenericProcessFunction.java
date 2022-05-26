@@ -3,9 +3,6 @@ package in.org.iudx.adaptor.process;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.TimeCharacteristic;
-import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -14,7 +11,6 @@ import in.org.iudx.adaptor.logger.CustomLogger;
 import org.apache.flink.api.java.utils.ParameterTool;
 
 import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.codegen.Deduplicator;
 
@@ -33,8 +29,7 @@ public class GenericProcessFunction
 
     private Transformer transformer;
     private Deduplicator deduplicator;
-    static CustomLogger LOGGER;
-    private String appName;
+    static CustomLogger logger;
 
     public static final OutputTag<String> errorStream
             = new OutputTag<String>("error") {
@@ -62,21 +57,21 @@ public class GenericProcessFunction
         streamState = getRuntimeContext().getState(stateDescriptor);
 
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-        this.appName = parameters.getRequired("appName");
-        LOGGER = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class, this.appName);
+        String appName = parameters.getRequired("appName");
+        logger = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class, appName);
 
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
-        LOGGER.info("processsELemenntt");
+        logger.info("[GenericProcessFunction] processing element");
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
         if (previousMessage == null) {
             streamState.update(msg);
         } else {
-            if (deduplicator.isDuplicate(previousMessage, msg) == true) {
+            if (deduplicator.isDuplicate(previousMessage, msg)) {
                 return;
             }
         }
@@ -93,6 +88,7 @@ public class GenericProcessFunction
                     "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\""
                             + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
             context.output(errorStream, tmpl);
+            logger.error("[GenericProcessFunction] Error in process element", e);
         }
         streamState.update(msg);
     }
