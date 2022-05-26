@@ -14,8 +14,11 @@ services:
     hostname: jobmanager
     ports:
       - 8081:8081
-    env_file:
-      - ./env
+      - 9251:9251
+    expose:
+      - "9251"
+#    env_file:
+#      - ./env
     environment:
       - "TZ=Asia/Kolkata"
     networks:
@@ -36,9 +39,13 @@ services:
       context: .
     hostname: taskmanager
     volumes:
-      - ./flink-jobmanager:/opt/flink/conf
-    env_file:
-      - ./env
+      - ./flink-taskmanager:/opt/flink/conf
+    ports:
+      - 9252:9252
+    expose:
+      - "9252"
+#    env_file:
+#      - ./env
     environment:
       - "TZ=Asia/Kolkata"
     networks:
