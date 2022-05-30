@@ -109,7 +109,7 @@ public class RMQSinkTest {
 
     env.addSource(new HttpSource<Message>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans, dedup, "test"))
+        .process(new GenericProcessFunction(trans, dedup))
         //.process(new DumbProcess())
         //.addSink(new DumbStringSink());
         //.addSink(new RMQSink<String>(rmqConfig, new SimpleStringSchema(), publishOptions));

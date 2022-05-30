@@ -15,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 public class DumbStringSink implements SinkFunction<String> {
 
 
-  CustomLogger logger = (CustomLogger) CustomLogger.getLogger(DumbStringSink.class, "unit_test");
+  CustomLogger logger = new CustomLogger(DumbStringSink.class, "unit_test");
 
   public DumbStringSink() {
   }

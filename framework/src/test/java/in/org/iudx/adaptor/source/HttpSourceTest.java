@@ -104,7 +104,7 @@ public class HttpSourceTest {
     /* Include process */
     so
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans,dedup, "test"))
+        .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());
 
 
@@ -134,7 +134,7 @@ public class HttpSourceTest {
     /* Include process */
     so
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans,dedup, "test"))
+        .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());
 
     /* Passthrough
@@ -185,7 +185,7 @@ public class HttpSourceTest {
     /* Include process */
     env.addSource(new HttpSource<Message[]>(apiConfig, parser))
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans, dedup, "test"))
+        .process(new GenericProcessFunction(trans, dedup))
         .addSink(new DumbSink());
 
     /* Passthrough
@@ -224,7 +224,7 @@ void dynUrl() throws InterruptedException {
     /* Include process */
     so
         .keyBy((Message msg) -> msg.key)
-        .process(new GenericProcessFunction(trans,dedup, "test"))
+        .process(new GenericProcessFunction(trans,dedup))
         .addSink(new DumbSink());
 
 

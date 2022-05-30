@@ -115,12 +115,12 @@ public class HttpEntity {
             HttpResponse<String> resp =
                     httpClient.send(httpRequest, BodyHandlers.ofString());
             if (resp.statusCode() != 200) {
-                logger.error("[HttpEntity] http request failed with {status_code: " + resp.statusCode() + "}");
+                logger.error("[HttpEntity] http request failed with [status_code]:" + resp.statusCode() + "[summary]:" + resp.body() + "}");
                 return "";
             }
             return resp.body();
         } catch (Exception e) {
-            logger.error(e);
+            logger.error("[HttpEntity] Error http entity", e);
             return "";
         }
     }
@@ -138,6 +138,7 @@ public class HttpEntity {
                     httpClient.send(httpRequest, BodyHandlers.ofString());
             return resp.body();
         } catch (Exception e) {
+            logger.error("[HttpEntity] Error in post request", e);
             throw e;
         }
     }
