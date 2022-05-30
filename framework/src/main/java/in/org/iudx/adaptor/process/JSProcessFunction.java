@@ -32,7 +32,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
     public static final OutputTag<String> errorStream = new OutputTag<String>("error") {
     };
 
-    CustomLogger logger;
+    transient CustomLogger logger;
 
     private static final long serialVersionUID = 49L;
 
@@ -44,7 +44,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
     public void open(Configuration config) {
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.getRequired("appName");
-        this.logger = (CustomLogger) CustomLogger.getLogger(JSPathProcessFunction.class, appName);
+        logger = new CustomLogger(JSPathProcessFunction.class, appName);
 
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
 

@@ -1,81 +1,67 @@
 package in.org.iudx.adaptor.logger;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
-public class CustomLogger extends Logger {
+public class CustomLogger {
 
-    private final String fqcn = CustomLogger.class.getName();
+    private static Logger logger;
     private String jobID = null;
 
-    public CustomLogger(String name) {
-        super(name);
+    public CustomLogger(Class clazz) {
+        logger = LogManager.getLogger(clazz);
     }
 
-    public CustomLogger(String name, String jobID) {
-        super(name);
+    public CustomLogger(Class clazz, String jobID) {
+        logger = LogManager.getLogger(clazz);
         this.jobID = jobID;
     }
 
-    public static Logger getLogger(Class name, String jobID) {
-        return Logger.getLogger(name.getName(), new CustomLoggerFactory(jobID));
-    }
-
-    public static Logger getLogger(Class name) {
-        return Logger.getLogger(name.getName(), new CustomLoggerFactory());
-    }
-
-    @Override
     public void info(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.INFO, "[" + this.jobID + "] - " + message, null);
+            logger.info("[{}] - {}", this.jobID, message);
         } else {
-            super.log(fqcn, Level.INFO, message, null);
+            logger.info(message);
         }
     }
 
-    @Override
     public void info(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.INFO, "[" + this.jobID + "] - " + message, t);
+            logger.info("[{}] - {}", this.jobID, message, t);
         } else {
-            super.log(fqcn, Level.INFO, message, t);
+            logger.info(message, t);
         }
     }
 
-    @Override
     public void error(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.ERROR, "[" + this.jobID + "] - " + message, null);
+            logger.error("[{}] - {}", this.jobID, message);
         } else {
-            super.log(fqcn, Level.ERROR, message, null);
+            logger.error(message);
         }
     }
 
-    @Override
     public void error(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.ERROR, "[" + this.jobID + "] - " + message, t);
+            logger.error("[{}] - {}", this.jobID, message, t);
         } else {
-            super.log(fqcn, Level.ERROR, message, t);
+            logger.error(message, t);
         }
     }
 
-    @Override
     public void debug(Object message) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.DEBUG, "[" + this.jobID + "] - " + message, null);
+            logger.debug("[{}] - {}", this.jobID, message);
         } else {
-            super.log(fqcn, Level.DEBUG, message, null);
+            logger.debug(message);
         }
     }
 
-    @Override
     public void debug(Object message, Throwable t) {
         if (this.jobID != null) {
-            super.log(fqcn, Level.DEBUG, "[" + this.jobID + "] - " + message, t);
+            logger.debug("[{}] - {}", this.jobID, message, t);
         } else {
-            super.log(fqcn, Level.DEBUG, message, t);
+            logger.debug(message, t);
         }
     }
 

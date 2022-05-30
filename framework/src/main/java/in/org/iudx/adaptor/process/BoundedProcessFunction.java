@@ -56,7 +56,7 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
 
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.getRequired("appName");
-        this.logger = (CustomLogger) CustomLogger.getLogger(BoundedProcessFunction.class, appName);
+        this.logger = new CustomLogger(BoundedProcessFunction.class, appName);
     }
 
     @Override

@@ -3,6 +3,7 @@ package in.org.iudx.adaptor.process;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -29,7 +30,10 @@ public class GenericProcessFunction
 
     private Transformer transformer;
     private Deduplicator deduplicator;
-    static CustomLogger logger;
+    transient CustomLogger logger;
+
+    private transient Counter counter;
+
 
     public static final OutputTag<String> errorStream
             = new OutputTag<String>("error") {
@@ -58,14 +62,18 @@ public class GenericProcessFunction
 
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.getRequired("appName");
-        logger = (CustomLogger) CustomLogger.getLogger(GenericProcessFunction.class, appName);
+        logger = new CustomLogger(GenericProcessFunction.class, appName);
 
+        this.counter = getRuntimeContext()
+                .getMetricGroup()
+                .counter("GenericProcessFunctionCounter");
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
         logger.info("[GenericProcessFunction] processing element");
+        this.counter.inc();
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
         if (previousMessage == null) {

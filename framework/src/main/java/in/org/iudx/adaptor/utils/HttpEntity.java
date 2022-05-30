@@ -39,7 +39,7 @@ public class HttpEntity {
 
     private String body;
 
-    static CustomLogger logger;
+    transient CustomLogger logger;
 
 
     /**
@@ -54,7 +54,7 @@ public class HttpEntity {
      *                   - Handle timeouts from ApiConfig
      */
     public HttpEntity(ApiConfig apiConfig, String appName) {
-        logger = (CustomLogger) CustomLogger.getLogger(HttpSource.class, appName);
+        logger = new CustomLogger(HttpSource.class, appName);
         this.apiConfig = apiConfig;
 
         requestBuilder = HttpRequest.newBuilder();

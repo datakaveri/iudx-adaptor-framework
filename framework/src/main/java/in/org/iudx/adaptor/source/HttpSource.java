@@ -47,7 +47,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     private org.mozilla.javascript.Context jscontext;
     private ScriptableObject scope;
 
-    static CustomLogger logger;
+    transient CustomLogger logger;
 
     /**
      * {@link HttpEntity} Constructor
@@ -78,7 +78,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
         super.open(config);
         ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.getRequired("appName");
-        logger = (CustomLogger) CustomLogger.getLogger(HttpSource.class, appName);
+        logger = new CustomLogger(HttpSource.class, appName);
         httpEntity = new HttpEntity(apiConfig, appName);
     }
 
