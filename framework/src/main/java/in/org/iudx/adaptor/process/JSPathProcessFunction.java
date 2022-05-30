@@ -66,7 +66,7 @@ public class JSPathProcessFunction extends RichFlatMapFunction<Message, Message>
     public void flatMap(Message msg, Collector<Message> out) throws Exception {
         /* Update state with current message if not done */
 
-        logger.info("[JSPathProcessFunction] transforming data");
+        logger.info("Transforming data");
         // JsonPath context
         ReadContext rCtx = JsonPath.parse(msg.body);
         DocumentContext docCtx = JsonPath.parse(pathSpec.getTemplate());
@@ -92,7 +92,7 @@ public class JSPathProcessFunction extends RichFlatMapFunction<Message, Message>
                     }
                 }
             } catch (Exception e) {
-                logger.error("[JSPathProcessFunction] failed to transform data", e);
+                logger.error("Failed to transform data", e);
             }
         }
         String output = docCtx.jsonString();

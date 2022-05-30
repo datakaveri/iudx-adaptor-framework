@@ -72,7 +72,7 @@ public class GenericProcessFunction
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
-        logger.info("[GenericProcessFunction] processing element");
+        logger.info("processing element");
         this.counter.inc();
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
@@ -96,7 +96,7 @@ public class GenericProcessFunction
                     "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\""
                             + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
             context.output(errorStream, tmpl);
-            logger.error("[GenericProcessFunction] Error in process element", e);
+            logger.error("Error in process element", e);
         }
         streamState.update(msg);
     }

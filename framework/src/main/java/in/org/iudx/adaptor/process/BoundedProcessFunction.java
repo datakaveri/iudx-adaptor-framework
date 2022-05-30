@@ -62,7 +62,7 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
-        logger.info("[BoundedProcessFunction] Processing element");
+        logger.info("Processing element");
         Message previousMessage = streamState.getMessage(msg);
 
         /* Update state with current message if not done */
@@ -87,7 +87,7 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
                     "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\""
                             + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
             context.output(errorStream, tmpl);
-            logger.error("[BoundedProcessFunction] Error in process element", e);
+            logger.error("Error in process element", e);
         }
 
         streamState.addMessage(msg);

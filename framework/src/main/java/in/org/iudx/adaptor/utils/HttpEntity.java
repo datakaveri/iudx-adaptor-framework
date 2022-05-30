@@ -49,12 +49,31 @@ public class HttpEntity {
      *                  <p>
      *                  Note: This is called from context open() methods of the Source Function
      *                  <p>
-     *                  TODO:
-     *                   - Modularize/cleanup
-     *                   - Handle timeouts from ApiConfig
+     *                                   TODO:
+     *                                    - Modularize/cleanup
+     *                                    - Handle timeouts from ApiConfig
      */
     public HttpEntity(ApiConfig apiConfig, String appName) {
         logger = new CustomLogger(HttpSource.class, appName);
+        this.apiConfig = apiConfig;
+
+        requestBuilder = HttpRequest.newBuilder();
+
+        HttpClient.Builder clientBuilder = HttpClient.newBuilder();
+        clientBuilder.version(Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10));
+
+        if (apiConfig.url != null) {
+            requestBuilder.uri(URI.create(apiConfig.url));
+        }
+        /* TODO: consider making this neater */
+        if (this.apiConfig.getHeaderString().length > 0) {
+            requestBuilder.headers(this.apiConfig.headersArray);
+        }
+        httpClient = clientBuilder.build();
+    }
+
+    public HttpEntity(ApiConfig apiConfig) {
+        logger = new CustomLogger(HttpSource.class);
         this.apiConfig = apiConfig;
 
         requestBuilder = HttpRequest.newBuilder();
@@ -114,13 +133,14 @@ public class HttpEntity {
         try {
             HttpResponse<String> resp =
                     httpClient.send(httpRequest, BodyHandlers.ofString());
-            if (resp.statusCode() != 200) {
-                logger.error("[HttpEntity] http request failed with [status_code]:" + resp.statusCode() + "[summary]:" + resp.body() + "}");
+
+            if (resp.statusCode() / 100 != 2) {
+                logger.error("Http request failed with [status_code]:" + resp.statusCode() + "[summary]:" + resp.body() + "}");
                 return "";
             }
             return resp.body();
         } catch (Exception e) {
-            logger.error("[HttpEntity] Error http entity", e);
+            logger.error("Error http entity", e);
             return "";
         }
     }
@@ -138,7 +158,7 @@ public class HttpEntity {
                     httpClient.send(httpRequest, BodyHandlers.ofString());
             return resp.body();
         } catch (Exception e) {
-            logger.error("[HttpEntity] Error in post request", e);
+            logger.error("Error in post request", e);
             throw e;
         }
     }

@@ -6,7 +6,6 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -83,7 +82,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     }
 
     public void emitMessage(SourceContext<Message> ctx) {
-        logger.info("[HttpSource] Emitting source data");
+        logger.info("Emitting source data");
         String serializedMessage = httpEntity.getSerializedMessage();
         if (Objects.equals(serializedMessage, "") || serializedMessage.isEmpty()) {
             return;

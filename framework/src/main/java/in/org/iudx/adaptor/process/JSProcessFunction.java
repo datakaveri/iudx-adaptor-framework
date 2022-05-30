@@ -53,7 +53,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
             Compilable compilable = (Compilable) engine;
             this.transformFunction = compilable.compile(script);
         } catch (Exception e) {
-            logger.error("[JSProcessFunction] Failed to init script");
+            logger.error("Failed to init script");
         }
 
     }
@@ -70,7 +70,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
             msg.setResponseBody(resp);
             out.collect(msg);
         } catch (Exception e) {
-            logger.error("[JSProcessFunction] Failed to execute script", e);
+            logger.error("Failed to execute script", e);
         }
     }
 
