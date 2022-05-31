@@ -1,6 +1,6 @@
 package in.org.iudx.adaptor.sink;
 
-import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import in.org.iudx.adaptor.utils.HttpEntity;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -30,8 +30,8 @@ public class HttpSink extends RichSinkFunction<String> {
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
-    ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-    String appName = parameters.getRequired("appName");
+    ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+    String appName = parameters.toMap().get("appName");
     httpEntity = new HttpEntity(apiConfig, appName);
   }
 

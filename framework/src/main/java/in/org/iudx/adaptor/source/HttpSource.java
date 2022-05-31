@@ -1,7 +1,7 @@
 package in.org.iudx.adaptor.source;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
-import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
@@ -75,8 +75,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     @Override
     public void open(Configuration config) throws Exception {
         super.open(config);
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-        String appName = parameters.getRequired("appName");
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
         logger = new CustomLogger(HttpSource.class, appName);
         httpEntity = new HttpEntity(apiConfig, appName);
     }

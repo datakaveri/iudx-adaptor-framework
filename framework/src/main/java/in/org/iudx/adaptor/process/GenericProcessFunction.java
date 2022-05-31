@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.process;
 
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.configuration.Configuration;
@@ -9,7 +10,6 @@ import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
-import org.apache.flink.api.java.utils.ParameterTool;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.Transformer;
@@ -60,8 +60,8 @@ public class GenericProcessFunction
                 new ValueStateDescriptor<>(STATE_NAME, Message.class);
         streamState = getRuntimeContext().getState(stateDescriptor);
 
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-        String appName = parameters.getRequired("appName");
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
         logger = new CustomLogger(GenericProcessFunction.class, appName);
 
         this.counter = getRuntimeContext()

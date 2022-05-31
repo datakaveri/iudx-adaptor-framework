@@ -1,7 +1,7 @@
 package in.org.iudx.adaptor.process;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
-import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.util.Collector;
@@ -54,8 +54,8 @@ public class JSPathProcessFunction extends RichFlatMapFunction<Message, Message>
 
     @Override
     public void open(Configuration config) {
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-        String appName = parameters.getRequired("appName");
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
         logger = new CustomLogger(JSPathProcessFunction.class, appName);
 
         pathSpecArray = new JSONArray(pathSpec.getPathSpec());

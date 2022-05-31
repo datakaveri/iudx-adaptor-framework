@@ -7,7 +7,7 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.utils.HashMapState;
 import in.org.iudx.adaptor.utils.MinioClientHelper;
-import org.apache.flink.api.java.utils.ParameterTool;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
@@ -54,8 +54,8 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
             streamState.deserialize(result);
         }
 
-        ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-        String appName = parameters.getRequired("appName");
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
         this.logger = new CustomLogger(BoundedProcessFunction.class, appName);
     }
 
