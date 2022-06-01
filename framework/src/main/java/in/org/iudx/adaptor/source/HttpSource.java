@@ -14,11 +14,13 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Parser;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.ScriptableObject;
-
 import in.org.iudx.adaptor.utils.HttpEntity;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 
 
 /**
@@ -41,10 +43,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     private ApiConfig apiConfig;
     private Parser<PO> parser;
 
-
-    private ContextFactory contextFactory;
-    private org.mozilla.javascript.Context jscontext;
-    private ScriptableObject scope;
+    private ScriptEngine engine;
+    private ScriptContext context;
 
     transient CustomLogger logger;
 
@@ -79,6 +79,10 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
         String appName = parameters.toMap().get("appName");
         logger = new CustomLogger(HttpSource.class, appName);
         httpEntity = new HttpEntity(apiConfig, appName);
+
+        engine = new ScriptEngineManager().getEngineByName("nashorn");
+        context = new SimpleScriptContext();
+        context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
     }
 
     public void emitMessage(SourceContext<Message> ctx) {
@@ -121,37 +125,29 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
      */
     @Override
     public void run(SourceContext<Message> ctx) throws Exception {
-        // TODO: See if this breaks during runtime
-        // TODO: See why getting current context doesn't work here
-        contextFactory = ContextFactory.getGlobal();
-        jscontext = contextFactory.enterContext();
-        jscontext.setOptimizationLevel(9);
-        scope = jscontext.initStandardObjects();
-
         /* TODO: Better way of figuring out batch jobs */
         if (apiConfig.pollingInterval == -1) {
-            makeApi(jscontext);
+            makeApi(context);
             emitMessage(ctx);
         } else {
             while (running) {
-                makeApi(jscontext);
+                makeApi(context);
                 emitMessage(ctx);
                 Thread.sleep(apiConfig.pollingInterval);
             }
         }
     }
 
-    private void makeApi(Context cx) {
+    private void makeApi(ScriptContext cx) throws ScriptException {
         if (apiConfig.hasScript) {
             for (int i = 0; i < apiConfig.scripts.size(); i++) {
                 HashMap<String, String> mp = apiConfig.scripts.get(i);
                 if (mp.get("in").equals("url")) {
-
-                    String val = Context.toString(cx.evaluateString(scope, mp.get("script"), "script", 1, null));
+                    String val = engine.eval(mp.get("script"), cx).toString();
                     httpEntity.setUrl(apiConfig.url.replace(mp.get("pattern"), val));
                 }
                 if (mp.get("in").equals("body")) {
-                    String val = Context.toString(cx.evaluateString(scope, mp.get("script"), "script", 1, null));
+                    String val = engine.eval(mp.get("script"), cx).toString();
 
                     httpEntity.setUrl(apiConfig.body.replace(mp.get("pattern"), val));
                 }
