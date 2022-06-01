@@ -135,7 +135,7 @@ public class HttpEntity {
                     httpClient.send(httpRequest, BodyHandlers.ofString());
 
             if (resp.statusCode() / 100 != 2) {
-                logger.error("Http request failed with [status_code]:" + resp.statusCode() + "[summary]:" + resp.body() + "}");
+                logger.error("[status_code - " + resp.statusCode() + "]-[summary - " + resp.body() + "] Http request failed", new Throwable("Failed with status code"));
                 return "";
             }
             return resp.body();
