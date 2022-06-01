@@ -2,6 +2,7 @@ package in.org.iudx.adaptor.source;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
@@ -48,6 +49,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
 
     transient CustomLogger logger;
 
+    private transient Counter counter;
+
     /**
      * {@link HttpEntity} Constructor
      *
@@ -56,8 +59,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
      *                  Note:
      *                  - Only set configuration here. Don't initialize {@link HttpEntity}.
      *                  <p>
-     *                                                                                                       TODO:
-     *                                                                                                        - Parser is prone to non-serializable params
+     *                                                                                                                        TODO:
+     *                                                                                                                         - Parser is prone to non-serializable params
      */
     public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
         this.apiConfig = apiConfig;
@@ -80,6 +83,10 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
         logger = new CustomLogger(HttpSource.class, appName);
         httpEntity = new HttpEntity(apiConfig, appName);
 
+        this.counter = getRuntimeContext()
+                .getMetricGroup()
+                .counter("HttpSourceCounter");
+
         engine = new ScriptEngineManager().getEngineByName("nashorn");
         context = new SimpleScriptContext();
         context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
@@ -87,6 +94,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
 
     public void emitMessage(SourceContext<Message> ctx) {
         logger.info("Emitting source data");
+        this.counter.inc();
         String serializedMessage = httpEntity.getSerializedMessage();
         if (Objects.equals(serializedMessage, "") || serializedMessage.isEmpty()) {
             return;

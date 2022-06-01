@@ -66,14 +66,13 @@ public class GenericProcessFunction
 
         this.counter = getRuntimeContext()
                 .getMetricGroup()
-                .counter("GenericProcessFunctionCounter");
+                .counter("GenericProcessCounter");
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
         logger.info("processing element");
-        this.counter.inc();
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
         if (previousMessage == null) {
@@ -99,5 +98,6 @@ public class GenericProcessFunction
             logger.error("Error in process element", e);
         }
         streamState.update(msg);
+        this.counter.inc();
     }
 }

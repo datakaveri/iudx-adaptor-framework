@@ -9,6 +9,7 @@ import in.org.iudx.adaptor.utils.HashMapState;
 import in.org.iudx.adaptor.utils.MinioClientHelper;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
@@ -28,7 +29,9 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
     };
 
     private static final long serialVersionUID = 44L;
-    CustomLogger logger;
+    transient CustomLogger logger;
+
+    private transient Counter counter;
 
     public BoundedProcessFunction(Transformer transformer,
                                   Deduplicator deduplicator, MinioConfig minioConfig) {
@@ -57,6 +60,10 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
         ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
         String appName = parameters.toMap().get("appName");
         this.logger = new CustomLogger(BoundedProcessFunction.class, appName);
+
+        this.counter = getRuntimeContext()
+                .getMetricGroup()
+                .counter("BoundedProcessCounter");
     }
 
     @Override
@@ -90,6 +97,7 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
             logger.error("Error in process element", e);
         }
 
+        this.counter.inc();
         streamState.addMessage(msg);
     }
 

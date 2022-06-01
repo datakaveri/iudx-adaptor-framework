@@ -1,21 +1,20 @@
 package in.org.iudx.adaptor.source;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 
 
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -23,33 +22,20 @@ import org.json.JSONArray;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 
-import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
-import in.org.iudx.adaptor.sink.DumbStringSink;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
-import in.org.iudx.adaptor.process.DumbProcess;
 
 
 import in.org.iudx.adaptor.codegen.ApiConfig;
-import in.org.iudx.adaptor.codegen.Transformer;
-import in.org.iudx.adaptor.codegen.Parser;
-import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.SimpleATestTransformer;
 import in.org.iudx.adaptor.codegen.SimpleATestParser;
 import in.org.iudx.adaptor.codegen.SimpleBTestParser;
 import in.org.iudx.adaptor.codegen.SimpleADeduplicator;
 
-import in.org.iudx.adaptor.sink.AMQPSink;
-import in.org.iudx.adaptor.codegen.RMQConfig;
-import in.org.iudx.adaptor.sink.StaticStringPublisher;
-
-
 import in.org.iudx.adaptor.process.JoltTransformer;
-import in.org.iudx.adaptor.process.JSProcessFunction;
-import in.org.iudx.adaptor.process.JSPathProcessFunction;
 import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 
 
@@ -108,11 +94,20 @@ public class HttpSourceTest {
                 .addSink(new DumbSink());
 
 
+        CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
+            try {
+                env.execute("Simple Get");
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        });
         try {
-            env.execute("Simple Get");
-        } catch (Exception e) {
-            System.out.println(e);
+            handle.get(30, TimeUnit.SECONDS);
+        } catch (TimeoutException | ExecutionException e) {
+            handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
         }
+
+
     }
 
 
@@ -230,6 +225,7 @@ public class HttpSourceTest {
 
         try {
             env.execute("Simple Get");
+
         } catch (Exception e) {
             System.out.println(e);
         }
