@@ -16,7 +16,7 @@ public class HttpEntityTest {
     
 
     ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8080/simpleA")
+      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
                                           .setRequestType("GET")
                                           .setPollingInterval(1000L);
 
@@ -29,7 +29,7 @@ public class HttpEntityTest {
     
     String basicAuthStr = Base64.getEncoder().encodeToString(("admin:admin").getBytes());
     
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/auth/simpleA")
+    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8888/auth/simpleA")
                                          .setRequestType("GET")
                                          .setPollingInterval(1000)
                                          .setHeader("Authorization","Basic "+ basicAuthStr);
@@ -43,7 +43,7 @@ public class HttpEntityTest {
     
     String basicAuthStr = Base64.getEncoder().encodeToString(("admin1:admin").getBytes());
     
-    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8080/auth/simpleA")
+    ApiConfig apiConfig = new ApiConfig().setUrl("http://127.0.0.1:8888/auth/simpleA")
                                          .setRequestType("GET")
                                          .setHeader("Authorization","Basic "+ basicAuthStr);
     

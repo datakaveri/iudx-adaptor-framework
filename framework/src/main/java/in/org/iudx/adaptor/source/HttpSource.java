@@ -105,6 +105,7 @@ public class HttpSource<PO> extends RichSourceFunction <Message>{
         ctx.emitWatermark(new Watermark(m.getEventTime()));
       }
     } catch (Exception e) {
+      LOGGER.debug(e);
       // Do nothing
     }
 

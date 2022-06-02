@@ -63,6 +63,10 @@ public class Constants {
   public static final String USER_ROUTE = "/user";
   public static final String USER_ROUTE_ID = USER_ROUTE + "/:id";
 
+  /* Spec test routes */
+  public static final String INPUT_SPEC_ROUTE = "/onboard/run-input-spec";
+  public static final String PARSE_SPEC_ROUTE = "/onboard/run-parse-spec";
+
   /** Response messages */
   public static final String MESSAGE = "message";
   public static final String RESULTS = "results";

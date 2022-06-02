@@ -31,8 +31,11 @@ public class Streamer {
     pub.subscribe(sub);
 
     for (int i=0; i<10; i++) {
-      Message msg = parser.parse(httpEntity.getSerializedMessage());
-      pub.submit(msg);
+      try {
+        Message msg = parser.parse(httpEntity.getSerializedMessage());
+        pub.submit(msg);
+      } catch (Exception e) {
+      }
     }
     pub.close();
 

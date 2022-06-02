@@ -3,6 +3,7 @@ package in.org.iudx.adaptor.codegen;
 import org.json.JSONObject;
 import java.time.Instant;
 import in.org.iudx.adaptor.datatypes.Message;
+import java.text.ParseException;
 
 /* 
  * PO - Parser Output
@@ -17,7 +18,7 @@ public class SimpleATestParser implements Parser<Message> {
   }
 
 
-  public Message parse(String message) {
+  public Message parse(String message) throws ParseException {
     // Try catch around this
     data = new JSONObject(message);
     Message msg = new Message();

@@ -44,13 +44,13 @@ public class GenericProcessFunction
   private static final long serialVersionUID = 43L;
 
   public GenericProcessFunction(Transformer transformer,
-      Deduplicator deduplicator, String adaptorD) {
+      Deduplicator deduplicator) {
     this.transformer = transformer;
     this.deduplicator = deduplicator;
 
   }
 
-  public GenericProcessFunction(Deduplicator deduplicator, String adaptorD) {
+  public GenericProcessFunction(Deduplicator deduplicator) {
     this.transformer = null;
     this.deduplicator = deduplicator;
   }
@@ -60,15 +60,20 @@ public class GenericProcessFunction
     ValueStateDescriptor<Message> stateDescriptor =
       new ValueStateDescriptor<>(STATE_NAME, Message.class);
     streamState = getRuntimeContext().getState(stateDescriptor);
-    ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
-    this.appName = parameters.getRequired("appName");
+    try {
+      ParameterTool parameters = (ParameterTool) getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+      this.appName = parameters.getRequired("appName");
+    } catch (Exception e) {
+      // Some default app name
+      this.appName = "flink";
+      LOGGER.debug(e);
+    }
 
   }
 
   @Override
   public void processElement(Message msg,
       Context context, Collector<Message> out) throws Exception {
-        LOGGER.info(appName + ": " + "processsELemenntt");
     Message previousMessage = streamState.value();
     /* Update state with current message if not done */
     if (previousMessage == null) {
