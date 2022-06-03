@@ -1,0 +1,130 @@
+jobmanager.rpc.address: taskmanager
+blob.server.port: 6124
+query.server.port: 6125
+taskmanager.numberOfTaskSlots: 1
+jobmanager.rpc.address: taskmanager
+taskmanager.numberOfTaskSlots: 1
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
+jobmanager.rpc.address: taskmanager
+taskmanager.numberOfTaskSlots: 1
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
+jobmanager.rpc.address: taskmanager
+taskmanager.numberOfTaskSlots: 1
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
+jobmanager.rpc.address: taskmanager
+taskmanager.numberOfTaskSlots: 1
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
+jobmanager.rpc.address: taskmanager
+taskmanager.numberOfTaskSlots: 1
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
+jobmanager.rpc.address: jobmanager
+taskmanager.numberOfTaskSlots: 3
+# web.upload.dir: /jars
+
+state.backend: rocksdb
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+s3.endpoint: http://minio1:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio 
+presto.s3.secret-key: minio123  
+presto.s3.endpoint: http://minio1:9000   
+presto.s3.path-style-access: true
+
+high-availability: zookeeper
+high-availability.storageDir: s3://recovery/
+high-availability.zookeeper.quorum: zook:2181
+
