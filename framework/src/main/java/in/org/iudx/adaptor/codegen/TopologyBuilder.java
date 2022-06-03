@@ -48,7 +48,6 @@ public class TopologyBuilder {
     private boolean hasGenericTransformer;
     private boolean hasJSTransformer;
     private boolean hasJSPathTransformer;
-    private boolean isBoundedJob;
 
     private static final int DEFAULT_RESTART_ATTEMPTS = 10;
     private static final long DEFAULT_RESTART_DELAY = 10000L;
@@ -87,6 +86,12 @@ public class TopologyBuilder {
                 .addStatement("final $T env = $T.getExecutionEnvironment()",
                         StreamExecutionEnvironment.class,
                         StreamExecutionEnvironment.class);
+
+        // setting checkpointing
+        if (!tc.isBoundedJob) {
+            mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
+        }
+
 
         if (tc.hasFailureRecovery){ 
           failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
@@ -165,9 +170,6 @@ public class TopologyBuilder {
 
     // TODO: Why are we building api config like this instead of directly passing json
     private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
-        if (inputSpec.has("boundedJob") && inputSpec.getBoolean("boundedJob")) {
-            isBoundedJob = true;
-        }
 
         if ("http".equals(inputSpec.getString("type"))) {
             mainBuilder
@@ -301,7 +303,7 @@ public class TopologyBuilder {
          * TODO: Break this construction logic further
          **/
         if (hasGenericTransformer) {
-            if (isBoundedJob) {
+            if (tc.isBoundedJob) {
                 mainBuilder.addStatement("$T<$T> ds = so"
                                 + ".keyBy(($T msg) -> msg.key)"
                                 + ".process(new $T(trans, dedup, minioConfig))",
@@ -316,7 +318,7 @@ public class TopologyBuilder {
             }
         } else {
             if (hasJSTransformer) {
-                if (isBoundedJob) {
+                if (tc.isBoundedJob) {
                     mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
                                     + ".process(new $T(dedup, minioConfig))"
@@ -335,7 +337,7 @@ public class TopologyBuilder {
                 }
             }
             if (hasJSPathTransformer) {
-                if (isBoundedJob) {
+                if (tc.isBoundedJob) {
                     mainBuilder.addStatement("$T<$T> ds = so"
                                     + ".keyBy(($T msg) -> msg.key)"
                                     + ".process(new $T(dedup, minioConfig))"
@@ -355,9 +357,14 @@ public class TopologyBuilder {
 
             }
         }
+        if (tc.isBoundedJob) {
+            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
+                    DataStream.class, BoundedProcessFunction.class);
+        } else {
+            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
+                    DataStream.class, GenericProcessFunction.class);
+        }
 
-        mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
-                DataStream.class, GenericProcessFunction.class);
 
 
         /* TODO: Loki config */

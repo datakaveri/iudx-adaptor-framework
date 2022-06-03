@@ -1,8 +1,10 @@
 package in.org.iudx.adaptor.process;
 
 import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.api.common.state.StateTtlConfig;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
@@ -42,6 +44,12 @@ public class GenericProcessFunction
 
     private static final long serialVersionUID = 43L;
 
+    static StateTtlConfig ttlConfig = StateTtlConfig
+            .newBuilder(Time.hours(2))
+            .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
+            .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
+            .build();
+
     public GenericProcessFunction(Transformer transformer,
                                   Deduplicator deduplicator) {
         this.transformer = transformer;
@@ -58,6 +66,7 @@ public class GenericProcessFunction
     public void open(Configuration config) {
         ValueStateDescriptor<Message> stateDescriptor =
                 new ValueStateDescriptor<>(STATE_NAME, Message.class);
+        stateDescriptor.enableTimeToLive(ttlConfig);
         streamState = getRuntimeContext().getState(stateDescriptor);
 
         ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();

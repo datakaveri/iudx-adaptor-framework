@@ -15,6 +15,8 @@ public class TopologyConfig {
   public JSONObject transformSpec;
   public JSONObject publishSpec;
   public boolean hasFailureRecovery;
+  public boolean isBoundedJob;
+  public long pollingInterval;
 
   public TopologyConfig(String configString) throws Exception {
 
@@ -22,6 +24,7 @@ public class TopologyConfig {
     name = config.getString("name");
 
     hasFailureRecovery = false;
+    isBoundedJob = false;
     
     // TODO: Run validations
     if (config.has("failureRecoverySpec")) {
@@ -33,6 +36,10 @@ public class TopologyConfig {
     deduplicationSpec = config.getJSONObject("deduplicationSpec");
     transformSpec = config.getJSONObject("transformSpec");
     publishSpec = config.getJSONObject("publishSpec");
+    if (inputSpec.has("boundedJob") && inputSpec.getBoolean("boundedJob")) {
+      isBoundedJob = true;
+    }
+    pollingInterval = inputSpec.getLong("pollingInterval");
   }
   
 
