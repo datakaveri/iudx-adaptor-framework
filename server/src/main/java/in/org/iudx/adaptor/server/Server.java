@@ -30,6 +30,8 @@ import in.org.iudx.adaptor.server.util.MinioConfig;
 import static in.org.iudx.adaptor.server.util.Constants.*;
 import java.nio.file.FileSystems;
 import java.util.Set;
+import in.org.iudx.adaptor.server.specEndpoints.InputSpecEndpoint;
+import in.org.iudx.adaptor.server.specEndpoints.ParseSpecEndpoint;
 
 /**
  * The Adaptor API Server API Verticle.
@@ -75,6 +77,9 @@ public class Server extends AbstractVerticle {
 
     databaseService = DatabaseService.createProxy(vertx, DATABASE_SERVICE_ADDRESS);
     HttpServerOptions serverOptions = new HttpServerOptions();
+
+    InputSpecEndpoint ise = new InputSpecEndpoint();
+    ParseSpecEndpoint pse = new ParseSpecEndpoint();
 
     if (isSsl) {
       serverOptions.setSsl(true)
@@ -297,6 +302,39 @@ public class Server extends AbstractVerticle {
           .handler(AdminAuthHandler.create(authCred))
           .handler(routingContext -> {
             getAdaptorUser(routingContext);
+          });
+
+
+
+    /* Spec test routes */
+
+    router.post(INPUT_SPEC_ROUTE)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            JsonObject jsonBody = routingContext.getBodyAsJson();
+            String resp = ise.run(jsonBody.getJsonObject("inputSpec"));
+            JsonObject r = new JsonObject().put("result", resp)
+                                            .put("success", true)
+                                            .put("message", "Executed successfully");
+            response.setStatusCode(200)
+                            .end(r.toString());
+          });
+
+    router.post(PARSE_SPEC_ROUTE)
+          .handler(AdminAuthHandler.create(authCred))
+          .handler(routingContext -> {
+            HttpServerResponse response = routingContext.response();
+            JsonObject jsonBody = routingContext.getBodyAsJson();
+            LOGGER.debug(jsonBody);
+            JsonObject parsespec = jsonBody.getJsonObject("parseSpec");
+            String inputData = jsonBody.getString("inputData");
+            String resp = pse.run(inputData, parsespec);
+            JsonObject r = new JsonObject().put("result", resp)
+                                            .put("success", true)
+                                            .put("message", "Executed successfully");
+            response.setStatusCode(200)
+                            .end(r.toString());
           });
 
 
@@ -1082,4 +1120,7 @@ public class Server extends AbstractVerticle {
       }
     });
   }
+
+
+
 }

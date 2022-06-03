@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+import java.text.ParseException;
 
 /* 
  * Parse input json data based on json path specifier
@@ -44,21 +45,15 @@ public class JsonPathParser<T> implements Parser<T> {
 
     this.parseSpec = new JSONObject(parseSpecString);
 
+    this.timestampPath = parseSpec.optString("timestampPath");
+    this.keyPath = parseSpec.getString("keyPath");
 
-    try {
-      this.timestampPath = parseSpec.optString("timestampPath");
-      this.keyPath = parseSpec.getString("keyPath");
+    this.containerPath = parseSpec.optString("containerPath");
+    this.inputTimeFormat = parseSpec.optString("inputTimeFormat");
+    this.outputTimeFormat = parseSpec.optString("outputTimeFormat");
+    // Default
+    toFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
-      this.containerPath = parseSpec.optString("containerPath");
-      this.inputTimeFormat = parseSpec.optString("inputTimeFormat");
-      this.outputTimeFormat = parseSpec.optString("outputTimeFormat");
-      // Default
-      toFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
-
-    } catch (Exception e) {
-      LOGGER.error("Unable to process with JsonPathParser");
-      // TODO: Exit
-    }
 
     if (!inputTimeFormat.isEmpty()) {
      fromFormat = new SimpleDateFormat(inputTimeFormat); 
@@ -88,7 +83,7 @@ public class JsonPathParser<T> implements Parser<T> {
 
 
 
-  public Message parseTime(DocumentContext ctx, Message outMsg) {
+  public Message parseTime(DocumentContext ctx, Message outMsg) throws ParseException {
     String message = ctx.jsonString();
     if (timestampPath.isEmpty() || inputTimeFormat.isEmpty()) {
       Date now = new Date();
@@ -120,6 +115,7 @@ public class JsonPathParser<T> implements Parser<T> {
         outMsg.setResponseBody(message);
       } catch (Exception e) {
         LOGGER.debug(e);
+        throw e;
         // TODO: Handle this
       }
     }
@@ -129,7 +125,7 @@ public class JsonPathParser<T> implements Parser<T> {
   /* TODO:
    *  - Abstract out parsing time
    */
-  public T parse(String message) {
+  public T parse(String message) throws ParseException {
 
     DocumentContext ctx = JsonPath.parse(message);
 
@@ -157,16 +153,11 @@ public class JsonPathParser<T> implements Parser<T> {
         // TODO: This is pretty inefficient
         if (hasTrickleKeys == true) {
           for (int j=0; j<trickleObjs.length(); j++) {
-            try {
-              Object keyval =
-                ctx.read(trickleObjs.getJSONObject(j).getString("keyPath").toString());
-              tmpctx.put("$",
-                          trickleObjs.getJSONObject(j).getString("keyName"),
-                          keyval);
-            } catch (Exception e) {
-              LOGGER.debug(e);
-              // Ignore errors
-            }
+            Object keyval =
+              ctx.read(trickleObjs.getJSONObject(j).getString("keyPath").toString());
+            tmpctx.put("$",
+                        trickleObjs.getJSONObject(j).getString("keyName"),
+                        keyval);
           }
         }
 

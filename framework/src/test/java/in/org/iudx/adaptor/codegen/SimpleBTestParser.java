@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import java.text.ParseException;
 
 /* 
  * PO - Parser Output
@@ -28,7 +29,7 @@ public class SimpleBTestParser implements Parser<List<Message>> {
     return this;
   }
 
-  public List<Message> parse(String message) {
+  public List<Message> parse(String message) throws ParseException {
     // Try catch around this
     msg = new JSONObject(message);
     data = msg.getJSONArray("data");
