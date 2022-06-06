@@ -4,16 +4,17 @@ import in.org.iudx.adaptor.codegen.Deduplicator;
 import in.org.iudx.adaptor.codegen.MinioConfig;
 import in.org.iudx.adaptor.codegen.Transformer;
 import in.org.iudx.adaptor.datatypes.Message;
+import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.utils.HashMapState;
 import in.org.iudx.adaptor.utils.MinioClientHelper;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-public class BoundedProcessFunction extends KeyedProcessFunction<String,Message,Message> {
+public class BoundedProcessFunction extends KeyedProcessFunction<String, Message, Message> {
 
     private HashMapState streamState;
 
@@ -24,10 +25,13 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String,Message,
     private final MinioConfig minioConfig;
 
     public static final OutputTag<String> errorStream
-            = new OutputTag<String>("error") {};
+            = new OutputTag<String>("error") {
+    };
 
     private static final long serialVersionUID = 44L;
-    private static final Logger LOGGER = LogManager.getLogger(BoundedProcessFunction.class);
+    transient CustomLogger logger;
+
+    private transient Counter counter;
 
     public BoundedProcessFunction(Transformer transformer,
                                   Deduplicator deduplicator, MinioConfig minioConfig) {
@@ -49,21 +53,30 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String,Message,
 
         byte[] result = minioClientHelper.getObject();
 
-        if(result != null && result.length != 0) {
+        if (result != null && result.length != 0) {
             streamState.deserialize(result);
         }
+
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
+        this.logger = new CustomLogger(BoundedProcessFunction.class, appName);
+
+        this.counter = getRuntimeContext()
+                .getMetricGroup()
+                .counter("BoundedProcessCounter");
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
+        logger.info("Processing element");
         Message previousMessage = streamState.getMessage(msg);
 
         /* Update state with current message if not done */
         if (previousMessage == null) {
             streamState.addMessage(msg);
         } else {
-            if(deduplicator.isDuplicate(previousMessage, msg)) {
+            if (deduplicator.isDuplicate(previousMessage, msg)) {
                 return;
             }
         }
@@ -80,20 +93,21 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String,Message,
             String tmpl =
                     "{\"streams\": [ { \"stream\": { \"flinkhttp\": \"test-sideoutput\"}, \"values\": [[\""
                             + Long.toString(System.currentTimeMillis() * 1000000) + "\", \"error\"]]}]}";
-            context.output(errorStream, tmpl) ;
+            context.output(errorStream, tmpl);
+            logger.error("Error in process element", e);
         }
 
+        this.counter.inc();
         streamState.addMessage(msg);
     }
 
     @Override
     public void close() {
-        try{
-            LOGGER.info("Saving state");
+        try {
+            logger.info("Saving state");
             minioClientHelper.putObject(streamState.serialize());
-        }
-        catch(Exception e) {
-            LOGGER.error("Error saving the state to minio");
+        } catch (Exception e) {
+            logger.error("Error saving the state to minio");
         }
     }
 }

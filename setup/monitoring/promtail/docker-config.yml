@@ -8,52 +8,52 @@ positions:
 clients:
   - url: http://loki:3100/loki/api/v1/push
 
-scrape_configs:
-- job_name: system
-  static_configs:
-  - targets:
-      - localhost
-    labels:
-      job: varlogs
-      __path__: /var/log/*log
 
-- job_name: flink-logs
+scrape_configs:
+
+- job_name: containers
   static_configs:
   - targets:
       - localhost
     labels:
-      job: flink_container
-      __path__: /var/lib/docker/containers/*/*-json.log
+      job: containerlogs
+      __path__: /var/lib/docker/containers/*/*log
 
   pipeline_stages:
-  - match:
-      selector: '{filename="/var/lib/docker/containers/*/*-json.log"}'
-      stages:
-      - labels:
-          host: flink-node
+
   - json:
       expressions:
-        log: log
+        output: log
         stream: stream
-        docker_time: time
-        container_info: attrs.tag
-  - json:
-      expressions:
-        time: timeMillis
-        source: source
-        sourceUrl: sourceURL
-        level: level
-        origin: loggerName #class from which its logged
-        message: message
+        attrs: attrs
+        tag: attrs.tag
+        time: time
+
+  - regex:
+      expression: (?P<image_name>(?:[^|]*[^|])).(?P<container_name>(?:[^|]*[^|])).(?P<image_id>(?:[^|]*[^|])).(?P<container_id>(?:[^|]*[^|]))
+      source: tag
   - labels:
-      source:
-      sourceUrl:
-      #level:        # level will create more streams, 5x times
-      #origin:
-  - output:
-      source: log
+      image_name:
+      container_name:
+      image_id:
+      container_id:
+
+  - regex:
+      expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[(?P<level>.*?)\] (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[.*?(?P<status_code>\d+?)\])?-?(\[.*?-(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+      source: output
+  - labels:
+      context:
+      adaptor_id:
+      level:
+      stream:
+      tag:
+      status_code:
+      http_error_summary:
+      message:
 
   - timestamp:
-      source: docker_time
-      format: RFC3339
+      format: RFC3339Nano
+      source: time
 
+  - output:
+      source: output

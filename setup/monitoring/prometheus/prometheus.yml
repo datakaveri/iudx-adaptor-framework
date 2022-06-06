@@ -9,6 +9,6 @@ rule_files:
 scrape_configs:
 - job_name: 'flink'
   static_configs:
-  - targets: ['docker_taskmanager_1:9249', 'docker_jobmanager_1:9249']
+  - targets: ['172.17.0.1:9251', '172.17.0.1:9252']
   - labels:
       name: flink_taskmanager_job_task_operator_value_histogram 

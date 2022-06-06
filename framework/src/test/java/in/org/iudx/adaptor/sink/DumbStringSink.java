@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.sink;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import in.org.iudx.adaptor.datatypes.Message;
 import org.apache.flink.configuration.Configuration;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.Logger;
 public class DumbStringSink implements SinkFunction<String> {
 
 
-  private static final Logger LOGGER = LogManager.getLogger(DumbStringSink.class);
+  CustomLogger logger = new CustomLogger(DumbStringSink.class, "unit_test");
 
   public DumbStringSink() {
   }

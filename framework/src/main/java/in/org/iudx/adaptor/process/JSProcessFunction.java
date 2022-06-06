@@ -1,12 +1,12 @@
 package in.org.iudx.adaptor.process;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.json.JSONObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import in.org.iudx.adaptor.datatypes.Message;
 
@@ -32,7 +32,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
     public static final OutputTag<String> errorStream = new OutputTag<String>("error") {
     };
 
-    private static final Logger LOGGER = LogManager.getLogger(JSProcessFunction.class);
+    transient CustomLogger logger;
 
     private static final long serialVersionUID = 49L;
 
@@ -42,6 +42,9 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
 
     @Override
     public void open(Configuration config) {
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
+        logger = new CustomLogger(JSPathProcessFunction.class, appName);
 
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
 
@@ -50,7 +53,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
             Compilable compilable = (Compilable) engine;
             this.transformFunction = compilable.compile(script);
         } catch (Exception e) {
-            LOGGER.error("Failed to init script");
+            logger.error("Failed to init script");
         }
 
     }
@@ -67,7 +70,7 @@ public class JSProcessFunction extends RichFlatMapFunction<Message, Message> {
             msg.setResponseBody(resp);
             out.collect(msg);
         } catch (Exception e) {
-            LOGGER.error("Failed to execute script", e);
+            logger.error("Failed to execute script", e);
         }
     }
 

@@ -14,6 +14,9 @@ services:
     hostname: jobmanager
     ports:
       - 8081:8081
+      - 9251:9251
+    expose:
+      - "9251"
     env_file:
       - ./env
     environment:
@@ -22,8 +25,11 @@ services:
       - adaptor-net
     command: "jobmanager"
     volumes:
-      - jars:/jars/flink-web-upload
+      - ./flink-jobmanager/log4j-console.properties:/opt/flink/conf/log4j-console.properties
     restart: always
+    logging:
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
 
   taskmanager:
@@ -32,6 +38,12 @@ services:
       dockerfile: ./Dockerfile
       context: .
     hostname: taskmanager
+    volumes:
+      - ./flink-taskmanager/log4j-console.properties:/opt/flink/conf/log4j-console.properties
+    ports:
+      - 9252:9251
+    expose:
+      - "9251"
     env_file:
       - ./env
     environment:
@@ -40,6 +52,10 @@ services:
       - adaptor-net
     command: "taskmanager"
     restart: always
+    logging:
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
 
+## TODO: REMOVE VOLUME
 volumes:
   jars:

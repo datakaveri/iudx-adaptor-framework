@@ -1,122 +1,113 @@
 package in.org.iudx.adaptor.process;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.util.Map;
-import java.util.HashMap;
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 
-import org.json.JSONObject;
-import org.json.JSONArray;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.ScriptableObject;
-import org.mozilla.javascript.Scriptable;
+import static java.lang.Float.parseFloat;
 
 
 public class JSEvalTest {
-  
-
-  public String stringedNum = "12.5 ppm";
-
-  private static ContextFactory contextFactory;
-  private static Context context;
-  private static ScriptableObject scope;
 
 
-  @BeforeAll
-  public static void initialize() {
-    contextFactory = ContextFactory.getGlobal();
-    context = contextFactory.enterContext();
-    context.setOptimizationLevel(9);
-    scope = context.initStandardObjects();
-  }
+    public String stringedNum = "12.5 ppm";
 
-  @Test
-  void evalSimple() throws InterruptedException {
+    private static ScriptEngine engine;
 
-    String  script = "function test(a) { return parseFloat(a.split(\" \")[0]) }";
+    private static ScriptContext context;
 
-    final Function fn = context.compileFunction(scope,
-                                    script, "test", 1, null);
-    final Object[] args = new Object[1];
-    args[0] = stringedNum;
-    Object res = fn.call(context, scope, scope, args);
-    System.out.println("Result is");
-    System.out.println(Context.toNumber(res));
+    @BeforeAll
+    public static void initialize() {
+        engine = new ScriptEngineManager().getEngineByName("nashorn");
+        context = new SimpleScriptContext();
+        context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
+    }
 
-  }
+    @Test
+    void evalSimple() throws ScriptException, NoSuchMethodException {
+        String script = "function test(a) { return parseFloat(a.split(\" \")[0]) }";
 
-  public class TestObj {
-    public String name;
-    public int age;
-  }
+        Compilable compilable = (Compilable) engine;
+        final CompiledScript fn = compilable.compile(script);
+        fn.eval();
+        Invocable invocable = (Invocable) fn.getEngine();
+        final Object[] args = new Object[1];
+        args[0] = stringedNum;
+        Object res = invocable.invokeFunction("test", args);
+        System.out.println("Result is");
+        System.out.println(parseFloat(res.toString()));
 
-  @Test
-  void pojoSimple() throws InterruptedException {
+    }
 
-    TestObj obj = new TestObj();
-    obj.name = "test";
-    obj.age = 10;
+    public class TestObj {
+        public String name;
+        public int age;
+    }
 
-    String  script = "function test(a) { a.name = \"success\"; return a; }";
-    final Function fn = context.compileFunction(scope,
-                                    script, "test", 1, null);
-    Object[] args = new Object[1];
-    args[0] = obj;
-    final TestObj res = (TestObj) fn.call(context, scope, scope, args);
-    System.out.println("Result is");
-    System.out.println(res.name);
-    System.out.println(res.age);
-  }
+    @Test
+    void pojoSimple() throws ScriptException, NoSuchMethodException {
+        TestObj obj = new TestObj();
+        obj.name = "test";
+        obj.age = 10;
 
-  @Test
-  void singleLine() throws InterruptedException {
+        String script = "function test(a) { a.name = \"success\"; return a; }";
+        Compilable compilable = (Compilable) engine;
+        final CompiledScript fn = compilable.compile(script);
+        fn.eval();
+        Invocable invocable = (Invocable) fn.getEngine();
 
-    String  script = "parseFloat(a.split(\" \")[0])";
+        Object[] args = new Object[1];
+        args[0] = obj;
+        final TestObj res = (TestObj) invocable.invokeFunction("test", args);
+        System.out.println("Result is");
+        System.out.println(res.name);
+        System.out.println(res.age);
+    }
 
-    ScriptableObject.putProperty(scope, "a", stringedNum);
-    Object obj = context.evaluateString(scope,
-                                    script, "test", 1, null);
-    System.out.println("Result is");
-    System.out.println(obj);
-    System.out.println(obj.getClass().getName());
+    @Test
+    void singleLine() throws ScriptException {
+        String script = "parseFloat(a.split(\" \")[0])";
 
-  }
+        Bindings engineScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        engineScope.put("a", stringedNum);
+        Object obj = engine.eval(script, context);
+        System.out.println("Result is");
+        System.out.println(obj);
+        System.out.println(obj.getClass().getName());
 
-  @Test
-  void fixedAttributes() throws InterruptedException {
+    }
 
-    String  script = "output = [parseFloat(input.split(\" \")[0])];";
+    @Test
+    void fixedAttributes() throws ScriptException {
+        String script = "output = [parseFloat(input.split(\" \")[0])];";
 
-    ScriptableObject.putProperty(scope, "input", stringedNum);
-    Object obj = context.evaluateString(scope,
-                                    script, "test", 1, null);
-    System.out.println("Result is");
-    System.out.println(obj);
-    System.out.println(obj.getClass().getName());
+        Bindings engineScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        engineScope.put("input", stringedNum);
+        Object obj = engine.eval(script, context);
 
-  }
+        System.out.println("Result is");
+        System.out.println(obj);
+        System.out.println(obj.getClass().getName());
 
-  @Test
-  void getTime() throws InterruptedException {
+    }
 
-    String  script = "var d = new Date(); datestring = d.getDate()  + '-' + (d.getMonth()+1) + '-' + d.getFullYear();";
-    ScriptableObject.putProperty(scope, "input", stringedNum);
-    Object obj = context.evaluateString(scope,
-                                    script, "test", 1, null);
-    System.out.println("Result is");
-    System.out.println(obj);
-    System.out.println(obj.getClass().getName());
+    @Test
+    void getTime() throws ScriptException {
+        String script = "var d = new Date(); datestring = d.getDate()  + '-' + (d.getMonth()+1) + '-' + d.getFullYear();";
+        Object obj = engine.eval(script, context);
+        System.out.println("Result is");
+        System.out.println(obj);
+        System.out.println(obj.getClass().getName());
 
-  }
+    }
 }
 

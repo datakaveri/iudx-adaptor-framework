@@ -15,31 +15,8 @@ import in.org.iudx.adaptor.codegen.SimpleATestParser;
 
 public class Streamer {
 
-  public Streamer(EndSubscriber<Message> sub) {
-
-    
-    SimpleATestParser parser = new SimpleATestParser();
-
-    ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
-                                          .setRequestType("GET")
-                                          .setPollingInterval(1000L);
-
-    HttpEntity httpEntity = new HttpEntity(apiConfig);
-
-    SubmissionPublisher<Message> pub = new SubmissionPublisher<Message>();
-    pub.subscribe(sub);
-
-    for (int i=0; i<10; i++) {
-      try {
-        Message msg = parser.parse(httpEntity.getSerializedMessage());
-        pub.submit(msg);
-      } catch (Exception e) {
-      }
+    public Streamer(EndSubscriber<Message> sub) {
     }
-    pub.close();
-
-  }
 }
 
 

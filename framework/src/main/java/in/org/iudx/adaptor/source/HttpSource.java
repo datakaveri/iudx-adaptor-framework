@@ -1,176 +1,170 @@
 package in.org.iudx.adaptor.source;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
+import org.apache.flink.api.common.ExecutionConfig;
+import org.apache.flink.metrics.Counter;
 import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
+
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.Objects;
 
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.codegen.Parser;
 
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextAction;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Function;
-import org.mozilla.javascript.ScriptableObject;
-
 import in.org.iudx.adaptor.utils.HttpEntity;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 
 
 /**
  * {@link HttpSource} - The HttpSource Class
- *
+ * <p>
  * This extends {@link RichSourceFunction} which implements stateful functionalities.
  * This generic function exchanges meesages as {@link Message} objects.
- *
+ * <p>
  * PO - Parser Output
- *
- * Notes: 
- *  - ?This is serializable from flink examples
- *  - The constructor can only take a serializable object, {@link ApiConfig}
- *
+ * <p>
+ * Notes:
+ * - ?This is serializable from flink examples
+ * - The constructor can only take a serializable object, {@link ApiConfig}
  */
-public class HttpSource<PO> extends RichSourceFunction <Message>{
+public class HttpSource<PO> extends RichSourceFunction<Message> {
 
-  private static final long serialVersionUID = 1L;
-  private volatile boolean running = true;
-  private HttpEntity httpEntity;
-  private ApiConfig apiConfig;
-  private Parser<PO> parser;
+    private static final long serialVersionUID = 1L;
+    private volatile boolean running = true;
+    private HttpEntity httpEntity;
+    private ApiConfig apiConfig;
+    private Parser<PO> parser;
 
+    private ScriptEngine engine;
+    private ScriptContext context;
 
-  private ContextFactory contextFactory;
-  private org.mozilla.javascript.Context jscontext;
-  private ScriptableObject scope;
+    transient CustomLogger logger;
 
-  private static final Logger LOGGER = LogManager.getLogger(HttpSource.class);
-  /**
-   * {@link HttpEntity} Constructor
-   * 
-   * @param ApiConfig Api configuration object
-   *
-   * Note: 
-   *   - Only set configuration here. Don't initialize {@link HttpEntity}.
-   *
-   * TODO: 
-   *  - Parser is prone to non-serializable params
-   */
-  public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
-    this.apiConfig = apiConfig;
-    this.parser = parser;
-  }
+    private transient Counter counter;
 
-  /**
-   * Retrieve stateful context info
-   * 
-   * @param Configuration Flink managed state configuration
-   *
-   * Note: 
-   *   - This is where {@link HttpEntity} must be initialized
-   */
-  @Override
-  public void open(Configuration config) throws Exception {
-    super.open(config);
-    httpEntity = new HttpEntity(apiConfig);
-
-  }
-
-  public void emitMessage(SourceContext<Message> ctx) {
-    
-    String smsg = httpEntity.getSerializedMessage();
-    if (smsg.isEmpty()) {
-      return;
+    /**
+     * {@link HttpEntity} Constructor
+     *
+     * @param apiConfig Api configuration object
+     *                  <p>
+     *                  Note:
+     *                  - Only set configuration here. Don't initialize {@link HttpEntity}.
+     *                  <p>
+     */
+    public HttpSource(ApiConfig apiConfig, Parser<PO> parser) {
+        this.apiConfig = apiConfig;
+        this.parser = parser;
     }
-    try {
-      PO msg = parser.parse(smsg);
-      /* Message array */
-      if (msg instanceof ArrayList) {
-        ArrayList<Message> message = (ArrayList<Message>) msg;
-        for (int i=0; i<message.size(); i++) {
-          Message m = (Message) message.get(i);
-          ctx.collectWithTimestamp(m, m.getEventTime());
-          ctx.emitWatermark(new Watermark(m.getEventTime()));
+
+    /**
+     * Retrieve stateful context info
+     *
+     * @param config Flink managed state configuration
+     *               <p>
+     *               Note:
+     *               - This is where {@link HttpEntity} must be initialized
+     */
+    @Override
+    public void open(Configuration config) throws Exception {
+        super.open(config);
+        ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+        String appName = parameters.toMap().get("appName");
+        logger = new CustomLogger(HttpSource.class, appName);
+        httpEntity = new HttpEntity(apiConfig, appName);
+
+        this.counter = getRuntimeContext()
+                .getMetricGroup()
+                .counter("HttpSourceCounter");
+
+        engine = new ScriptEngineManager().getEngineByName("nashorn");
+        context = new SimpleScriptContext();
+        context.setBindings(engine.createBindings(), ScriptContext.ENGINE_SCOPE);
+    }
+
+    public void emitMessage(SourceContext<Message> ctx) {
+        logger.info("Emitting source data");
+        this.counter.inc();
+        String serializedMessage = httpEntity.getSerializedMessage();
+        if (Objects.equals(serializedMessage, "") || serializedMessage.isEmpty()) {
+            return;
         }
-      } 
-      /* Single object */
-      if (msg instanceof Message) {
-        Message m = (Message) msg;
-        ctx.collectWithTimestamp(m, m.getEventTime());
-        ctx.emitWatermark(new Watermark(m.getEventTime()));
-      }
-    } catch (Exception e) {
-      LOGGER.debug(e);
-      // Do nothing
-    }
-
-  }
-
-  /**
-   * Forever loop with a delay
-   * 
-   * @param SourceContext ?Context
-   *
-   * TODOS:
-   *  - Is thread.sleep the best way?
-   *
-   */
-  @Override
-  public void run(SourceContext<Message> ctx) throws Exception {
-
-    // TODO: See if this breaks during runtime
-    // TODO: See why getting current context doesn't work here
-    contextFactory = ContextFactory.getGlobal();
-    jscontext = contextFactory.enterContext();
-    jscontext.setOptimizationLevel(9);
-    scope = jscontext.initStandardObjects();
-    
-    /* TODO: Better way of figuring out batch jobs */
-    if (apiConfig.pollingInterval == -1) {
-      makeApi(jscontext);
-      emitMessage(ctx);
-    }
-
-    else {
-      while (running) {
-        makeApi(jscontext);
-        emitMessage(ctx);
-        Thread.sleep(apiConfig.pollingInterval);
-      }
-    }
-  }
-
-  private void makeApi(Context cx) {
-    if (apiConfig.hasScript == true) {
-      for(int i=0; i<apiConfig.scripts.size(); i++) {
-        HashMap<String, String> mp = apiConfig.scripts.get(i);
-        if (mp.get("in").equals("url")) {
-
-          String val = Context.toString(cx.evaluateString(scope, 
-                                                mp.get("script"),
-                                                "script", 1, null));
-          httpEntity.setUrl(apiConfig.url.replace(mp.get("pattern"), val));
+        try {
+            PO msg = parser.parse(serializedMessage);
+            /* Message array */
+            if (msg instanceof ArrayList) {
+                ArrayList<Message> message = (ArrayList<Message>) msg;
+                for (int i = 0; i < message.size(); i++) {
+                    Message m = (Message) message.get(i);
+                    ctx.collectWithTimestamp(m, m.getEventTime());
+                    ctx.emitWatermark(new Watermark(m.getEventTime()));
+                }
+            }
+            /* Single object */
+            if (msg instanceof Message) {
+                Message m = (Message) msg;
+                ctx.collectWithTimestamp(m, m.getEventTime());
+                ctx.emitWatermark(new Watermark(m.getEventTime()));
+            }
+        } catch (Exception e) {
+            // Do nothing
+            logger.error("[HttpSource] Error emitting source data", e);
         }
-        if (mp.get("in").equals("body")) {
-          String val = Context.toString(cx.evaluateString(scope, 
-                                                mp.get("script"),
-                                                "script", 1, null));
-
-          httpEntity.setUrl(apiConfig.body.replace(mp.get("pattern"), val));
-        }
-      }
 
     }
-  }
 
-  @Override
-  public void cancel() {
+    /**
+     * Forever loop with a delay
+     *
+     * @param ctx ?Context
+     *            <p>
+     *            TODOS:
+     *            - Is thread.sleep the best way?
+     */
+    @Override
+    public void run(SourceContext<Message> ctx) throws Exception {
+        /* TODO: Better way of figuring out batch jobs */
+        if (apiConfig.pollingInterval == -1) {
+            makeApi(context);
+            emitMessage(ctx);
+        } else {
+            while (running) {
+                makeApi(context);
+                emitMessage(ctx);
+                Thread.sleep(apiConfig.pollingInterval);
+            }
+        }
+    }
 
-  }
+    private void makeApi(ScriptContext cx) throws ScriptException {
+        if (apiConfig.hasScript) {
+            for (int i = 0; i < apiConfig.scripts.size(); i++) {
+                HashMap<String, String> mp = apiConfig.scripts.get(i);
+                if (mp.get("in").equals("url")) {
+                    String val = engine.eval(mp.get("script"), cx).toString();
+                    httpEntity.setUrl(apiConfig.url.replace(mp.get("pattern"), val));
+                }
+                if (mp.get("in").equals("body")) {
+                    String val = engine.eval(mp.get("script"), cx).toString();
+
+                    httpEntity.setUrl(apiConfig.body.replace(mp.get("pattern"), val));
+                }
+            }
+
+        }
+    }
+
+    @Override
+    public void cancel() {
+
+    }
 
 }

@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.sink;
 
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import in.org.iudx.adaptor.utils.HttpEntity;
 import in.org.iudx.adaptor.codegen.ApiConfig;
@@ -21,7 +22,7 @@ public class HttpSink extends RichSinkFunction<String> {
   /**
    * Retrieve stateful context info
    * 
-   * @param Configuration Flink managed state configuration
+   * @param config Flink managed state configuration
    *
    * Note: 
    *   - This is where {@link HttpEntity} must be initialized
@@ -29,7 +30,9 @@ public class HttpSink extends RichSinkFunction<String> {
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
-    httpEntity = new HttpEntity(apiConfig);
+    ExecutionConfig.GlobalJobParameters parameters = getRuntimeContext().getExecutionConfig().getGlobalJobParameters();
+    String appName = parameters.toMap().get("appName");
+    httpEntity = new HttpEntity(apiConfig, appName);
   }
 
   /* TODO: handle different http methods */

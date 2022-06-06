@@ -1,24 +1,68 @@
 package in.org.iudx.adaptor.logger;
-import org.apache.log4j.*;
 
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
-public class CustomLogger extends Logger {
+public class CustomLogger {
 
-    static String FQCN = CustomLogger.class.getName() + ".";
-    static String jobID;
+    private static Logger logger;
+    private String jobID = null;
 
-    public CustomLogger(String name, String jobID) {
-        super(name);
+    public CustomLogger(Class clazz) {
+        logger = LogManager.getLogger(clazz);
+    }
+
+    public CustomLogger(Class clazz, String jobID) {
+        logger = LogManager.getLogger(clazz);
         this.jobID = jobID;
     }
 
-    public static Logger getLogger(Class name) {
-        StackTraceElement trace[] = Thread.currentThread().getStackTrace();
-        return Logger.getLogger(name.getName(), new CustomLoggerFactory(trace[trace.length - 2].getClassName()));
+    public void info(Object message) {
+        if (this.jobID != null) {
+            logger.info("[{}] - {}", this.jobID, message);
+        } else {
+            logger.info(message);
+        }
     }
 
-    public void info(Object message) {
-        super.log(FQCN, Level.INFO, this.jobID + " - " + message, null);
+    public void info(Object message, Throwable t) {
+        if (this.jobID != null) {
+            logger.info("[{}] - {}", this.jobID, message, t);
+        } else {
+            logger.info(message, t);
+        }
+    }
+
+    public void error(Object message) {
+        if (this.jobID != null) {
+            logger.error("[{}] - {}", this.jobID, message);
+        } else {
+            logger.error(message);
+        }
+    }
+
+    public void error(Object message, Throwable t) {
+        if (this.jobID != null) {
+            logger.error("[{}] - {}", this.jobID, message, t);
+        } else {
+            logger.error(message, t);
+        }
+    }
+
+    public void debug(Object message) {
+        if (this.jobID != null) {
+            logger.debug("[{}] - {}", this.jobID, message);
+        } else {
+            logger.debug(message);
+        }
+    }
+
+    public void debug(Object message, Throwable t) {
+        if (this.jobID != null) {
+            logger.debug("[{}] - {}", this.jobID, message, t);
+        } else {
+            logger.debug(message, t);
+        }
     }
 
 }
