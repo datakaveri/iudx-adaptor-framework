@@ -1,0 +1,52 @@
+{
+	"version": "1.0",
+	"modules": [
+		{
+			"id": "in.org.iudx.adaptor.server.Server",
+			"ssl": false,
+			"port": 8080,
+			"ip": "127.0.0.1",
+			"keystorePath": "configs/keystore.jks",
+			"keystorePassword": "password",
+			"verticleInstances": 1,
+            "jarOutPath": "upload-jar",
+			"adminAuth": {
+				"username": "user",
+				"password": "user-password"
+			},
+            "quartzPropertiesPath": "../configs/quartz.test.properties",
+			"flinkOptions": {
+				"port": 8081,
+				"host": "localhost",
+				"ssl": false,
+				"timeout": 10000
+			}
+		},
+		{
+			"id": "in.org.iudx.adaptor.server.flink.FlinkClientVerticle",
+			"verticleInstances": 1,
+			"flinkOptions": {
+				"port": 8081,
+				"host": "localhost",
+				"ssl": false,
+				"timeout": 10000
+			}
+		},
+		{
+			"id": "in.org.iudx.adaptor.server.codegeninit.CodegenInitVerticle",
+            "templatePath": "template",
+            "jarOutPath": "upload-jar",
+			"verticleInstances": 1
+		},
+		{
+			"id": "in.org.iudx.adaptor.server.database.DatabaseVerticle",
+			"verticleInstances": 1,
+			"databaseUser":"root",
+			"databasePassword": "adaptor@db",
+			"databseHost":"localhost",
+            "databasePort": 15432,
+            "databaseName":"iudx-adaptor",
+            "databasePoolSize":10
+		}
+	]
+}
