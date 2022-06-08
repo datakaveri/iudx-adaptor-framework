@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: default
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:13
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: TZ
+              value: Asia/Kolkata
+            - name: POSTGRES_DB
+              value: iudx-adaptor
+            - name: POSTGRES_PASSWORD
+              value: adaptor@db
+            - name: POSTGRES_USER
+              value: root
+          volumeMounts:
+            - name: postgres-conf
+              mountPath: /docker-entrypoint-initdb.d
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+              subPath: postgres
+
+        - name: pgadmin
+          image: dpage/pgadmin4:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              value: "test@gmail.com"
+            - name: PGADMIN_DEFAULT_PASSWORD
+              value: "adaptor@pgadmin"
+      volumes:
+        - name: postgres-conf
+          configMap:
+            name: postgres-conf
+        - name: postgredb
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+
+
