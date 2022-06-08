@@ -1,0 +1,3 @@
+- RabbitMQ sink deployment, using Helm
+- The ```rmq-deployment.yaml``` is currently unused
+- Command to create the release: ```helm install rmq bitnami/rabbitmq --values rmq/values.yaml```
