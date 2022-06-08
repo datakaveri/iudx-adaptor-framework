@@ -1,0 +1,36 @@
+
+
+## MinIO Tenant Definition
+tenants:
+  # Tenant name
+  - name: minio1
+    ## Registry location and Tag to download MinIO Server image
+    image:
+      repository: minio/operator
+      tag: v4.3.8
+      pullPolicy: IfNotPresent
+    namespace: default
+    pools:
+      ## Servers specifies the number of MinIO Tenant Pods / Servers in this pool.
+      ## For standalone mode, supply 1. For distributed mode, supply 4 or more.
+      ## Note that the operator does not support upgrading from standalone to distributed mode.
+      - servers: 4
+        ## volumesPerServer specifies the number of volumes attached per MinIO Tenant Pod / Server.
+        volumesPerServer: 4
+        ## size specifies the capacity per volume
+        size: 1Gi
+        storageClassName: standard
+    secrets:
+      # create a kubernetes secret object with the accessKey and secretKey as defined here.
+      enabled: true
+      name: minio1-secret
+      accessKey: minio
+      secretKey: minio123
+    # pool metrics to be read by Prometheus
+#    metrics:
+#      enabled: false
+#      port: 9000
+    certificate:
+      ## Enable automatic Kubernetes based certificate generation and signing as explained in
+      ## https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster
+      requestAutoCert: false
