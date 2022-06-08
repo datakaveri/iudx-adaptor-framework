@@ -1,0 +1,28 @@
+promtail: 
+  kind: DaemonSet
+  name: promtail
+  labels:
+    app: promtail
+  podAnnotations:
+    prometheus.io/port: http-metrics
+    prometheus.io/scrape: "true"
+  container:
+    image: grafana/promtail:latest
+    port: http-metrics  
+  ServiceAccountName: promtail 
+  ClusterRole: promtail-role
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 50m
+      memory: 100Mi
+  terminationGracePeriod: 60
+
+
+
+
+
+
+

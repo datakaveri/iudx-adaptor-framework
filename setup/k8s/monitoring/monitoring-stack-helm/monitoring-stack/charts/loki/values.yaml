@@ -1,0 +1,24 @@
+loki: 
+  kind: StatefulSet 
+  name: loki
+  labels:
+    app: loki 
+  replicas: 1
+  serviceAccountName: loki
+  container: 
+    image: grafana/loki:2.1.0
+    port: http-metrics
+  terminationGracePeriod: 60
+  service:
+    name: loki
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "3100"
+
+
+
+
+
+
+
+

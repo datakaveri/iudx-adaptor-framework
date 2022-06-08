@@ -1,0 +1,88 @@
+---
+apiVersion: apps/v1
+kind: {{ .Values.promtail.kind }}
+metadata:
+  namespace: {{ .Values.global.namespace }}
+  name: {{ .Values.promtail.name}}
+  {{- with .Values.promtail.labels }}
+  labels:
+    {{- toYaml .  | nindent 4 }}
+  {{- end}}
+spec:
+  selector:
+    {{- with .Values.promtail.labels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end}}
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      {{- with .Values.promtail.labels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end}}
+      {{- with .Values.promtail.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end}}
+    spec:
+      serviceAccount: {{ .Values.promtail.ServiceAccountName }}
+      serviceAccountName:  {{ .Values.promtail.ServiceAccountName }}
+      containers:
+        - name: {{ .Values.promtail.name}}
+          image: {{ .Values.promtail.container.image }}
+          imagePullPolicy: IfNotPresent
+          args:
+          - -config.file=/etc/promtail/config.yaml
+          env:
+          - name: HOSTNAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          ports:
+            - name: {{ .Values.promtail.container.port}}
+              containerPort: 3200
+              protocol: TCP
+          resources:
+            limits:
+              cpu: {{ .Values.promtail.resources.limits.cpu }}
+              memory: {{ .Values.promtail.resources.limits.memory}}
+            requests:
+              cpu: {{ .Values.promtail.resources.requests.cpu}}
+              memory: {{.Values.promtail.resources.requests.memory}}
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.promtail.container.port}}
+            initialDelaySeconds: 45
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Values.promtail.container.port}}
+            initialDelaySeconds: 45
+          volumeMounts:
+          - name: config
+            mountPath: /etc/promtail
+          - name: run
+            mountPath: /run/promtail
+          - mountPath: /var/lib/docker/containers
+            name: docker
+            readOnly: true
+          - mountPath: /var/log/pods
+            name: pods
+            readOnly: true
+      terminationGracePeriodSeconds: {{ .Values.promtail.terminationGracePeriod}}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.promtail.name }}
+        - name: run
+          hostPath:
+            path: /run/promtail
+        - hostPath:
+            path: /var/lib/docker/containers
+          name: docker
+        - hostPath:
+            path: /var/log/pods
+          name: pods

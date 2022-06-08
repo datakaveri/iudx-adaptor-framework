@@ -1,0 +1,47 @@
+nodeExporter:
+  name: node-exporter
+  image: prom/node-exporter
+  labels:
+    component: exporter
+    app: node-exporter
+    name: node-exporter
+  podAnnotations:
+    prometheus.io/scrape: "true"    
+  kind: DaemonSet
+  securityContext:
+    privileged: true
+  args:
+    - --path.procfs
+    - /host/proc
+    - --path.sysfs
+    - /host/sys
+    - --collector.filesystem.ignored-mount-points
+    - '"^/(sys|proc|dev|host|etc)($|/)"'
+  volumeMounts:
+    - name: dev
+      mountPath: /host/dev
+    - name: proc
+      mountPath: /host/proc
+    - name: sys
+      mountPath: /host/sys
+    - name: rootfs
+      mountPath: /rootfs
+  volumes:
+    - name: proc
+      hostPath:
+        path: /proc
+    - name: dev
+      hostPath:
+        path: /dev
+    - name: sys
+      hostPath:
+        path: /sys
+    - name: rootfs
+      hostPath:
+        path: /
+  ports:
+    number: 9100
+  service:
+    type: ClusterIP
+    port: 9100
+    name: node-exporter

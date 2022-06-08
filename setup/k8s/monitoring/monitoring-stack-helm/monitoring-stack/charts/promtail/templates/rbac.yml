@@ -1,0 +1,32 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.promtail.ClusterRole }}
+rules:
+  - apiGroups: [""]
+    resources:
+    - nodes
+    - services
+    - pods
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.promtail.ServiceAccountName }}
+  namespace: {{ .Values.global.namespace }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promtail-clusterrolebinding
+subjects:
+    - kind: ServiceAccount
+      name: {{ .Values.promtail.ServiceAccountName }}
+      namespace: {{ .Values.global.namespace }}
+roleRef:
+    kind: ClusterRole
+    name: {{ .Values.promtail.ClusterRole }}
+    apiGroup: rbac.authorization.k8s.io

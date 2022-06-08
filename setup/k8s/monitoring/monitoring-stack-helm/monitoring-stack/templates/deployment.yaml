@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.grafana.name}}
+  namespace: {{ .Values.namespace }}
+  {{- with .Values.grafana.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}   
+
+spec:
+  replicas: {{ .Values.grafana.replicas }}
+  selector:
+    {{- with .Values.grafana.labels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end}}
+  template:
+    metadata:
+#      {{- with .Values.podAnnotations }}
+#      annotations:
+#        {{- toYaml . | nindent 8 }}
+#      {{- end }}
+      {{- with .Values.grafana.labels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end}}
+    spec:
+      securityContext:
+        {{- toYaml .Values.grafana.SecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.grafana.name }}
+          securityContext:
+            {{- toYaml .Values.grafana.containerSecurityContext | nindent 12 }}
+          image: {{ .Values.grafana.image }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.grafana.ports.name }}
+              containerPort: {{ .Values.grafana.ports.port }}
+              protocol: TCP
+          volumeMounts:
+          - name: datasource
+            mountPath: /etc/grafana/provisioning/datasources
+          - name: dashboard
+#            mountPath: /usr/share/grafana/public/dashboards
+            mountPath: /etc/grafana/provisioning/dashboards
+
+      volumes:
+        - name: datasource
+          configMap:
+            name: {{ .Values.grafana.configmap.name}}
+            items:
+              - key: datasource
+                path: datasource.yml
+        - name: dashboard
+          configMap:
+            name: {{ .Values.grafana.configmap.name}}
+            items:
+              - key: dashboard.json
+                path: dashboard.json
+              - key: dashboard
+                path: dashboard.yml
+            
+ #         livenessProbe:
+ #           httpGet:
+ #             path: /
+ #             port: http
+ #         readinessProbe:
+ #           httpGet:
+ #             path: /
+ #             port: http
+
+
+#       - ./monitor/grafana.ini:/etc/grafana/grafana.ini
+ #     - ./monitor/dashboard.json:/etc/dashboard.json
+#      - ./monitor/provision.yml:/etc/grafana/provisioning/datasources/datasource.yml
+#      - ./monitor/dashboards/:/etc/grafana/provisioning/dashboards/

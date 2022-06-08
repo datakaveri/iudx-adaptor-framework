@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: {{ .Values.nodeExporter.kind}}
+metadata:
+  name:  {{ .Values.nodeExporter.name }}
+  namespace: {{ .Values.global.namespace }}
+  {{- with .Values.nodeExporter.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}    
+spec:
+  selector:
+    {{- with .Values.nodeExporter.labels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  template:
+    metadata:
+      {{- with .Values.nodeExporter.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- toYaml .Values.nodeExporter.labels | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.nodeExporter.name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.nodeExporter.image }}

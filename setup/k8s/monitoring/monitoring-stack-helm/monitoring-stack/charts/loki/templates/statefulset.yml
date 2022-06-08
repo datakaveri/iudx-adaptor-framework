@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: {{ .Values.loki.kind}}
+metadata:
+  namespace: {{ .Values.global.namespace }}
+  name: {{ .Values.loki.name }}
+  {{- with .Values.loki.labels }}
+  labels:
+    {{- toYaml .  | nindent 4 }}
+  {{- end}}
+spec:
+  volumeClaimTemplates: []
+  podManagementPolicy: OrderedReady
+  replicas: {{ .Values.loki.replicas }}
+  selector:
+    {{- with .Values.loki.labels }}
+    matchLabels:
+      {{- toYaml . | nindent 6 }}
+    {{- end}}
+  serviceName: {{ .Values.loki.service.name}}-headless
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      {{- with .Values.loki.labels }}
+      labels:
+        {{- toYaml . | nindent 8 }}
+      {{- end}}
+      
+      annotations:
+        prometheus.io/port: http-metrics
+        prometheus.io/scrape: "true"
+    spec:
+#      serviceAccountName: prometheus 
+      securityContext:
+        fsGroup: 10001
+        runAsGroup: 10001
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: {{ .Values.loki.name }}
+          image: {{ .Values.loki.container.image}} 
+          imagePullPolicy: IfNotPresent
+          args:
+            - "-config.file=/etc/loki/loki.yaml"
+          volumeMounts:
+            - name: config
+              mountPath: "/etc/loki"            
+            - name: storage
+              mountPath: /data
+            - name: db
+              mountPath: /db
+          ports:
+            - name: {{ .Values.loki.container.port}}
+              containerPort: 3100
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 45
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http-metrics
+            initialDelaySeconds: 45
+          securityContext:
+            readOnlyRootFilesystem: false
+      terminationGracePeriodSeconds: {{ .Values.loki.terminationGracePeriod}}
+      volumes:
+        - name: config
+          configMap: 
+            name: loki
+        - name: storage
+          emptyDir: {}
+        - name: db
+          emptyDir: {}

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.grafana.configmap.name }}
+  namespace: {{ .Values.global.namespace }}
+data:
+  grafana.ini: |-
+{{ .Files.Get "grafana.ini" | indent 4}}
+  datasource: |-
+{{ .Files.Get "datasource.yml" | indent 4}}
+  dashboard.json: |-
+{{ .Files.Get "home.json" | indent 4}}
+  dashboard: |-
+{{ .Files.Get "dashboard.yml" | indent 4 }}
+  
