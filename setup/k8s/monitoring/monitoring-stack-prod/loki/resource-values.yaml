@@ -1,0 +1,29 @@
+nodeSelector:
+  node.kubernetes.io/instance-type: t3.medium
+
+resources:
+  limits:
+   cpu: 1800m
+   memory: 3.8Gi
+  requests:
+   cpu: 1500m
+   memory: 3.5Gi
+## ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+## If you set enabled as "True", you need :
+## - create a pv which above 10Gi and has same namespace with loki
+## - keep storageClassName same with below setting
+persistence:
+  enabled: true
+  accessModes:
+  - ReadWriteOnce
+  size: 60Gi
+  storageClassName: "ebs-storage-class"
+  annotations: 
+  # selector:
+  #   matchLabels:
+  #     app.kubernetes.io/name: loki
+  volumeBindingMode: "WaitForFirstConsumer"
+  reclaimPolicy: "Delete"
+  # subPath: ""
+  # existingClaim:
+
