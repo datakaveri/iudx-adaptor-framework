@@ -1,0 +1,32 @@
+nodeSelector:
+  node.kubernetes.io/instance-type: t3.medium
+resources: 
+  limits: 
+    cpu: 600m
+    memory: 1.5Gi
+  requests:
+    cpu: 300m
+    memory: 1Gi
+
+## Enable persistence using Persistent Volume Claims
+## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+persistence:
+  type: pvc
+  enabled: true
+  storageClassName: "ebs-storage-class"
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  # annotations: {}
+  finalizers:
+    - kubernetes.io/pvc-protection
+  volumeBindingMode: "WaitForFirstConsumer"
+  reclaimPolicy: "Delete"
+  inMemory:
+    enabled: false
+    ## The maximum usage on memory medium EmptyDir would be
+    ## the minimum value between the SizeLimit specified
+    ## here and the sum of memory limits of all containers in a pod
+    ##
+                        
