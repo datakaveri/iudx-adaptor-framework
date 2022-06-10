@@ -1,6 +1,6 @@
 config:
   clients:
-    - url: http://loki.monitoring:3100/loki/api/v1/push
+    - url: http://loki.mon-stack.svc.cluster.local:3100/loki/api/v1/push
   snippets:
     pipelineStages:
       - json:
@@ -8,10 +8,27 @@ config:
             log: log
             stream: stream
             docker_time: time
-      - regex: 
-          expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})? ?(?P<message>(?s:.*))
-          source: log
+      - regex:
+        expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[(?P<level>.*?)\] (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[.*?(?P<status_code>\d+?)\])?-?(\[.*?-(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+        source: log
       - labels:
+          context:
+          adaptor_id:
+          level:
+          stream:
+          tag:
+          status_code:
+          http_error_summary:
           message:
+
       - output:
           source: log
+
+
+resources: 
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 50Mi
