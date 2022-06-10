@@ -1,0 +1,28 @@
+service:
+  type: ClusterIP
+  nodePort:
+  port: 3100
+  annotations: {}
+  labels: {}
+  targetPort: http-metrics
+
+nodeSelector:
+  node.kubernetes.io/instance-type: t3.medium
+
+resources:
+  limits:
+   cpu: 1800m
+   memory: 3.8Gi
+  requests:
+   cpu: 1500m
+   memory: 3.5Gi
+
+persistence:
+  enabled: true
+  accessModes:
+  - ReadWriteOnce
+  size: 60Gi
+  storageClassName: "ebs-storage-class"
+  annotations:
+  volumeBindingMode: "WaitForFirstConsumer"
+  reclaimPolicy: "Delete"

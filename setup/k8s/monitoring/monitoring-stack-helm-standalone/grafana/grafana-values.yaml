@@ -1,0 +1,67 @@
+service:
+  enabled: true
+  type: LoadBalancer
+  port: 80
+  targetPort: 3000
+  annotations: {}
+  labels: {}
+  portName: service
+
+ingress:
+  enabled: false
+  annotations: 
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "5"
+    nginx.ingress.kubernetes.io/global-rate-limit: "100"
+    nginx.ingress.kubernetes.io/global-rate-limit-window: "1s"
+    nginx.ingress.kubernetes.io/global-rate-limit-key: "$server_name"
+  labels: {}
+  path: /
+
+  pathType: Prefix
+
+  hosts:
+    - adaptor-logs.iudx.io
+  extraPaths: []
+
+  tls:
+   - secretName: grafana-tls-secret
+     hosts:
+      - adaptor-logs.iudx.io
+
+nodeSelector:
+  node.kubernetes.io/instance-type: t3.medium
+resources: 
+  limits: 
+    cpu: 600m
+    memory: 1.5Gi
+  requests:
+    cpu: 300m
+    memory: 1Gi
+
+persistence:
+  type: pvc
+  enabled: true
+  storageClassName: "ebs-storage-class"
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi
+  # annotations: {}
+  finalizers:
+    - kubernetes.io/pvc-protection
+  volumeBindingMode: "WaitForFirstConsumer"
+  reclaimPolicy: "Delete"
+  inMemory:
+    enabled: false
+
+datasources:
+  datasources.yaml: 
+    apiVersion: 1
+    deleteDatasources:
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: "http://loki.mon-stack.svc.cluster.local:3100/"
