@@ -1,0 +1,17 @@
+config:
+  clients:
+    - url: http://loki.monitoring:3100/loki/api/v1/push
+  snippets:
+    pipelineStages:
+      - json:
+          expressions:
+            log: log
+            stream: stream
+            docker_time: time
+      - regex: 
+          expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})? ?(?P<message>(?s:.*))
+          source: log
+      - labels:
+          message:
+      - output:
+          source: log
