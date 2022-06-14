@@ -12,35 +12,40 @@ import in.org.iudx.adaptor.utils.JSProcess;
 public class TransformSpecEndpoint {
     public static final Logger LOGGER = LogManager.getLogger(TransformSpecEndpoint.class);
 
-    private JsonPathParser jsonPathParser;
     private JSPathProcess jsPathProcess;
     private JSProcess jsProcess;
 
     public String msg;
+    public Message message = new Message();
+
 
     public TransformSpecEndpoint() {
 
     }
 
     public String run(String inputData, JsonObject spec) {
-        String messageContainer = spec.getString("type");
-        if(messageContainer.equals("js")) {
-//            jsProcess = new JSProcess(spec.toString());
-            jsonPathParser = new JsonPathParser<Message>(spec.toString());
-            try {
-                msg = jsProcess.process(jsonPathParser);
-            } catch (Exception e) {
-                return e.getMessage();
-            }
-        } else if (messageContainer.equals("jsPath")) {
-            jsPathProcess = new JSPathProcess(spec.toString());
-            try {
-                msg = jsPathProcess.process(spec).toString();
-            } catch (Exception e) {
-               return e.getMessage();
-            }
-        } else if (messageContainer.equals("jolt")) {
-            // TODO: Response for Jolt spec
+        String specType = spec.getString("type");
+        message.setResponseBody(inputData);
+        switch (specType) {
+            case "js":
+                try {
+                    msg = jsProcess.process(message);
+                } catch (Exception e) {
+                    return e.getMessage();
+                }
+                break;
+            case "jsPath":
+                try {
+                    msg = jsPathProcess.process(message);
+                } catch (Exception e) {
+                    return e.getMessage();
+                }
+                break;
+            case "jolt":
+                // TODO: Response for Jolt spec
+                break;
+            default:
+                return "Invalid argument provided. Supported types are 'js', 'jsPath' & 'jolt'";
         }
         return msg;
     }

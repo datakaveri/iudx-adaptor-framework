@@ -341,17 +341,19 @@ public class Server extends AbstractVerticle {
 
     router.post(TRANSFORM_SPEC_ROUTE)
             .handler(AdminAuthHandler.create(authCred))
-                    .handler(routingContext -> {
-                      HttpServerResponse response = routingContext.response();
-                      JsonObject jsonBody = routingContext.getBodyAsJson();
-                      LOGGER.debug(jsonBody);
-                      JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
-                      String inputData = jsonBody.getString("inputData");
-                      String resp = tse.run(inputData, transformSpec);
-                      JsonObject r = new JsonObject().put("success", true)
-                              .put("message", "Successfully executed transform spec")
-                              .put("result", resp);
-                    });
+            .handler(routingContext -> {
+                HttpServerResponse response = routingContext.response();
+                JsonObject jsonBody = routingContext.getBodyAsJson();
+                LOGGER.debug(jsonBody);
+                JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
+                String inputData = jsonBody.getString("inputData");
+                String resp = tse.run(inputData, transformSpec);
+                JsonObject r = new JsonObject().put("success", true)
+                        .put("message", "Successfully executed transform spec")
+                        .put("result", resp);
+                response.setStatusCode(200)
+                        .end(r.toString());
+            });
 
 
     /* Start server */
