@@ -66,6 +66,7 @@ public class Constants {
   /* Spec test routes */
   public static final String INPUT_SPEC_ROUTE = "/onboard/run-input-spec";
   public static final String PARSE_SPEC_ROUTE = "/onboard/run-parse-spec";
+  public static final String TRANSFORM_SPEC_ROUTE = "/onboard/run-transform=spec";
 
   /** Response messages */
   public static final String MESSAGE = "message";
