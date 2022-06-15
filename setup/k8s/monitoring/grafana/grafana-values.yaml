@@ -64,4 +64,4 @@ datasources:
       - name: Loki
         type: loki
         access: proxy
-        url: "http://loki.mon-stack.svc.cluster.local:3100/"
+        url: "http://loki.adaptor-framework.svc.cluster.local:3100/"
