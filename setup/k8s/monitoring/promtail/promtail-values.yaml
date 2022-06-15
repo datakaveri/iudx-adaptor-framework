@@ -24,6 +24,9 @@ config:
       - output:
           source: log
 
+nodeSelector:
+  node.kubernetes.io/instance-type: t3.medium
+  target.application: adaptor-framework
 
 resources: 
   limits:
