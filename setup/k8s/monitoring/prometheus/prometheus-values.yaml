@@ -17,7 +17,7 @@ nodeExporter:
 extraScrapeConfigs: |
   - job_name: "flink"
     static_configs:
-      - targets: ["10.43.193.128:9250", "10.43.157.126:9250"]
+      - targets: ["flink-metrics.adaptor-framework.svc.cluster.local:9250", "	flink-tm-metrics.adaptor-framework.svc.cluster.local:9250"]
       - labels:
           name: flink_taskmanager_job_task_operator_value_histogram
 
