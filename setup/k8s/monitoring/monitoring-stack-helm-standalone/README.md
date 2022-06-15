@@ -4,6 +4,8 @@ minikube tunnel
 
 helm repo add grafana https://grafana.github.io/helm-charts
 
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
 helm repo update
 
 
@@ -21,6 +23,9 @@ helm install grafana grafana/grafana -n monitoring -f grafana/grafana-values.yam
 helm install loki grafana/loki -n monitoring -f loki/loki-values.yaml
 
 helm install promtail grafana/promtail -n monitoring -f promtail/promtail-values.yaml
+
+helm install prometheus prometheus-community/prometheus -n monitoring -f prometheus/prometheus-values.yaml
+
 
 
 Grafana
@@ -44,4 +49,12 @@ kubectl --namespace monitoring port-forward daemonset/promtail 3101
 curl http://127.0.0.1:3101/metrics
 
 
-helm upgrade promtail grafana/promtail -n monitoring -f promtail/promtail-values.yaml
+Prometheus - 
+
+prometheus-server.mon-stack.svc.cluster.local
+
+export POD_NAME=$(kubectl get pods --namespace mon-stack -l "app=prometheus,component=server" -o jsonpath="{.items[0].metadata.name}")
+kubectl --namespace mon-stack port-forward $POD_NAME 9090
+
+
+helm upgrade promtail grafana/promtail -n mon-stack -f promtail/promtail-values.yaml

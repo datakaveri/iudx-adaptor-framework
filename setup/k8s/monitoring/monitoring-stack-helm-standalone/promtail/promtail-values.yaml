@@ -9,8 +9,8 @@ config:
             stream: stream
             docker_time: time
       - regex:
-        expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[(?P<level>.*?)\] (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[.*?(?P<status_code>\d+?)\])?-?(\[.*?-(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
-        source: log
+          expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[.*?(?P<status_code>\d+?)\])?-?(\[.*?-(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+          source: log
       - labels:
           context:
           adaptor_id:
