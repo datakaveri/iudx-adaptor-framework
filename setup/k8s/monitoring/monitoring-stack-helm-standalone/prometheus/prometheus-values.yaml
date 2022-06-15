@@ -1,0 +1,33 @@
+server:
+  nodeSelector:
+    target.application: adaptor-framework
+
+  persistentVolume:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    mountPath: /data
+    size: 30Gi
+    storageClass: "ebs-storage-class"
+
+nodeExporter:
+  nodeSelector:
+    target.application: adaptor-framework
+
+extraScrapeConfigs: |
+  - job_name: "flink"
+    static_configs:
+      - targets: ["10.43.193.128:9250", "10.43.157.126:9250"]
+      - labels:
+          name: flink_taskmanager_job_task_operator_value_histogram
+
+serverFiles:
+  recording_rules.yml:
+    groups:
+      - name: flink
+        rules:
+          - alert: FlinkTaskManagerMissing
+            expr: count(flink_taskmanager_Status_JVM_CPU_Time) < 2
+            for: 1m
+            annotations:
+              summary: Fewer Flink TaskManagers than expected are running.
