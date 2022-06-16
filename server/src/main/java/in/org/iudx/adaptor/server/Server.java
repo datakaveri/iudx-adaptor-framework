@@ -81,7 +81,6 @@ public class Server extends AbstractVerticle {
 
     InputSpecEndpoint ise = new InputSpecEndpoint();
     ParseSpecEndpoint pse = new ParseSpecEndpoint();
-    TransformSpecEndpoint tse = new TransformSpecEndpoint();
 
     if (isSsl) {
       serverOptions.setSsl(true)
@@ -347,7 +346,8 @@ public class Server extends AbstractVerticle {
                 LOGGER.debug(jsonBody);
                 JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
                 String inputData = jsonBody.getString("inputData");
-                String resp = tse.run(inputData, transformSpec);
+                TransformSpecEndpoint tse = new TransformSpecEndpoint(transformSpec);
+                String resp = tse.run(inputData);
                 JsonObject r = new JsonObject().put("success", true)
                         .put("message", "Successfully executed transform spec")
                         .put("result", resp);

@@ -41,7 +41,7 @@ public class TransformSpecEndpointTest {
                         )
                 );
 
-        String inputData = new JsonArray()
+        String inputData = new JsonObject().put("inputData", new JsonArray()
                 .add(new JsonObject()
                         .put("id", "123")
                         .put("k", 1.5)
@@ -51,11 +51,11 @@ public class TransformSpecEndpointTest {
                         .put("id", "4356")
                         .put("k", 2.5)
                         .put("time", "2021-04-01T12:00:01+05:30")
-                ).toString();
+                )).toString();
 
-        TransformSpecEndpoint tse = new TransformSpecEndpoint();
+        TransformSpecEndpoint tse = new TransformSpecEndpoint(spec);
         try {
-            String res = tse.run(inputData, spec);
+            String res = tse.run(inputData);
             LOGGER.debug(res);
         } catch(Exception e) {
             LOGGER.debug(e);
