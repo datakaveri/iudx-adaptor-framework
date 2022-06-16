@@ -1,6 +1,7 @@
 package in.org.iudx.adaptor.server.specEndpoints;
 
 import in.org.iudx.adaptor.datatypes.Message;
+import in.org.iudx.adaptor.utils.JSProcess;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +17,8 @@ public class TransformSpecEndpoint {
     public Message message = new Message();
     private String transformSpec;
 
-    private  JsonObject transformSpecJson;
+    private JsonObject transformSpecJson;
+
 
     public TransformSpecEndpoint(JsonObject transformSpec) {
         this.transformSpec = transformSpec.toString();
@@ -29,7 +31,9 @@ public class TransformSpecEndpoint {
         switch (specType) {
             case "js":
                 try {
-
+                    JSProcess jsProcess = new JSProcess(this.transformSpec);
+                    jsProcess.initializeScriptEngine();
+                    msg = jsProcess.process(message);
                 } catch (Exception e) {
                     return e.getMessage();
                 }
@@ -37,13 +41,13 @@ public class TransformSpecEndpoint {
             case "jsPath":
                 try {
                     JSPathProcess jsPathProcess = new JSPathProcess(this.transformSpec);
-
                     msg = jsPathProcess.process(message);
+                    System.out.println("msg " + msg);
                 } catch (Exception e) {
                     return e.getMessage();
                 }
                 break;
-            case "jolt":
+            case "jolt":;
                 // TODO: Response for Jolt spec
                 break;
             default:

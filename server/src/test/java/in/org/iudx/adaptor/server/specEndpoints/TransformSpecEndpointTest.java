@@ -29,11 +29,7 @@ public class TransformSpecEndpointTest {
                                 .put("outputKeyPath", "$.co2.avgOverTime")
                                 .put("inputValuePath", "$.k1")
                         )
-                        .add(new JsonObject()
-                                .put("outputKeyPath", "$.name")
-                                .put("inputValuePath", "$.k2")
-                                .put("regexFilter", "^(?!.*reject).*")
-                        )
+
                         .add(new JsonObject()
                                 .put("outputKeyPath", "$.id")
                                 .put("inputValuePath", "$.deviceId")
@@ -41,17 +37,10 @@ public class TransformSpecEndpointTest {
                         )
                 );
 
-        String inputData = new JsonObject().put("inputData", new JsonArray()
-                .add(new JsonObject()
-                        .put("id", "123")
-                        .put("k", 1.5)
-                        .put("time", "2021-04-01T12:00:01+05:30")
-                )
-                .add(new JsonObject()
-                        .put("id", "4356")
-                        .put("k", 2.5)
-                        .put("time", "2021-04-01T12:00:01+05:30")
-                )).toString();
+        String inputData = new JsonObject()
+                        .put("deviceId", "abc-123")
+                        .put("k1", "a")
+                        .put("time", "2021-04-01T12:00:01+05:30").toString();
 
         TransformSpecEndpoint tse = new TransformSpecEndpoint(spec);
         try {
