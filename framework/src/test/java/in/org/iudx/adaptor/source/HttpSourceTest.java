@@ -102,7 +102,7 @@ public class HttpSourceTest {
             }
         });
         try {
-            handle.get(30, TimeUnit.SECONDS);
+            handle.get(10, TimeUnit.SECONDS);
         } catch (TimeoutException | ExecutionException e) {
             handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
         }

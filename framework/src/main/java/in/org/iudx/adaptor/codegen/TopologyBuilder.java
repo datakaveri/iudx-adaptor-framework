@@ -1,7 +1,12 @@
 package in.org.iudx.adaptor.codegen;
 
 
-import in.org.iudx.adaptor.process.*;
+import in.org.iudx.adaptor.process.BoundedProcessFunction;
+import in.org.iudx.adaptor.process.GenericProcessFunction;
+import in.org.iudx.adaptor.process.JSPathProcessFunction;
+import in.org.iudx.adaptor.process.JSProcessFunction;
+import in.org.iudx.adaptor.process.JoltTransformer;
+import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -11,9 +16,6 @@ import javax.lang.model.element.Modifier;
 
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.JavaFile;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.TypeName;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.MethodSpec.Builder;
 
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
@@ -27,14 +29,11 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.source.HttpSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import in.org.iudx.adaptor.source.JsonPathParser;
-import in.org.iudx.adaptor.codegen.ApiConfig;
 import in.org.iudx.adaptor.sink.AMQPSink;
-import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 import java.util.List;
 import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.processing.Filer;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -72,14 +71,14 @@ public class TopologyBuilder {
                 .returns(void.class)
                 .addParameter(String[].class, "args");
 
-        HashMap<String,String> propertyMap = new HashMap<String, String>();
+        HashMap<String, String> propertyMap = new HashMap<String, String>();
 
         // TODO: Replace this with unique app name
         mainBuilder.addStatement("$T<String,String> propertyMap = new $T<String,String>()",
-                                    HashMap.class, HashMap.class);
+                HashMap.class, HashMap.class);
         mainBuilder.addStatement("propertyMap.put($S, $S)", "appName", tc.name);
         mainBuilder.addStatement("$T parameters = $T.fromMap(propertyMap)", ParameterTool.class,
-                                                                      ParameterTool.class);
+                ParameterTool.class);
 
         /* Variables */
         mainBuilder
@@ -93,10 +92,10 @@ public class TopologyBuilder {
         }
 
 
-        if (tc.hasFailureRecovery){ 
-          failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
+        if (tc.hasFailureRecovery) {
+            failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);
         } else {
-          failureRecoverySpecBuilder(mainBuilder, tc.inputSpec);
+            failureRecoverySpecBuilder(mainBuilder, tc.inputSpec);
         }
         inputSpecBuilder(mainBuilder, tc.inputSpec);
         parseSpecBuilder(mainBuilder, tc.parseSpec);
@@ -123,49 +122,49 @@ public class TopologyBuilder {
 
     private void failureRecoverySpecBuilder(Builder mainBuilder, JSONObject failureRecoverySpec, JSONObject inputSpec) {
 
-      if ("fixed-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
-        mainBuilder.addStatement(
-            "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
-            RestartStrategies.class,
-            failureRecoverySpec.getInt("attempts"),
-            Time.class,
-            failureRecoverySpec.getLong("delay"),
-            TimeUnit.class);
-      } else if("exponential-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
-        mainBuilder.addStatement(
-            "env.setRestartStrategy($T.exponentialDelayRestart($T.of($L, $T.MILLISECONDS), $T.of($L, $T.MILLISECONDS), $L, $T.of($L, $T.MILLISECONDS), $L))",
-            RestartStrategies.class,
-            Time.class,
-            failureRecoverySpec.getLong("initial-backoff"),
-            TimeUnit.class,
-            Time.class,
-            failureRecoverySpec.getLong("max-backoff"),
-            TimeUnit.class,
-            failureRecoverySpec.getDouble("backoff-multiplier"),
-            Time.class,
-            failureRecoverySpec.getLong("reset-backoff-threshold"),
-            TimeUnit.class,
-            failureRecoverySpec.getDouble("jitter-factor"));
-      }
+        if ("fixed-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+            mainBuilder.addStatement(
+                    "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+                    RestartStrategies.class,
+                    failureRecoverySpec.getInt("attempts"),
+                    Time.class,
+                    failureRecoverySpec.getLong("delay"),
+                    TimeUnit.class);
+        } else if ("exponential-delay".equalsIgnoreCase(failureRecoverySpec.getString("type"))) {
+            mainBuilder.addStatement(
+                    "env.setRestartStrategy($T.exponentialDelayRestart($T.of($L, $T.MILLISECONDS), $T.of($L, $T.MILLISECONDS), $L, $T.of($L, $T.MILLISECONDS), $L))",
+                    RestartStrategies.class,
+                    Time.class,
+                    failureRecoverySpec.getLong("initial-backoff"),
+                    TimeUnit.class,
+                    Time.class,
+                    failureRecoverySpec.getLong("max-backoff"),
+                    TimeUnit.class,
+                    failureRecoverySpec.getDouble("backoff-multiplier"),
+                    Time.class,
+                    failureRecoverySpec.getLong("reset-backoff-threshold"),
+                    TimeUnit.class,
+                    failureRecoverySpec.getDouble("jitter-factor"));
+        }
     }
 
     private void failureRecoverySpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
 
-      // if failure recovery strategy not specified, use fixed-delay strategy
-      // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
+        // if failure recovery strategy not specified, use fixed-delay strategy
+        // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
 
-      long delay = inputSpec.getLong("pollingInterval");
-      if (delay == -1L) {
-        delay = DEFAULT_RESTART_DELAY;
-      }
+        long delay = inputSpec.getLong("pollingInterval");
+        if (delay == -1L) {
+            delay = DEFAULT_RESTART_DELAY;
+        }
 
-      mainBuilder.addStatement(
-          "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
-          RestartStrategies.class,
-          DEFAULT_RESTART_ATTEMPTS,
-          Time.class,
-          delay,
-          TimeUnit.class);
+        mainBuilder.addStatement(
+                "env.setRestartStrategy($T.fixedDelayRestart($L, $T.of($L, $T.MILLISECONDS)))",
+                RestartStrategies.class,
+                DEFAULT_RESTART_ATTEMPTS,
+                Time.class,
+                delay,
+                TimeUnit.class);
     }
 
     // TODO: Why are we building api config like this instead of directly passing json
@@ -332,7 +331,7 @@ public class TopologyBuilder {
                                     + ".process(new $T(dedup))"
                                     + ".flatMap(new $T(transformSpec))",
                             SingleOutputStreamOperator.class, Message.class,
-                            Message.class, GenericProcessFunction.class, 
+                            Message.class, GenericProcessFunction.class,
                             JSProcessFunction.class);
                 }
             }

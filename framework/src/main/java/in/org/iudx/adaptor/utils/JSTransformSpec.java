@@ -1,4 +1,4 @@
-package in.org.iudx.adaptor.process;
+package in.org.iudx.adaptor.utils;
 
 import java.io.Serializable;
 
