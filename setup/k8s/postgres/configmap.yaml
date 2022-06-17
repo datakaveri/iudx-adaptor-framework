@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-conf
-  namespace: default
+  namespace: adaptor-framework
 data:
   adaptor-init.sql: |
     -- https://github.com/quartz-scheduler/quartz/blob/master/quartz-core/src/main/resources/org/quartz/impl/jdbcjobstore/tables_postgres.sql
@@ -253,4 +253,4 @@ data:
     CREATE INDEX IDX_QRTZ_FT_T_G
       ON QRTZ_FIRED_TRIGGERS (SCHED_NAME, TRIGGER_NAME, TRIGGER_GROUP);
     CREATE INDEX IDX_QRTZ_FT_TG
-      ON QRTZ_FIRED_TRIGGERS (SCHED_NAME, TRIGGER_GROUP); 
+      ON QRTZ_FIRED_TRIGGERS (SCHED_NAME, TRIGGER_GROUP);

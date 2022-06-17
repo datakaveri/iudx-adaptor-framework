@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-deployment
-  namespace: default
+  namespace: adaptor-framework
   labels:
     app: postgres
 spec:
@@ -52,5 +52,3 @@ spec:
         - name: postgredb
           persistentVolumeClaim:
             claimName: postgres-pvc
-
-
