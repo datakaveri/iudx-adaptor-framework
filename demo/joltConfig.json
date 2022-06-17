@@ -1,0 +1,43 @@
+{
+    "name": "joltjob",
+
+    "inputSpec": {
+        "type": "http",
+        "url": "http://mockserver.adaptor-framework.svc.cluster.local:8080/simpleB",
+        "requestType": "GET",
+        "pollingInterval": 1000
+    },
+
+    "parseSpec": {
+        "type": "json",
+        "messageContainer": "array",
+        "containerPath": "$.data",
+        "keyPath": "$.deviceId",
+        "timestampPath": "$.time"
+    },
+    
+    "deduplicationSpec": {
+        "type": "timeBased"
+    },
+    
+    "transformSpec": {
+        "type": "jolt",
+        "joltSpec": [
+            { "operation": "shift", "spec": 
+                { "time": "observationDateTime", "deviceId": "id", "k1": "k1" } },
+            { "operation": "modify-overwrite-beta", "spec": 
+                { "id": "=concat('datakaveri.org/123/', id)" } }
+        ]
+    },
+
+    "publishSpec": {
+        "type": "rmq",
+        "url": "amqp://rmq-rabbitmq",
+        "port": 5672,
+        "uname": "guest",
+        "password": "guest",
+        "sinkName": "adaptor-test",
+        "tagName": "test"
+    }
+}
+

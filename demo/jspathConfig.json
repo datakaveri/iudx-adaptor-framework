@@ -1,0 +1,54 @@
+{
+    "name": "jsPathJob",
+
+    "inputSpec": {
+        "type": "http",
+        "url": "http://mockserver.adaptor-framework.svc.cluster.local:8080/simpleB",
+        "requestType": "GET",
+        "pollingInterval": 1000
+    },
+
+    "parseSpec": {
+        "type": "json",
+        "messageContainer": "array",
+        "containerPath": "$.data",
+        "keyPath": "$.deviceId",
+        "timestampPath": "$.time",
+        "inputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ssXXX"
+    },
+    
+    "deduplicationSpec": {
+        "type": "timeBased"
+    },
+    
+    "transformSpec": {
+        "type": "jsPath",
+        "template": "{ 'observationDateTime': '2021', 'co2': { 'avgOverTime': 100}, 'id': 'abc'}",
+        "jsonPathSpec": [
+            {
+                "outputKeyPath": "$.observationDateTime",
+                "inputValuePath": "$.time"
+            },
+            {
+                "outputKeyPath": "$.co2.avgOverTime",
+                "inputValuePath": "$.k1"
+            },
+            {
+                "outputKeyPath": "$.id",
+                "inputValuePath": "$.deviceId",
+                "valueModifierScript": "value.split('-')[0]"
+            }
+        ]
+    },
+
+    "publishSpec": {
+        "type": "rmq",
+        "url": "amqp://rmq-rabbitmq",
+	"port": 5672,
+        "uname": "guest",
+        "password": "guest",
+        "sinkName": "adaptor-test",
+        "tagName": "test"
+    }
+}
