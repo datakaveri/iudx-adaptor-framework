@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rmq-deployment
+  namespace: adaptor-framework
   labels:
     app: rmq
 spec:
@@ -23,11 +24,12 @@ spec:
               value: "-rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
           volumeMounts:
             - mountPath: /etc/rabbitmq/definitions.json
-              name: rmq-conf
+              name: rmq-volume
           ports:
             - containerPort: 5672
             - containerPort: 15672
       volumes:
-        - name: rmq-conf
-          configMap:
-            name: rmq-conf
+        - name: rmq-volume
+          hostPath:
+            path: /home/krithik/Desktop/Git/iudx-adaptor-framework/setup/rmq/mock-rmq.json
+            type: File
