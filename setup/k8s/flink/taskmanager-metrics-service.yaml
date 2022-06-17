@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # This name uniquely identifies the service
+  name: flink-tm-metrics
+  namespace: adaptor-framework
+spec:
+  type: ClusterIP   
+  ports:
+    - port: 9250
+      targetPort: 9250
+      protocol: TCP
+  selector:
+    app: flink-cluster
+    component: taskmanager
+    type: flink-native-kubernetes

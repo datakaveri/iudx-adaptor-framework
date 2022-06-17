@@ -1,0 +1,71 @@
+kubernetes.cluster-id: flink-adaptor-cluster
+
+jobmanager.rpc.address: localhost
+taskmanager.numberOfTaskSlots: 5
+service-account: flink-service-account
+
+# The total process memory size for the JobManager.
+# Note this accounts for all memory usage within the JobManager process, including JVM metaspace and other overhead.
+jobmanager.memory.process.size: 1000Mb
+kubernetes.jobmanager.cpu: 0.5
+
+# The total process memory size for the TaskManager.
+# Note this accounts for all memory usage within the TaskManager process, including JVM metaspace and other overhead.
+kubernetes.taskmanager.cpu: 0.5
+taskmanager.memory.process.size: 1500Mb
+#taskmanager.memory.task.heap.size: 600Mb
+#taskmanager.memory.managed.size: 200Mb
+
+# Default is 300000 (5 min), but since the EC2 instances were usually taking > 5min to provision, increase the timeout 
+# With the slotmanager.redundant-taskmanager-num set as non zero, it's not necessary to set this
+slot.request.timeout: 600000
+
+# Default value is 30s, but it would cause redundant task manager to keep spinning up until the first redundant TM
+# changes from pending -> running state
+resourcemanager.taskmanager-timeout: 600000
+
+# slotmanager.redundant-taskmanager-num: 1
+
+# restart-delay
+# If checkpointing is disabled, the default value is none.
+# If checkpointing is enabled, the default value is fixed-delay with Integer.MAX_VALUE restart attempts and '1 s' delay.
+
+restart-strategy: exponential-delay
+restart-strategy.exponential-delay.max-backoff: 60 min
+#restart-strategy: fixed-delay
+#restart-strategy.fixed-delay.attempts: 20 # default = 1
+#restart-strategy.fixed-delay.delay: 30 s # default = 1 s
+
+state.backend: hashmap
+state.checkpoint-storage: filesystem
+state.checkpoints.dir: s3://state/checkpoints
+state.savepoints.dir: s3://state/savepoints
+
+s3.endpoint: http://minio-service:9000
+s3.path.style.access: true
+s3.access-key: minio
+s3.secret-key: minio123
+
+presto.s3.access-key: minio
+presto.s3.secret-key: minio123
+presto.s3.endpoint: http://minio-service:9000
+presto.s3.path-style-access: true
+
+high-availability: org.apache.flink.kubernetes.highavailability.KubernetesHaServicesFactory
+high-availability.storageDir: s3://recovery/
+
+metrics.reporters: prom
+metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+metrics.reporter.prom.port: 9250
+
+#kubernetes.jobmanager.node-selector:
+#  node.kubernetes.io/instance-type: t3.medium
+#  target.application: adaptor-framework
+#kubernetes.taskmanager.node-selector:
+#  node.kubernetes.io/instance-type: t3.medium
+#  target.application: adaptor-framework
+
+kubernetes.jobmanager.node-selector: node.kubernetes.io/instance-type:t3.medium,target.application: adaptor-framework
+kubernetes.taskmanager.node-selector: node.kubernetes.io/instance-type: t3.medium,target.application: adaptor-framework
+
+kubernetes.namespace: adaptor-framework
