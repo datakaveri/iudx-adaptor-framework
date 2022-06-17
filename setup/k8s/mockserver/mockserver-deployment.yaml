@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mockserver-deployment
+  namespace: adaptor-framework
+  labels:
+    app: mockserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mockserver
+  template:
+    metadata:
+      labels:
+        app: mockserver
+    spec:
+      containers:
+        - name: mockserver
+          image: datakaveri/adaptor-mockserver:latest
+          imagePullPolicy: IfNotPresent
+          command: [ "java" ]
+          args: [ "-jar", "mockserver/target/mockserver.jar" ]
+          ports:
+            - containerPort: 8080
+
