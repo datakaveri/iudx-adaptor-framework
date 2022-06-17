@@ -1,0 +1,1 @@
+python3 start_adaptor.py $1 local
