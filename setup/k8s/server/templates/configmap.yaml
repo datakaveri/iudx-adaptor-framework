@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: server-configmap
-  namespace: default
+  namespace: adaptor-framework
 data:
   config.json: |
     {
@@ -44,7 +44,7 @@ data:
           "verticleInstances": 1,
           "databaseUser": "root",
           "databasePassword": "adaptor@db",
-          "databseHost": "postgressvc",
+          "databseHost": "postgressvc.adaptor-framework.svc.cluster.local",
           "databasePort": 5432,
           "databaseName": "iudx-adaptor",
           "databasePoolSize": 5
@@ -62,6 +62,6 @@ data:
     org.quartz.jobStore.dataSource = quartzDS
 
     org.quartz.dataSource.quartzDS.driver = org.postgresql.Driver
-    org.quartz.dataSource.quartzDS.URL = jdbc:postgresql://postgressvc:5432/iudx-adaptor
+    org.quartz.dataSource.quartzDS.URL = jdbc:postgresql://postgressvc.adaptor-framework.svc.cluster.local:5432/iudx-adaptor
     org.quartz.dataSource.quartzDS.user = root
     org.quartz.dataSource.quartzDS.password = adaptor@db

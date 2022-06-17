@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: "{{ include "adaptor-server.fullname" . }}-test-connection"
+  namespace: adaptor-server
   labels:
     {{- include "adaptor-server.labels" . | nindent 4 }}
   annotations:
