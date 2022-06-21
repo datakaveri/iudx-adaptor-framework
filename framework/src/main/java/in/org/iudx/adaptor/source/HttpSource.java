@@ -91,7 +91,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     }
 
     public void emitMessage(SourceContext<Message> ctx) {
-        logger.info("Emitting source data");
+        logger.info("Executing http source");
         this.counter.inc();
         String serializedMessage = httpEntity.getSerializedMessage();
         if (Objects.equals(serializedMessage, "") || serializedMessage.isEmpty()) {
@@ -104,6 +104,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
                 ArrayList<Message> message = (ArrayList<Message>) msg;
                 for (int i = 0; i < message.size(); i++) {
                     Message m = (Message) message.get(i);
+                    logger.info("[event_key - " + m.key + "] Emitting event from http source");
                     ctx.collectWithTimestamp(m, m.getEventTime());
                     ctx.emitWatermark(new Watermark(m.getEventTime()));
                 }
@@ -111,6 +112,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
             /* Single object */
             if (msg instanceof Message) {
                 Message m = (Message) msg;
+                logger.info("[event_key - " + m.key + "] Emitting event from http source");
                 ctx.collectWithTimestamp(m, m.getEventTime());
                 ctx.emitWatermark(new Watermark(m.getEventTime()));
             }

@@ -39,7 +39,7 @@ scrape_configs:
       container_id:
 
   - regex:
-      expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}) \[(?P<level>.*?)\] (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[.*?(?P<status_code>\d+?)\])?-?(\[.*?-(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+      expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[(event_key - )(?P<event_key>.*?)\])? ?-? ?(\[(status_code - )(?P<status_code>\d{3})\])? ?-? ?(\[(summary - )(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
       source: output
   - labels:
       context:
