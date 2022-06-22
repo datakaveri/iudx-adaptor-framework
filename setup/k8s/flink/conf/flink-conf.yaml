@@ -36,7 +36,7 @@ restart-strategy.exponential-delay.max-backoff: 60 min
 #restart-strategy.fixed-delay.attempts: 20 # default = 1
 #restart-strategy.fixed-delay.delay: 30 s # default = 1 s
 
-state.backend: hashmap
+state.backend: rocksdb
 state.checkpoint-storage: filesystem
 state.checkpoints.dir: s3://state/checkpoints
 state.savepoints.dir: s3://state/savepoints
