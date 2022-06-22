@@ -20,6 +20,7 @@ config:
           status_code:
           http_error_summary:
           message:
+          event_key:
 
       - output:
           source: log

@@ -50,6 +50,7 @@ scrape_configs:
       status_code:
       http_error_summary:
       message:
+      event_key:
 
   - timestamp:
       format: RFC3339Nano
