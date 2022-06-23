@@ -13,10 +13,9 @@ if (dest == "local"):
 config = { "username":"testuser", "password":"testuserpassword" }
 
 
-
 headers = {
-  'username': 'user',
-  'password': 'user-password',
+  'username': 'admin',
+  'password': 'admin',
   'Content-Type': 'application/json'
 }
 
