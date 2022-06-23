@@ -6,7 +6,7 @@ helm repo update
 
 kubectl create namespace adaptor-framework
 
-helm install --version=6:30.0 grafana grafana/grafana -n adaptor-framework -f grafana/grafana-values.yaml --set "type=LoadBalancer"
+helm install --version=6.30.0 grafana grafana/grafana -n adaptor-framework -f grafana/grafana-values.yaml --set "type=LoadBalancer"
 
 helm install loki grafana/loki -n adaptor-framework -f loki/loki-values.yaml
 
