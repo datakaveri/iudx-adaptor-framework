@@ -52,7 +52,7 @@ public class PreAuth {
 
     HttpServerResponse response = routingContext.response();
 
-    String timeNow = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+    String timeNow = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
                               .withZone(ZoneOffset.UTC)
                               .format(Instant.now());
 
