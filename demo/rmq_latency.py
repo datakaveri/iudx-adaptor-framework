@@ -1,6 +1,5 @@
-from asyncio import current_task
 import pika, sys, os, json
-from dateutil import parser
+from dateutil import tz
 import time
 from datetime import datetime
 
@@ -15,7 +14,11 @@ def main():
         if routing_key == method.routing_key:
             data = json.loads(body.decode())
             current_time = time.time()
-            obsereved_time = datetime.strptime(data['observationDateTime'], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+            obsereved_time = datetime.strptime(data['observationDateTime'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            from_zone = tz.tzutc()
+            to_zone = tz.tzlocal()
+            utc_time = obsereved_time.replace(tzinfo=from_zone)
+            obsereved_time = utc_time.astimezone(to_zone).timestamp()
             print(current_time - obsereved_time)
             
 
