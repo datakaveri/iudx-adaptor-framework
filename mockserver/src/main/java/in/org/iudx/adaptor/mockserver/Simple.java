@@ -59,7 +59,7 @@ public class Simple {
 
     HttpServerResponse response = routingContext.response();
 
-    String timeNow = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+    String timeNow = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
                               .withZone(ZoneOffset.UTC)
                               .format(Instant.now());
 
@@ -105,7 +105,7 @@ public class Simple {
 
     for (int i=0; i<10; i++) {
       JsonObject tmp = new JsonObject();
-      String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+      String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
                                 .withZone(ZoneOffset.UTC)
                                 .format(Instant.now().minusSeconds(10L + i));
       tmp.put("time", t);

@@ -47,7 +47,7 @@ public class Complex {
     HttpServerResponse response = routingContext.response();
 
 
-    String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+    String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
       .withZone(ZoneOffset.UTC)
       .format(Instant.now().minusSeconds(10L));
 
@@ -94,7 +94,7 @@ public class Complex {
     HttpServerResponse response = routingContext.response();
 
 
-    String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+    String t = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
       .withZone(ZoneOffset.UTC)
       .format(Instant.now().minusSeconds(10L));
 
