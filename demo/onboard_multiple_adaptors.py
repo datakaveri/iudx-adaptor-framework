@@ -29,6 +29,7 @@ headers = {
 job_name = config["name"]
 for i in range(0,no_jobs):
     config["name"] = job_name+string.ascii_uppercase[i]
+    config["publishSpec"]["tagName"] = config["name"]
     response = requests.request("POST", url, headers=headers, data=json.dumps(config))
 
     if (response.status_code == 202):
