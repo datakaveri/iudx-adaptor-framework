@@ -7,20 +7,14 @@ The schema of the publishSpec is as shown below. **Bold** implies that the prope
 
 - type(String): 
   - rmq (RabbitMQ)
-- url(String): Fully qualified URL with protocol information but without port and authentication information. For e.g amqps://databroker.iudx.org.in
-- port(Integer): Port
-- uname(String): Username
-- password(String): Password
+- uri(String): Fully qualified URI with protocol information including port, vhost and authentication information. For e.g amqps://user:password@databroker.iudx.org.in:24567/vhostname
 - sinkName(String): The RMQ exchange name
 - tagName(String): The RMQ routing key
 
 ``` 
 {
     "type": "<rmq>"
-    "url": "<url with protocol no port>",
-    "port": <port>,
-    "uname": "<uname>",
-    "password": "<password>",
+    "uri": "<uri with protocol, uname, password, vhostinfo, etc>",
     "sinkName": "<exchange name>",
     "tagName": "<routing key>"
 }
