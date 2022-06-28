@@ -285,12 +285,8 @@ public class TopologyBuilder {
                     StaticStringPublisher.class,
                     publishSpec.getString("sinkName"),
                     publishSpec.getString("tagName"));
-            mainBuilder.addStatement("rmqConfig.builder.setUri($S)"
-                            + ".setPort($L).setUserName($S).setPassword($S)",
-                    publishSpec.getString("url"),
-                    publishSpec.getInt("port"),
-                    publishSpec.getString("uname"),
-                    publishSpec.getString("password"));
+            mainBuilder.addStatement("rmqConfig.builder.setUri($S)",
+                                          publishSpec.getString("uri"));
             mainBuilder.addStatement("rmqConfig.getConfig()");
 
         }

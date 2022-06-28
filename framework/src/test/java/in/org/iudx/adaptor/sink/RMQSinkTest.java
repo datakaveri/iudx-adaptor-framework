@@ -99,10 +99,7 @@ public class RMQSinkTest {
 
    RMQConfig amqconfig = new RMQConfig(); 
    amqconfig.setPublisher(new StaticStringPublisher("adaptor-test", "test"));
-   amqconfig.builder.setUri("amqp://localhost")
-                    .setPort(5672)
-                    .setUserName("guest")
-                    .setPassword("guest");
+   amqconfig.builder.setUri("amqp://guest:guest@localhost:5672/");
    amqconfig.getConfig();
                       
 

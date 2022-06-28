@@ -6,7 +6,7 @@ networks:
 
 services:
   server:
-    image: iudx/adaptor-server:latest
+    image: datakaveri/adaptor-server:2.3.3
     ports:
       - "8080:8080"
     networks: 
