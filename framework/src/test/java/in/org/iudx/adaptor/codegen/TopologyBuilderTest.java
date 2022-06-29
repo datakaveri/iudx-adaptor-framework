@@ -105,17 +105,17 @@ public class TopologyBuilderTest {
 
   }
 
-//  @Test
-//  void temp() throws Exception {
-//
-//    TopologyConfig top = new TopologyConfig(
-//            new String(
-//                    Files.readAllBytes(
-//                            Paths.get(
-//                                    "src/test/java/in/org/iudx/adaptor/codegen/t.json"))));
-//
-//    TopologyBuilder builder = new TopologyBuilder(top);
-//    builder.gencode();
-//
-//  }
+ @Test
+ void temp() throws Exception {
+
+   TopologyConfig top = new TopologyConfig(
+           new String(
+                   Files.readAllBytes(
+                           Paths.get(
+                                   "src/test/java/in/org/iudx/adaptor/codegen/temp.json"))));
+
+   TopologyBuilder builder = new TopologyBuilder(top);
+   builder.gencode();
+
+ }
 }
