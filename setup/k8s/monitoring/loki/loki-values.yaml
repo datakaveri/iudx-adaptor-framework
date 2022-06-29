@@ -3,6 +3,13 @@ config:
     retention_deletes_enabled: true
     retention_period: 72h
 
+  query_scheduler:
+    max_outstanding_requests_per_tenant: 2048
+
+  query_range:
+    parallelise_shardable_queries: false
+    split_queries_by_interval: 0
+
 service:
   type: ClusterIP
   nodePort:
