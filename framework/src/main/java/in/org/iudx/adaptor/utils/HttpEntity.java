@@ -60,7 +60,7 @@ public class HttpEntity {
         requestBuilder = HttpRequest.newBuilder();
 
         HttpClient.Builder clientBuilder = HttpClient.newBuilder();
-        clientBuilder.version(Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10));
+        clientBuilder.version(Version.HTTP_2).connectTimeout(Duration.ofSeconds(10));
 
         if (apiConfig.url != null) {
             requestBuilder.uri(URI.create(apiConfig.url));
@@ -79,7 +79,7 @@ public class HttpEntity {
         requestBuilder = HttpRequest.newBuilder();
 
         HttpClient.Builder clientBuilder = HttpClient.newBuilder();
-        clientBuilder.version(Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10));
+        clientBuilder.version(Version.HTTP_2).connectTimeout(Duration.ofSeconds(10));
 
         if (apiConfig.url != null) {
             requestBuilder.uri(URI.create(apiConfig.url));
