@@ -77,9 +77,13 @@ public class JacksonTest {
         }
 
         if (firstToken == JsonToken.START_OBJECT) {
-            Message data = mapper.readValue(jsonParser, Message.class);
-            System.out.println(data);
-            System.out.println(data.getEventTime());
+            while (jsonParser.nextToken() != JsonToken.END_OBJECT) {
+                System.out.println(jsonParser.currentName());
+                jsonParser.nextToken();
+                System.out.println(jsonParser.getText());
+            }
+//            Message data = mapper.readValue(jsonParser, Message.class);
+//            System.out.println(data);
         }
     }
 }

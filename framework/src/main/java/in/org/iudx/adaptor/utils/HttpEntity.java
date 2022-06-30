@@ -113,7 +113,7 @@ public class HttpEntity {
      * - This is the method which deals with responses Raw
      */
     public String getSerializedMessage() {
-
+        requestBuilder.timeout(Duration.ofSeconds(apiConfig.requestTimeout));
         if (apiConfig.requestType.equals("GET")) {
             httpRequest = requestBuilder.build();
         } else if (apiConfig.requestType.equals("POST")) {

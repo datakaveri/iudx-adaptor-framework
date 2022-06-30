@@ -24,6 +24,7 @@ public class ApiConfig implements Serializable {
   public String url;
   public String body;
   public String requestType = "GET";
+  public long requestTimeout = 10;
   public String keyingProperty;
   public String timeIndexingProperty;
   public long pollingInterval;
@@ -55,6 +56,11 @@ public class ApiConfig implements Serializable {
     return this;
   }
 
+  public ApiConfig setRequestTimeout(long requestTimeout) {
+    this.requestTimeout = requestTimeout;
+    return this;
+  }
+
   public ApiConfig setPollingInterval(long pollingInterval) {
     this.pollingInterval = pollingInterval;
     return this;
@@ -65,6 +71,7 @@ public class ApiConfig implements Serializable {
     this.requestType = requestType;
     return this;
   }
+
 
   public String[] getHeaderString() {
     List<String> headerList = new ArrayList<String>();

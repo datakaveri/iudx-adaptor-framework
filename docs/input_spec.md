@@ -30,6 +30,7 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
   is a Map between a String key and a String value. Each object of the array contains
   - **key**(String): Key of the header
   - **value**(String): Value of the header
+- requestTimeout(Long): Set the request timeout in seconds. Default is set to 10 seconds
 - boundedJob(Boolean): Set the value to be true for scheduled jobs (bounded jobs)
 - minioConfig(Object): For scheduled bounded jobs state will be maintained in minio
   - **url**(String) : Minio host URL

@@ -19,6 +19,7 @@ public final class InputSpecEndpoint {
   public String run(JsonObject spec) {
     String url = spec.getString("url");
     String reqType = spec.getString("requestType");
+
     ApiConfig apiconf = new ApiConfig().setUrl(url)
                                     .setRequestType(reqType)
                                     .setPollingInterval(1000);
@@ -45,6 +46,10 @@ public final class InputSpecEndpoint {
 
     if (spec.containsKey("postBody")) {
       apiconf.setBody(spec.getString("postBody"));
+    }
+
+    if (spec.containsKey("requestTimeout")) {
+      apiconf.setRequestTimeout(spec.getLong("requestTimeout"));
     }
 
 

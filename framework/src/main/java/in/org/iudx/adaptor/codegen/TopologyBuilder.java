@@ -203,6 +203,10 @@ public class TopologyBuilder {
                 mainBuilder.addStatement("apiConfig.setBody($S)", inputSpec.getString("postBody"));
             }
 
+            if (inputSpec.has("requestTimeout")) {
+                mainBuilder.addStatement("apiConfig.setRequestTimeout($L)", inputSpec.getLong("requestTimeout"));
+            }
+
             if (inputSpec.has("boundedJob")) {
                 JSONObject minioConfigSpec = inputSpec.getJSONObject("minioConfig");
 
