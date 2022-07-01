@@ -45,7 +45,7 @@ public class JSPathProcessFunction extends RichFlatMapFunction<Message, Message>
     public void flatMap(Message msg, Collector<Message> out) throws Exception {
         /* Update state with current message if not done */
 
-        logger.info("Transforming data");
+        logger.debug("Transforming data");
         try {
             String output = this.jsPathProcess.process(msg);
             if (!Objects.equals(output, "")) {
