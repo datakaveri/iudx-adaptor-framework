@@ -46,11 +46,11 @@ public class AMQPSink extends RMQSink<Message> {
     @Override
     public void invoke(Message value, Context context) throws Exception {
         try {
-            logger.info("[event_key - " + value.key + "] publishing event to sink");
+            logger.debug("[event_key - " + value.key + "] publishing event to sink");
             super.invoke(value, context);
             this.counter.inc();
         } catch (Exception e) {
-            logger.error("Failed to publish to sink");
+            logger.error("Failed to publish to sink",e);
             throw e;
         }
 
