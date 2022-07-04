@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.server;
 
+import in.org.iudx.adaptor.server.specEndpoints.TransformSpecEndpoint;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
@@ -104,7 +105,8 @@ public class Server extends AbstractVerticle {
     
     router.route().handler(
         CorsHandler.create("*")
-                   .allowedHeaders(ALLOWED_HEADERS));
+                   .allowedHeaders(ALLOWED_HEADERS)
+    );
 
     /* Sumbit Jar Route */
     router.post(JAR_ROUTE)
@@ -336,6 +338,23 @@ public class Server extends AbstractVerticle {
             response.setStatusCode(200)
                             .end(r.toString());
           });
+
+    router.post(TRANSFORM_SPEC_ROUTE)
+            .handler(AdminAuthHandler.create(authCred))
+            .handler(routingContext -> {
+                HttpServerResponse response = routingContext.response();
+                JsonObject jsonBody = routingContext.getBodyAsJson();
+                LOGGER.debug(jsonBody);
+                JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
+                String inputData = jsonBody.getString("inputData");
+                TransformSpecEndpoint tse = new TransformSpecEndpoint(transformSpec);
+                String resp = tse.run(inputData);
+                JsonObject r = new JsonObject().put("success", true)
+                        .put("message", "Successfully executed transform spec")
+                        .put("result", resp);
+                response.setStatusCode(200)
+                        .end(r.toString());
+            });
 
 
     /* Start server */
