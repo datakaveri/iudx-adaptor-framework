@@ -105,7 +105,8 @@ public class Server extends AbstractVerticle {
     
     router.route().handler(
         CorsHandler.create("*")
-                   .allowedHeaders(ALLOWED_HEADERS));
+                   .allowedHeaders(ALLOWED_HEADERS)
+    );
 
     /* Sumbit Jar Route */
     router.post(JAR_ROUTE)

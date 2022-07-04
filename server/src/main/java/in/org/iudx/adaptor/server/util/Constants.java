@@ -1,5 +1,7 @@
 package in.org.iudx.adaptor.server.util;
 
+import io.vertx.core.http.HttpMethod;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
@@ -23,6 +25,11 @@ public class Constants {
 
   /** Accept Headers and CORS */
   public static final String HEADER_ACCEPT = "Accept";
+  public static final String HEADER_USERNAME = "username";
+  public static final String HEADER_PASSWORD = "password";
+  public static final String HEADER_GET = "GET";
+  public static final String HEADER_POST = "POST";
+  public static final String HEADER_OPTIONS = "OPTIONS";
   public static final String HEADER_TOKEN = "token";
   public static final String HEADER_CONTENT_LENGTH = "Content-Length";
   public static final String HEADER_CONTENT_TYPE = "Content-Type";
@@ -32,7 +39,7 @@ public class Constants {
   public static final String HEADER_REFERER = "Referer";
   public static final String HEADER_CORS = "Access-Control-Allow-Origin";
   public static final Set<String> ALLOWED_HEADERS =
-      new HashSet<String>(Arrays.asList(HEADER_ACCEPT, HEADER_TOKEN, HEADER_CONTENT_LENGTH,
+      new HashSet<String>(Arrays.asList(HEADER_ACCEPT, HEADER_USERNAME, HEADER_PASSWORD, HEADER_GET, HEADER_POST, HEADER_OPTIONS, HEADER_TOKEN, HEADER_CONTENT_LENGTH,
           HEADER_CONTENT_TYPE, HEADER_HOST, HEADER_ORIGIN, HEADER_REFERER, HEADER_CORS));
 
   /** Mime Type */

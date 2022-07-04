@@ -3,7 +3,7 @@ import requests
 
 
 data = { "outerkey": "outerkeyval",
-        "data": [ { "time": "2022-06-02 14:29:10Z", "k1": "701", "deviceId": "abc-123" },
+        "data": [ { "time": "20220602 14:29:10Z", "k1": "701", "deviceId": "abc-123" },
                     { "time": "2022-06-02'T'14:29:10Z", "k1": "701", "deviceId": "abc-123" }]}
 
 parsespec = { "timestampPath": "$.time", "messageContainer": "array",
