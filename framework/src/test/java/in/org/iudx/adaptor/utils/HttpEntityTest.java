@@ -51,4 +51,15 @@ public class HttpEntityTest {
         LOGGER.error("invalidAuthSimpleGet :" + httpEntity.getSerializedMessage());
     }
 
+    @Test
+    void longApiCallTest() throws InterruptedException {
+        ApiConfig apiConfig =
+                new ApiConfig().setUrl("http://127.0.0.1:8888/longWaitApi")
+                        .setRequestType("GET")
+                        .setPollingInterval(1000L);
+
+        HttpEntity httpEntity = new HttpEntity(apiConfig, "unit_test");
+        LOGGER.info("LongApiCall :" + httpEntity.getSerializedMessage());
+    }
+
 }

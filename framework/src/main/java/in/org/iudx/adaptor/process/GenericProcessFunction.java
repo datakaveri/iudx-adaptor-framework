@@ -81,7 +81,7 @@ public class GenericProcessFunction
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
-        logger.info("[event_key - " + msg.key + "] Processing event");
+        logger.debug("[event_key - " + msg.key + "] Processing event");
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
         if (previousMessage == null) {

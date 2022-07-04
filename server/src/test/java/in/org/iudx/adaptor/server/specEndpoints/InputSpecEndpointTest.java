@@ -12,34 +12,35 @@ import in.org.iudx.adaptor.utils.HttpEntity;
 
 public class InputSpecEndpointTest {
 
-  private static final Logger LOGGER = LogManager.getLogger(InputSpecEndpointTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(InputSpecEndpointTest.class);
 
-  @BeforeAll
-  public static void intialize() {
-  }
+    @BeforeAll
+    public static void intialize() {
+    }
 
-  @Test
-  void testInputSpec() throws InterruptedException {
-    JsonObject spec = new JsonObject();
-    spec.put("type", "http")
-        .put("url", "http://127.0.0.1:8888/simpleA")
-        .put("requestType", "GET")
-        .put("pollingInterval", 1000L);
+    @Test
+    void testInputSpec() throws InterruptedException {
+        JsonObject spec = new JsonObject();
+        spec.put("type", "http")
+                .put("url", "http://127.0.0.1:8888/simpleA")
+                .put("requestType", "GET")
+                .put("pollingInterval", 1000L)
+                .put("requestTimeout", 20L);
 
-    InputSpecEndpoint ise = new InputSpecEndpoint();
-    String res = ise.run(spec);
-    LOGGER.debug(res);
-  }
+        InputSpecEndpoint ise = new InputSpecEndpoint();
+        String res = ise.run(spec);
+        LOGGER.debug(res);
+    }
 
-  @Test
-  void testHttpEntity() throws InterruptedException {
-    ApiConfig apiConfig = 
-      new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
-                                          .setRequestType("GET")
-                                          .setPollingInterval(1000L);
+    @Test
+    void testHttpEntity() throws InterruptedException {
+        ApiConfig apiConfig =
+                new ApiConfig().setUrl("http://127.0.0.1:8888/simpleA")
+                        .setRequestType("GET")
+                        .setPollingInterval(1000L);
 
-    HttpEntity httpEntity = new HttpEntity(apiConfig);
-    LOGGER.info("SimpleGet :"+httpEntity.getSerializedMessage());
-  }
+        HttpEntity httpEntity = new HttpEntity(apiConfig);
+        LOGGER.info("SimpleGet :" + httpEntity.getSerializedMessage());
+    }
 
 }

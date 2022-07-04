@@ -15,11 +15,16 @@ nodeExporter:
     target.application: adaptor-framework
 
 extraScrapeConfigs: |
-  - job_name: "flink"
+  - job_name: "flink-job-manager"
     static_configs:
-      - targets: ["flink-metrics:9250", "flink-tm-metrics:9250"]
+      - targets: ["flink-metrics:9250"]
       - labels:
-          name: flink_taskmanager_job_task_operator_value_histogram
+          name: flink_taskmanager
+  - job_name: "flink-task-manager"
+    static_configs:
+      - targets: ["flink-tm-metrics:9250"]
+      - labels:
+          name: flinl_jobmanager
 
 serverFiles:
   recording_rules.yml:

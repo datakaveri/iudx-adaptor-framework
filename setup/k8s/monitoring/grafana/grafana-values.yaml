@@ -65,3 +65,7 @@ datasources:
         type: loki
         access: proxy
         url: "http://loki.adaptor-framework.svc.cluster.local:3100/"
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: "http://prometheus-server"
