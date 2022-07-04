@@ -31,9 +31,9 @@ With this, any java/script primitive type maybe extracted and manipulated.
 The schema of the transformSpec for **js** is as shown below. **Bold** implies that the property is **required**.  
 
 - **type**(String): js
-- **script**(String): String (with escaped characters) of a method which transforms the entire json message and having the signature as shown below. 
+- **script**(String): String (with escaped characters) of a method which transforms the entire json message and having the signature as shown below. Script should have a main function which takes in only one **object** parameter
     ```
-    function tx(obj) {
+    function main(obj) {
         var out = {}; var inp = JSON.parse(obj);
         // Transform and add keys to out
         return JSON.stringify(out);
