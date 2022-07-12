@@ -9,6 +9,7 @@ import org.apache.flink.configuration.Configuration;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -147,7 +148,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
                 logger.info("Calling API");
                 makeApi(context);
                 emitMessage(ctx);
-                LocalTime end = LocalTime.now().plusSeconds(apiConfig.pollingInterval/1000);
+                LocalTime end = LocalTime.now().plus(apiConfig.pollingInterval, ChronoUnit.MILLIS);
                 // this loop ensures that random interruption is not prematurely closing the source
                 while (LocalTime.now().compareTo(end) < 0) {
                     try {
