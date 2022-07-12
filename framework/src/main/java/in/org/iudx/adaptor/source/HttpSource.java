@@ -7,6 +7,8 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.configuration.Configuration;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
@@ -50,6 +52,8 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
     transient CustomLogger logger;
 
     private transient Counter counter;
+
+    private volatile boolean isCanceled = false;
 
     /**
      * {@link HttpEntity} Constructor
@@ -139,12 +143,30 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
             makeApi(context);
             emitMessage(ctx);
         } else {
-            while (running) {
+            while (!isCanceled) {
                 logger.info("Calling API");
                 makeApi(context);
                 emitMessage(ctx);
-                Thread.sleep(apiConfig.pollingInterval);
+                LocalTime end = LocalTime.now().plusSeconds(apiConfig.pollingInterval/1000);
+                // this loop ensures that random interruption is not prematurely closing the source
+                while (LocalTime.now().compareTo(end) < 0) {
+                    try {
+                        Thread.sleep(Duration.between(LocalTime.now(), end).toMillis());
+                    } catch (InterruptedException e) {
+                        // swallow interruption unless source is canceled
+                        if (isCanceled) {
+                            Thread.interrupted();
+                            return;
+                        }
+                    }
+                }
             }
+//            while (running) {
+//                logger.info("Calling API");
+//                makeApi(context);
+//                emitMessage(ctx);
+//                Thread.sleep(apiConfig.pollingInterval);
+//            }
         }
     }
 
@@ -168,7 +190,7 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
 
     @Override
     public void cancel() {
-
+        isCanceled = true;
     }
 
 }

@@ -57,9 +57,7 @@ Profiling result as follows
 - CDN
   ![local profile result](docs/images/cdn-script.png "dayjs script run via cdn")
 
-
 ### RabbiMQ Latency Test
-
 
 ```
 python3 rmq_latency.py <job-name/routing-key>
@@ -67,8 +65,8 @@ python3 rmq_latency.py <job-name/routing-key>
 
 Replace appropriate routing key
 
-Note: If any error related to date time update the format according to the received timestamp, default - "%Y-%m-%dT%H:%M:%S.%fZ"
-
+Note: If any error related to date time update the format according to the received timestamp, default - "%Y-%m-%dT%H:
+%M:%S.%fZ"
 
 | Parsing Type   | Interval | Latency  |
 | -------------- | -------- | -------- |
@@ -82,9 +80,17 @@ Note: If any error related to date time update the format according to the recei
 | JS Path Config | 500ms    | 10-11 ms |
 | JS Path Config | 1000ms   | 10-11 ms |
 
+### Native Http Client vs Apache Http Client Latency Test
 
+| Client        | Latency |
+|---------------|---------|
+| Native Client | 84ms    |
+| Apache Client | 80ms    |
 
+<br />
+<br />
 
+Note:
 All the above result are run on following machine
 
 - CPU: 11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz 4 core

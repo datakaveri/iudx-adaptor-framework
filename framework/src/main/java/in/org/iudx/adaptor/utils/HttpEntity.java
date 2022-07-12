@@ -1,20 +1,23 @@
 package in.org.iudx.adaptor.utils;
 
-
 import java.io.IOException;
-import java.net.http.HttpClient;
-import java.net.http.HttpClient.Version;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import java.time.Duration;
-import java.net.URI;
-import java.net.http.HttpRequest.BodyPublishers;
+import java.nio.charset.StandardCharsets;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.source.HttpSource;
 
 import in.org.iudx.adaptor.codegen.ApiConfig;
+import org.apache.commons.io.IOUtils;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -33,14 +36,15 @@ public class HttpEntity {
 
     public ApiConfig apiConfig;
 
-    private HttpRequest.Builder requestBuilder;
-    private HttpClient httpClient;
-    private HttpRequest httpRequest;
+    private final HttpClientBuilder clientBuilder;
+
+    private ClassicRequestBuilder requestBuilder;
+
+    private final CloseableHttpClient httpClient;
 
     private String body;
 
-    transient CustomLogger logger;
-
+    CustomLogger logger;
 
     /**
      * {@link HttpEntity} Constructor
@@ -49,26 +53,31 @@ public class HttpEntity {
      *                  <p>
      *                  Note: This is called from context open() methods of the Source Function
      *                  <p>
-     *                                   TODO:
-     *                                    - Modularize/cleanup
-     *                                    - Handle timeouts from ApiConfig
      */
     public HttpEntity(ApiConfig apiConfig, String appName) {
         logger = new CustomLogger(HttpSource.class, appName);
         this.apiConfig = apiConfig;
 
-        requestBuilder = HttpRequest.newBuilder();
+        clientBuilder = HttpClients.custom();
 
-        HttpClient.Builder clientBuilder = HttpClient.newBuilder();
-        clientBuilder.version(Version.HTTP_2).connectTimeout(Duration.ofSeconds(10));
+        if (apiConfig.requestType != null) {
+            requestBuilder = ClassicRequestBuilder.create(apiConfig.requestType);
+        }
 
         if (apiConfig.url != null) {
-            requestBuilder.uri(URI.create(apiConfig.url));
+            requestBuilder.setUri(apiConfig.url);
         }
-        /* TODO: consider making this neater */
-        if (this.apiConfig.getHeaderString().length > 0) {
-            requestBuilder.headers(this.apiConfig.headersArray);
+
+        if (this.apiConfig.getHeaders().length != 0) {
+            requestBuilder.setHeaders(this.apiConfig.getHeaders());
         }
+
+        RequestConfig.Builder configBuilder = RequestConfig.custom();
+        configBuilder.setConnectTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        configBuilder.setConnectionRequestTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        configBuilder.setResponseTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        RequestConfig config = configBuilder.build();
+        clientBuilder.setDefaultRequestConfig(config);
         httpClient = clientBuilder.build();
     }
 
@@ -76,23 +85,31 @@ public class HttpEntity {
         logger = new CustomLogger(HttpSource.class);
         this.apiConfig = apiConfig;
 
-        requestBuilder = HttpRequest.newBuilder();
+        clientBuilder = HttpClients.custom();
 
-        HttpClient.Builder clientBuilder = HttpClient.newBuilder();
-        clientBuilder.version(Version.HTTP_2).connectTimeout(Duration.ofSeconds(10));
+        if (apiConfig.requestType != null) {
+            requestBuilder = ClassicRequestBuilder.create(apiConfig.requestType);
+        }
 
         if (apiConfig.url != null) {
-            requestBuilder.uri(URI.create(apiConfig.url));
+            requestBuilder.setUri(apiConfig.url);
         }
-        /* TODO: consider making this neater */
-        if (this.apiConfig.getHeaderString().length > 0) {
-            requestBuilder.headers(this.apiConfig.headersArray);
+
+        if (this.apiConfig.getHeaders().length != 0) {
+            requestBuilder.setHeaders(this.apiConfig.getHeaders());
         }
+
+        RequestConfig.Builder configBuilder = RequestConfig.custom();
+        configBuilder.setConnectTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        configBuilder.setConnectionRequestTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        configBuilder.setResponseTimeout(Timeout.ofSeconds(apiConfig.requestTimeout));
+        RequestConfig config = configBuilder.build();
+        clientBuilder.setDefaultRequestConfig(config);
         httpClient = clientBuilder.build();
     }
 
     public HttpEntity setUrl(String url) {
-        requestBuilder.uri(URI.create(url));
+        requestBuilder.setUri(url);
         return this;
     }
 
@@ -113,10 +130,7 @@ public class HttpEntity {
      * - This is the method which deals with responses Raw
      */
     public String getSerializedMessage() {
-        requestBuilder.timeout(Duration.ofSeconds(apiConfig.requestTimeout));
-        if (apiConfig.requestType.equals("GET")) {
-            httpRequest = requestBuilder.build();
-        } else if (apiConfig.requestType.equals("POST")) {
+        if (apiConfig.requestType.equals("POST")) {
             String reqBody = "";
             if (this.body == null) {
                 if (apiConfig.body == null) {
@@ -127,18 +141,24 @@ public class HttpEntity {
             } else {
                 reqBody = apiConfig.body;
             }
-            httpRequest = requestBuilder.POST(BodyPublishers.ofString(reqBody))
-                    .build();
-        }
-        try {
-            HttpResponse<String> resp =
-                    httpClient.send(httpRequest, BodyHandlers.ofString());
 
-            if (resp.statusCode() / 100 != 2) {
-                logger.error("[status_code - " + resp.statusCode() + "] - [summary - " + resp.body() + "] Http request failed");
-                return "";
+            requestBuilder.setEntity(reqBody, ContentType.APPLICATION_JSON);
+        }
+        ClassicHttpRequest httpRequest = requestBuilder.build();
+
+        try {
+            ClassicHttpResponse resp = httpClient.execute(httpRequest);
+            org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
+
+            if (entity != null) {
+                String responseBody = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
+                if (resp.getCode() / 100 != 2) {
+                    logger.error("[status_code - " + resp.getCode() + "] - [summary - " + responseBody + "] Http request failed");
+                    return "";
+                }
+                return responseBody;
             }
-            return resp.body();
+            return "";
         } catch (Exception e) {
             logger.error("Error http entity", e);
             return "";
@@ -151,12 +171,16 @@ public class HttpEntity {
      * - Manage non-post requests
      * - Handle auth
      */
-    public String postSerializedMessage(String message) throws IOException, InterruptedException {
-        httpRequest = requestBuilder.POST(BodyPublishers.ofString(message)).build();
+    public String postSerializedMessage(String message) throws IOException {
+        requestBuilder.setEntity(message, ContentType.APPLICATION_JSON);
+        ClassicHttpRequest httpRequest = requestBuilder.build();
         try {
-            HttpResponse<String> resp =
-                    httpClient.send(httpRequest, BodyHandlers.ofString());
-            return resp.body();
+            ClassicHttpResponse resp = httpClient.execute(httpRequest);
+            org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
+            if (entity != null) {
+                return IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
+            }
+            return null;
         } catch (Exception e) {
             logger.error("Error in post request", e);
             throw e;
