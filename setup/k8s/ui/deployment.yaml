@@ -1,0 +1,20 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: adaptor-framework-ui
+  namespace: adaptor-framework
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adaptor-framework-ui
+  template:
+    metadata:
+      labels:
+        app: adaptor-framework-ui
+    spec:
+      containers:
+        - name: adaptor-framework-ui
+          image: datakaveri/adaptor-framework-ui:latest
+          ports:
+            - containerPort: 80
