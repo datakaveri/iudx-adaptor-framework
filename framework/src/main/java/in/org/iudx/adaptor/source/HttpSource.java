@@ -148,17 +148,12 @@ public class HttpSource<PO> extends RichSourceFunction<Message> {
                 logger.info("Calling API");
                 makeApi(context);
                 emitMessage(ctx);
-                LocalTime end = LocalTime.now().plus(apiConfig.pollingInterval, ChronoUnit.MILLIS);
-                // this loop ensures that random interruption is not prematurely closing the source
-                while (LocalTime.now().compareTo(end) < 0) {
-                    try {
-                        Thread.sleep(Duration.between(LocalTime.now(), end).toMillis());
-                    } catch (InterruptedException e) {
-                        // swallow interruption unless source is canceled
-                        if (isCanceled) {
-                            Thread.interrupted();
-                            return;
-                        }
+                try {
+                    Thread.sleep(apiConfig.pollingInterval);
+                } catch (InterruptedException e) {
+                    if (isCanceled) {
+                        Thread.interrupted();
+                        return;
                     }
                 }
             }
