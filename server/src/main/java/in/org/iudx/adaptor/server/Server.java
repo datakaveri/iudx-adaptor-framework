@@ -311,7 +311,7 @@ public class Server extends AbstractVerticle {
     /* Spec test routes */
 
     router.post(INPUT_SPEC_ROUTE)
-          .handler(AdminAuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
             JsonObject jsonBody = routingContext.getBodyAsJson();
@@ -324,7 +324,7 @@ public class Server extends AbstractVerticle {
           });
 
     router.post(PARSE_SPEC_ROUTE)
-          .handler(AdminAuthHandler.create(authCred))
+          .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             HttpServerResponse response = routingContext.response();
             JsonObject jsonBody = routingContext.getBodyAsJson();
@@ -340,7 +340,7 @@ public class Server extends AbstractVerticle {
           });
 
     router.post(TRANSFORM_SPEC_ROUTE)
-            .handler(AdminAuthHandler.create(authCred))
+            .handler(AuthHandler.create(databaseService))
             .handler(routingContext -> {
                 HttpServerResponse response = routingContext.response();
                 JsonObject jsonBody = routingContext.getBodyAsJson();
