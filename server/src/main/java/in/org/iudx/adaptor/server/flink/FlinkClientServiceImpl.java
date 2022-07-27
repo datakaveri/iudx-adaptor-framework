@@ -71,7 +71,7 @@ public class FlinkClientServiceImpl implements FlinkClientService{
     } else if(request.getString(MODE).equals(STOP)) {
       JsonObject requestBody = new JsonObject().put(URI, JOBS_API + request.getString(JOB_ID));
       
-      httpGetAsync(requestBody, HttpMethod.GET).compose(getHandler -> {
+      httpGetAsync(requestBody, HttpMethod.PATCH).compose(getHandler -> {
         Future<JsonObject>future = null;
         JsonObject resStatus = new JsonObject();
         

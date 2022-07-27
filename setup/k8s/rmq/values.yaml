@@ -1,6 +1,6 @@
-#auth:
-#  username: guest
-#  password: guest
+auth:
+  username: guest
+  password: guest
 extraEnvVars:
   - name: RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS
     value: -rabbitmq_management load_definitions "/app/load_definition.json"

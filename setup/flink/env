@@ -17,7 +17,7 @@ presto.s3.secret-key: minio123
 presto.s3.endpoint: http://minio1:9000   
 presto.s3.path-style-access: true
 
-high-availability: zookeeper
+high-availability: NONE
 high-availability.storageDir: s3://recovery/
 high-availability.zookeeper.quorum: zook:2181
 
