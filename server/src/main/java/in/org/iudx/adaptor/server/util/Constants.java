@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 
+
 public class Constants {
 
   /** Service Addresses */
@@ -42,6 +43,10 @@ public class Constants {
       new HashSet<String>(Arrays.asList(HEADER_ACCEPT, HEADER_USERNAME, HEADER_PASSWORD, HEADER_GET, HEADER_POST, HEADER_OPTIONS, HEADER_TOKEN, HEADER_CONTENT_LENGTH,
           HEADER_CONTENT_TYPE, HEADER_HOST, HEADER_ORIGIN, HEADER_REFERER, HEADER_CORS));
 
+  public static final Set<HttpMethod> ALLOWED_METHODS = new HashSet<>(Arrays.asList(
+    HttpMethod.GET, HttpMethod.POST, HttpMethod.OPTIONS, HttpMethod.DELETE, HttpMethod.PATCH, HttpMethod.PUT));
+
+
   /** Mime Type */
   public static final String MIME_APPLICATION_JSON = "application/json";
   public static final String MIME_TEXT_HTML = "text/html";
@@ -62,7 +67,7 @@ public class Constants {
   public static final String LOG_ROUTE = basePath + "/log/:tId/:lId";
   public static final String SCHEDULER_ROUTE = basePath + "/schedule";
   public static final String DELETE_SCHEDULER_JOB = basePath + "/schedule/:id";
-  
+
   public static final String ADAPTOR_ROUTE = "/adaptor";
   public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
   public static final String ADAPTOR_START_ROUTE = ADAPTOR_ROUTE +"/:id/start";
@@ -160,81 +165,81 @@ public class Constants {
   public static final String ADAPTORS = "adaptors";
   public static final Set<String> ALLOWED_USER_STATUS =
       new HashSet<String>(Arrays.asList("active","inactive"));
-  
+
   public static final String AUTHENTICATE_USER =
       "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
   public static final String CREATE_ADAPTOR =
       "INSERT into adaptor(adaptor_id,\"data\",\"timestamp\",user_id) SELECT '$1', '$2'::json, now(), us.\"id\" from public.\"user\" us where username = '$3';"
       + "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$4', now(),'$1')";
-  
+
   public static final String UPDATE_STATUS = "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$1', now(),'$2')";
-  
+
   public static final String UPDATE_JARID = "UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'";
-  
+
   public static final String DELETE_ADAPTOR = "DELETE FROM adaptor where adaptor_id = '$1'";
-  
-  public static final String UPDATE_COMPLEX = "WITH update_adaptor AS (\n" + 
-      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
-      "  returning adaptor_id\n" + 
-      ")\n" + 
-      "UPDATE codegen_status SET status = '$3', \"timestamp\" = now() \n" + 
-      "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" + 
+
+  public static final String UPDATE_COMPLEX = "WITH update_adaptor AS (\n" +
+      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" +
+      "  returning adaptor_id\n" +
+      ")\n" +
+      "UPDATE codegen_status SET status = '$3', \"timestamp\" = now() \n" +
+      "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" +
       "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
-  
-  public static final String UPDATE_COMPLEX_PARTIAL = "WITH update_adaptor AS (\n" + 
-      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" + 
-      "  returning adaptor_id\n" + 
-      ")\n" + 
-      "UPDATE codegen_status SET status = '$3', \"timestamp\" = now() \n" + 
-      "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" + 
+
+  public static final String UPDATE_COMPLEX_PARTIAL = "WITH update_adaptor AS (\n" +
+      "  UPDATE adaptor SET jar_id = '$1' WHERE adaptor_id = '$2'\n" +
+      "  returning adaptor_id\n" +
+      ")\n" +
+      "UPDATE codegen_status SET status = '$3', \"timestamp\" = now() \n" +
+      "  FROM (select adaptor_id from update_adaptor) AS adaptor\n" +
       "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
-  
+
   public static final String INSERT_JOB =
       "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
   public static final String SELECT_JOB ="SELECT job_id FROM flink_job WHERE adaptor_id='$1' AND status = '$2'";
   public static final String SELECT_ALL_JOBS = "SELECT job_id FROM flink_job where status ='running'";
   public static final String UPDATE_JOB = "update flink_job set status ='$2', timestamp = now() where job_id = '$1'";
-  
-  public static final String GET_ALL_ADAPTOR = 
-      "WITH get_user_adaptor AS (\n" + 
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" + 
-      "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" + 
-      "    FROM adaptor AS ad\n" + 
-      "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" + 
-      "        AND _user.id = (SELECT id FROM public.user WHERE username = '$1')\n" + 
-      "    LEFT JOIN codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id\n" + 
-      "    LEFT JOIN flink_job AS fj ON cg.adaptor_id = fj.adaptor_id\n" + 
-      "),\n" + 
-      " get_filter_job AS (\n" + 
-      "     SELECT * FROM get_user_adaptor t1 \n" + 
-      "     WHERE timestamp = (SELECT MAX(timestamp) FROM get_user_adaptor t2 WHERE t1.adaptor_id = t2.adaptor_id)\n" + 
-      ")\n" + 
+
+  public static final String GET_ALL_ADAPTOR =
+      "WITH get_user_adaptor AS (\n" +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" +
+      "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
+      "    FROM adaptor AS ad\n" +
+      "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
+      "        AND _user.id = (SELECT id FROM public.user WHERE username = '$1')\n" +
+      "    LEFT JOIN codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id\n" +
+      "    LEFT JOIN flink_job AS fj ON cg.adaptor_id = fj.adaptor_id\n" +
+      "),\n" +
+      " get_filter_job AS (\n" +
+      "     SELECT * FROM get_user_adaptor t1 \n" +
+      "     WHERE timestamp = (SELECT MAX(timestamp) FROM get_user_adaptor t2 WHERE t1.adaptor_id = t2.adaptor_id)\n" +
+      ")\n" +
       "SELECT * FROM get_filter_job ORDER BY timestamp DESC";
-  
+
   public static final String GET_ONE_ADAPTOR =
-      "WITH get_user_adaptor AS (\n" + 
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" + 
-      "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" + 
-      "    FROM adaptor AS ad\n" + 
-      "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" + 
-      "        AND _user.id = (SELECT id FROM public.user WHERE username = '$1')\n" + 
-      "    LEFT JOIN codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id\n" + 
-      "    LEFT JOIN flink_job AS fj ON cg.adaptor_id = fj.adaptor_id\n" + 
-      "),\n" + 
-      " get_filter_job AS (\n" + 
-      "     SELECT * FROM get_user_adaptor t1 \n" + 
-      "     WHERE timestamp = (SELECT MAX(timestamp) FROM get_user_adaptor t2 WHERE t1.adaptor_id = t2.adaptor_id)\n" + 
-      "     AND adaptor_id = '$2'\n" + 
-      ")\n" + 
+      "WITH get_user_adaptor AS (\n" +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" +
+      "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
+      "    FROM adaptor AS ad\n" +
+      "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
+      "        AND _user.id = (SELECT id FROM public.user WHERE username = '$1')\n" +
+      "    LEFT JOIN codegen_status AS cg ON ad.adaptor_id = cg.adaptor_id\n" +
+      "    LEFT JOIN flink_job AS fj ON cg.adaptor_id = fj.adaptor_id\n" +
+      "),\n" +
+      " get_filter_job AS (\n" +
+      "     SELECT * FROM get_user_adaptor t1 \n" +
+      "     WHERE timestamp = (SELECT MAX(timestamp) FROM get_user_adaptor t2 WHERE t1.adaptor_id = t2.adaptor_id)\n" +
+      "     AND adaptor_id = '$2'\n" +
+      ")\n" +
       "SELECT * FROM get_filter_job";
-  
+
   public static final String REGISTER_USER = "INSERT INTO public.user "
       + "(username, password, status,\"timestamp\") VALUES ('$1','$2','$3',now());";
-  
+
   public static final String UPDATE_USER = "UPDATE public.user SET password='$2',status='$3',\"timestamp\"=now() WHERE username = '$1'";
   public static final String UPDATE_USER_PASSWORD = "UPDATE public.user SET password='$2',\"timestamp\"=now() WHERE username = '$1'";
   public static final String UPDATE_USER_STATUS = "UPDATE public.user SET status = '$2',\"timestamp\"=now() where username = '$1'";
-  
+
   public static final String GET_USERS = "SELECT username,password,status,\"timestamp\" FROM public.user";
   public static final String GET_USER = "SELECT username,password,status,\"timestamp\" FROM public.user WHERE username = '$1'";
 }
