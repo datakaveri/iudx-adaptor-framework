@@ -16,7 +16,6 @@ import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
-import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 
 /**
@@ -145,9 +144,7 @@ public class HttpEntity {
             requestBuilder.setEntity(reqBody, ContentType.APPLICATION_JSON);
         }
         ClassicHttpRequest httpRequest = requestBuilder.build();
-
-        try {
-            ClassicHttpResponse resp = httpClient.execute(httpRequest);
+        try (ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
             org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
 
             if (entity != null) {
@@ -174,8 +171,7 @@ public class HttpEntity {
     public String postSerializedMessage(String message) throws IOException {
         requestBuilder.setEntity(message, ContentType.APPLICATION_JSON);
         ClassicHttpRequest httpRequest = requestBuilder.build();
-        try {
-            ClassicHttpResponse resp = httpClient.execute(httpRequest);
+        try (ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
             org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
             if (entity != null) {
                 return IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);

@@ -31,7 +31,8 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
     private static final long serialVersionUID = 44L;
     transient CustomLogger logger;
 
-    private transient Counter counter;
+    private transient Counter counterIn;
+    private transient Counter counterOut;
 
     public BoundedProcessFunction(Transformer transformer,
                                   Deduplicator deduplicator, MinioConfig minioConfig) {
@@ -61,14 +62,19 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
         String appName = parameters.toMap().get("appName");
         this.logger = new CustomLogger(BoundedProcessFunction.class, appName);
 
-        this.counter = getRuntimeContext()
+        this.counterIn = getRuntimeContext()
                 .getMetricGroup()
-                .counter("BoundedProcessCounter");
+                .counter("ProcessCounterIn");
+
+        this.counterOut = getRuntimeContext()
+                .getMetricGroup()
+                .counter("ProcessCounterOut");
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
+        this.counterIn.inc();
         logger.debug("[event_key - " + msg.key + "] Processing event");
         Message previousMessage = streamState.getMessage(msg);
 
@@ -97,8 +103,8 @@ public class BoundedProcessFunction extends KeyedProcessFunction<String, Message
             logger.error("Error in process element", e);
         }
 
-        this.counter.inc();
         streamState.addMessage(msg);
+        this.counterOut.inc();
     }
 
     @Override

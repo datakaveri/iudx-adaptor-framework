@@ -60,4 +60,18 @@ public class HttpEntityTest {
         LOGGER.info("LongApiCall :" + httpEntity.getSerializedMessage());
     }
 
+    @Test
+    void formencoded() throws InterruptedException {
+        ApiConfig apiConfig =
+                new ApiConfig().setUrl("<url>")
+                        .setRequestType("POST")
+                        .setHeader("content-type","application/x-www-form-urlencoded")
+                        .setBody("<cred>>")
+                        .setPollingInterval(1000L);
+
+        HttpEntity httpEntity = new HttpEntity(apiConfig, "unit_test");
+        for(int i=0;i<100;i++) {
+            LOGGER.info("SimpleGet :" + httpEntity.getSerializedMessage());
+        }
+    }
 }

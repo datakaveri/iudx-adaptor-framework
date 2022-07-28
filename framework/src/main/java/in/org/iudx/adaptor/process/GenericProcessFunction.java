@@ -34,7 +34,8 @@ public class GenericProcessFunction
     private Deduplicator deduplicator;
     transient CustomLogger logger;
 
-    private transient Counter counter;
+    private transient Counter counterIn;
+    private transient Counter counterOut;
 
 
     public static final OutputTag<String> errorStream
@@ -73,14 +74,19 @@ public class GenericProcessFunction
         String appName = parameters.toMap().get("appName");
         logger = new CustomLogger(GenericProcessFunction.class, appName);
 
-        this.counter = getRuntimeContext()
+        this.counterIn = getRuntimeContext()
                 .getMetricGroup()
-                .counter("GenericProcessCounter");
+                .counter("ProcessCounterIn");
+
+        this.counterOut = getRuntimeContext()
+                .getMetricGroup()
+                .counter("ProcessCounterOut");
     }
 
     @Override
     public void processElement(Message msg,
                                Context context, Collector<Message> out) throws Exception {
+        this.counterIn.inc();
         logger.debug("[event_key - " + msg.key + "] Processing event");
         Message previousMessage = streamState.value();
         /* Update state with current message if not done */
@@ -107,6 +113,6 @@ public class GenericProcessFunction
             logger.error("Error in process element", e);
         }
         streamState.update(msg);
-        this.counter.inc();
+        this.counterOut.inc();
     }
 }

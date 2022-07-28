@@ -2,11 +2,8 @@
     "name": "FlinkTestApp7.1",
     "inputSpec": {
         "type": "http",
-        "url": "http://mockserver:8080/auth/simpleA",
+        "url": "http://13.232.120.105:30002/simpleA",
         "requestType": "GET",
-        "headers": [
-            {"key": "Authorization", "value": "Basic YWRtaW46YWRtaW4="}
-        ],
         "pollingInterval": 1000
     },
     "parseSpec": {
@@ -29,10 +26,7 @@
     },
     "publishSpec": {
         "type": "rmq",
-        "url": "amqp://mockrmq",
-        "port": 5672,
-        "uname": "guest",
-        "password": "guest",
+        "uri": "amqp://guest:guest@172.17.0.1:5672",
         "sinkName": "adaptor-test",
         "tagName": "test"
     }
