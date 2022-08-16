@@ -15,6 +15,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.util.Timeout;
 
@@ -146,9 +147,12 @@ public class HttpEntity {
         ClassicHttpRequest httpRequest = requestBuilder.build();
         try (ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
             org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
-
+            
             if (entity != null) {
-                String responseBody = IOUtils.toString(entity.getContent(), StandardCharsets.UTF_8);
+                byte[] bytesArray = EntityUtils.toByteArray(entity);
+                int contentLength = bytesArray.length;
+                String responseBody = new String(bytesArray, StandardCharsets.UTF_8);
+                logger.info("[status_code - " + resp.getCode() + "] - [summary - status response " + resp.getReasonPhrase() + "] API with response of size " + contentLength + " bytes");
                 if (resp.getCode() / 100 != 2) {
                     logger.error("[status_code - " + resp.getCode() + "] - [summary - " + responseBody + "] Http request failed");
                     return "";
