@@ -27,10 +27,7 @@
 
     "publishSpec": {
         "type": "rmq",
-        "url": "amqp://mockrmq",
-        "port": 5672,
-        "uname": "guest",
-        "password": "guest",
+        "uri": "amqp://guest:guest@mockrmq:5672/",
         "sinkName": "adaptor-test",
         "tagName": "test"
     }

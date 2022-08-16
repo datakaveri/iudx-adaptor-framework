@@ -74,4 +74,15 @@ public class HttpEntityTest {
             LOGGER.info("SimpleGet :" + httpEntity.getSerializedMessage());
         }
     }
+
+    @Test
+    void exception204() throws InterruptedException {
+        ApiConfig apiConfig =
+                new ApiConfig().setUrl("http://127.0.0.1:8080/exceptionA")
+                        .setRequestType("GET")
+                        .setPollingInterval(1000L);
+
+        HttpEntity httpEntity = new HttpEntity(apiConfig, "unit_test");
+        LOGGER.info("SimpleGet :" + httpEntity.getSerializedMessage());
+    }
 }
