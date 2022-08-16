@@ -192,3 +192,19 @@ framework/adaptor.iml
 mockserver/mockserver.iml
 server/server.iml
 test/benchmarks/jsengine-test/jsengine-test.iml
+
+
+# flink setup files
+setup/k8s/flink/*
+
+!setup/k8s/flink/flink-conf.yaml
+!setup/k8s/flink/Dockerfile
+!setup/k8s/flink/flink-metrics-service.yaml
+!setup/k8s/flink/log4j-console.properties
+!setup/k8s/flink/setup.sh
+!setup/k8s/flink/start.sh
+!setup/k8s/flink/stop.sh
+!setup/k8s/flink/taskmanager-metrics-service.yaml
+demo/bengaloreambulance.json
+demo/surat-live-prod.json
+demo/vad_amb.json
