@@ -14,7 +14,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
 import sql.CustomSchema;
-import tech.tablesaw.api.Table;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -65,12 +64,12 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
         rootSchema.add("listState", schema);
 
         try (Statement statement = calciteConnection.createStatement()) {
-            String sql = "select count(*) as countData from listState.state";
+            String sql = "select * from listState.state";
             ResultSet rs = statement.executeQuery(sql);
 
 //            System.out.println(Table.read().db(rs).print());
             while (rs.next()) {
-                int result = rs.getInt("countData");
+                String result = rs.getString("deviceId");
                 System.out.println("====================================");
                 System.out.println(result);
                 collector.collect(String.valueOf(result));

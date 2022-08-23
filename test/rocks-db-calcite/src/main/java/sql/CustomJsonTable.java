@@ -24,7 +24,7 @@ import java.util.List;
 public class CustomJsonTable extends AbstractTable implements ScannableTable {
     private final List<Message> sourceData;
     private @Nullable RelDataType rowType;
-    protected @Nullable List<Object> dataList;
+    protected @Nullable List<Message> dataList;
 
     public CustomJsonTable(List<Message> list) {
         this.sourceData = list;
@@ -42,16 +42,20 @@ public class CustomJsonTable extends AbstractTable implements ScannableTable {
         return rowType;
     }
 
-    public List<Object> getDataList(RelDataTypeFactory typeFactory) throws JsonProcessingException {
+    public List<Message> getDataList(RelDataTypeFactory typeFactory) throws JsonProcessingException {
         if (dataList == null) {
             JsonDataConverter jsonDataConverter = CustomJsonEnumerator.deduceRowType(typeFactory, sourceData);
-            dataList = Collections.singletonList(jsonDataConverter.getDataList());
+            dataList = jsonDataConverter.getDataList();
         }
         return dataList;
     }
 
     @Override public Statistic getStatistic() {
         return Statistics.UNKNOWN;
+    }
+
+    @Override public String toString() {
+        return "JsonScannableTable";
     }
 
     @Override public Enumerable<@Nullable Object[]> scan(DataContext root) {
