@@ -32,8 +32,8 @@ import java.util.HashMap;
 
 public class Main {
 
-    private static String RMQ_URI = "amqp://guest:guest@rmq:5672";
-//    private static String RMQ_URI = "amqp://guest:guest@localhost:5672";
+//    private static String RMQ_URI = "amqp://guest:guest@rmq:5672";
+    private static String RMQ_URI = "amqp://guest:guest@localhost:5672";
 
 
     private static String RMQ_SQL_QUEUE_NAME = "rules";
@@ -42,8 +42,8 @@ public class Main {
         HashMap<String, String> propertyMap = new HashMap<>();
         propertyMap.put("appName", "test");
         ParameterTool parameters = ParameterTool.fromMap(propertyMap);
-        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
+//        final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        final StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironment();
         env.enableCheckpointing(1000 * 100 * 1000);
 
         // Table Env
@@ -67,8 +67,8 @@ public class Main {
 
         // Http Source for data
 
-        ApiConfig apiConfig = new ApiConfig().setUrl("http://13.232.120.105:30002/simpleA").setRequestType("GET").setPollingInterval(1000);
-//        ApiConfig apiConfig = new ApiConfig().setUrl("http://localhost:8888/simpleA").setRequestType("GET").setPollingInterval(1000);
+//        ApiConfig apiConfig = new ApiConfig().setUrl("http://13.232.120.105:30002/simpleA").setRequestType("GET").setPollingInterval(1000);
+        ApiConfig apiConfig = new ApiConfig().setUrl("http://localhost:8888/simpleA").setRequestType("GET").setPollingInterval(1000);
         String parseSpec = "{\"messageContainer\":\"single\",\"timestampPath\":\"$.time\",\"keyPath\":\"$.deviceId\",\"type\":\"json\"}";
         JsonPathParser<Message> parser = new JsonPathParser<>(parseSpec);
         DataStreamSource<Message> so = env.addSource(new HttpSource<>(apiConfig, parser));
@@ -87,7 +87,7 @@ public class Main {
                 .process(new RuleFunction())
                 .uid("RuleSourceFunction")
                 .name("Rule Source Function")
-                .assignTimestampsAndWatermarks(WatermarkStrategy.forMonotonousTimestamps())
+//                .assignTimestampsAndWatermarks(WatermarkStrategy.forMonotonousTimestamps())
 //                .keyBy((Keyed::getKey))
 //                .connect(ruleBroadcastStream)
 //                .process(new RuleExecutorFunction())
@@ -128,13 +128,13 @@ public class Main {
 //            }
 //        })).uid("PrintSink").name("Print Sink").setParallelism(1);
 
-        out.addSink(new RMQSink<>(connectionConfig, "sink", new SimpleStringSchema())).uid("PrintSink").name("Print Sink").setParallelism(1);
+        out.addSink(new RMQSink<>(connectionConfig, "sink", new SimpleStringSchema())).uid("RmqSink").name("RMQ Sink").setParallelism(1);
 
         try {
             env.getConfig().setGlobalJobParameters(parameters);
-            System.out.println("-------------------------------------------");
-            System.out.println(env.getExecutionPlan());
-            System.out.println("-------------------------------------------");
+//            System.out.println("-------------------------------------------");
+//            System.out.println(env.getExecutionPlan());
+//            System.out.println("-------------------------------------------");
             env.execute();
         } catch (Exception e) {
         }

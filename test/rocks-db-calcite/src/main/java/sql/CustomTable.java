@@ -30,13 +30,13 @@ public class CustomTable extends AbstractTable implements ScannableTable {
         this.data = data;
 
         List<String> names = new ArrayList<>();
-        names.add("timestamp");
-        names.add("message");
+        names.add("key");
+//        names.add("message");
         this.fieldNames = names;
 
         List<SqlTypeName> types = new ArrayList<>();
         types.add(SqlTypeName.VARCHAR);
-        types.add(SqlTypeName.ANY);
+//        types.add(SqlTypeName.ANY);
         this.fieldTypes = types;
     }
 

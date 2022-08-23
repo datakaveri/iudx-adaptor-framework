@@ -72,6 +72,12 @@
             <version>1.26.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.calcite</groupId>
+            <artifactId>calcite-file</artifactId>
+            <version>1.26.0</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.calcite.avatica/avatica-core -->
         <dependency>
             <groupId>org.apache.calcite.avatica</groupId>

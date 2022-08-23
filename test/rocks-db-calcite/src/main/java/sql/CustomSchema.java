@@ -1,5 +1,6 @@
 package sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import in.org.iudx.adaptor.datatypes.Message;
@@ -13,8 +14,15 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomSchema extends AbstractSchema {
-    public List<Message> state;
-
+//    private static final Map<Object, ObjectNode> state = new HashMap<>();
+    private List<Message> data;
+//
+//    public void addToState(Message message) {
+//        ObjectMapper mapper = new ObjectMapper();
+//        ObjectNode root = mapper.createObjectNode();
+//        root.set("key", mapper.convertValue(message.key, JsonNode.class));
+//        state.put(message.timestamp, root);
+//    }
 //    private static final ObjectMapper mapper = new ObjectMapper();
 //
 //    private static final Map<Object, ObjectNode> employees = new HashMap<>();
@@ -27,6 +35,10 @@ public class CustomSchema extends AbstractSchema {
 
     @Override
     protected Map<String, Table> getTableMap() {
-        return Collections.singletonMap("state", new CustomTable(state));
+        return Collections.singletonMap("state", new CustomJsonTable(this.data));
+    }
+
+    public void setData(List<Message> data) {
+        this.data = data;
     }
 }
