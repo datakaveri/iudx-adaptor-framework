@@ -18,12 +18,6 @@ public class CustomSchema extends AbstractSchema {
 
     private static final Map<Object, ObjectNode> employees = new HashMap<>();
 
-    static {
-        employees.put(1L, mapper.createObjectNode().put("timestamp", "john").put("message", "text1"));
-        employees.put(2L, mapper.createObjectNode().put("timestamp", "jane").put("message", "text2"));
-        employees.put(3L, mapper.createObjectNode().put("timestamp", "cole").put("message", "text3"));
-    }
-
     @Override
     protected Map<String, Table> getTableMap() {
         return Collections.singletonMap("employees", new CustomTable(employees));
