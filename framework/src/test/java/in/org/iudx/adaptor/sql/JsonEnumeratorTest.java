@@ -14,6 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ValueNode;
+
+import in.org.iudx.adaptor.utils.JsonFlatten;
 import in.org.iudx.adaptor.sql.JsonEnumerator.JsonDataConverter;
 
 
@@ -28,8 +33,9 @@ public class JsonEnumeratorTest {
   static void initialize() throws Exception {
     ObjectMapper mapper = new ObjectMapper();
 
-    LinkedHashMap r1 = mapper.readValue("{\"name\":\"test\", \"index\":1}", LinkedHashMap.class);
-    LinkedHashMap r2 = mapper.readValue("{\"name\":\"test2\", \"index\":2}", LinkedHashMap.class);
+
+    LinkedHashMap r1 = (LinkedHashMap) new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test\"}, \"index\":[1,2]}")).flatten();
+    LinkedHashMap r2 = (LinkedHashMap)  new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test1\"}, \"index\":[3,4]}")).flatten();
     objlst = new ArrayList<LinkedHashMap>();
     objlst.add(r1); objlst.add(r2);
   }
@@ -54,6 +60,8 @@ public class JsonEnumeratorTest {
     Object[] obj = enumerator.current();
     System.out.println(obj[0].getClass());
     System.out.println(obj[0]);
+    System.out.println(obj[1].getClass());
+    System.out.println(obj[1]);
     enumerator.moveNext();
     Object[] obj2 = enumerator.current();
     System.out.println(obj2[0].getClass());

@@ -18,7 +18,7 @@ class JsonFlattenTest {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonObj = mapper.readTree(json);
 
-        Map<String, ValueNode> map = new JsonFlatten(jsonObj).flatten();
+        Map<String, Object> map = new JsonFlatten(jsonObj).flatten();
 
         System.out.println(map);
     }

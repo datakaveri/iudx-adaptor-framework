@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
+import in.org.iudx.adaptor.utils.JsonFlatten;
 import in.org.iudx.adaptor.sql.JsonEnumerator.JsonDataConverter;
 
 
@@ -28,8 +29,8 @@ public class JsonArrayListTableTest {
   static void initialize() throws Exception {
     ObjectMapper mapper = new ObjectMapper();
 
-    LinkedHashMap r1 = mapper.readValue("{\"name\":\"test\", \"index\":1}", LinkedHashMap.class);
-    LinkedHashMap r2 = mapper.readValue("{\"name\":\"test2\", \"index\":2}", LinkedHashMap.class);
+    LinkedHashMap r1 = (LinkedHashMap) new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test\"}, \"index\":[1,2]}")).flatten();
+    LinkedHashMap r2 = (LinkedHashMap)  new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test1\"}, \"index\":[3,4]}")).flatten();
     objlst = new ArrayList<LinkedHashMap>();
     objlst.add(r1); objlst.add(r2);
   }

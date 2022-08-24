@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 
+import in.org.iudx.adaptor.utils.JsonFlatten;
 import in.org.iudx.adaptor.sql.JsonEnumerator.JsonDataConverter;
 
 
@@ -47,8 +48,8 @@ public class JsonTableSqlTest {
     ObjectMapper mapper = new ObjectMapper();
 
     // Make table
-    LinkedHashMap r1 = mapper.readValue("{\"name\":\"test\", \"index\":1}", LinkedHashMap.class);
-    LinkedHashMap r2 = mapper.readValue("{\"name\":\"test2\", \"index\":2}", LinkedHashMap.class);
+    LinkedHashMap r1 = (LinkedHashMap) new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test\"}, \"index\":[1,2]}")).flatten();
+    LinkedHashMap r2 = (LinkedHashMap)  new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test1\"}, \"index\":[3,4]}")).flatten();
     objlst = new ArrayList<LinkedHashMap>();
     objlst.add(r1); objlst.add(r2);
     tbl = new JsonArrayListTable(objlst);
@@ -68,11 +69,12 @@ public class JsonTableSqlTest {
     TestSchema schema = new TestSchema();
     rootSchema.add("listState", schema);
     Statement statement = calciteConnection.createStatement();
-    String sql = "select * from listState.testTable where name='test2'";
+    String sql = "select * from listState.testTable where `name.value`='test1'";
     ResultSet rs = statement.executeQuery(sql);
 
     while (rs.next()) {
-        String key = rs.getString("index");
+        int key = rs.getInt("index.0");
+        System.out.println("Result is = ");
         System.out.println(key);
         }
   }
