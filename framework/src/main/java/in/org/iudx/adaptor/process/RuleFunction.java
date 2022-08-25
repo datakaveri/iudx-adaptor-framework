@@ -1,9 +1,11 @@
 package in.org.iudx.adaptor.process;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
 import in.org.iudx.adaptor.sql.Schema;
+import in.org.iudx.adaptor.utils.JsonFlatten;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.commons.collections.IteratorUtils;
@@ -17,30 +19,24 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.*;
-
-
-import in.org.iudx.adaptor.utils.JsonFlatten;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
 
 public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message, Rule, String> {
 
-    private transient ListState<LinkedHashMap<String,Object>> listState;
-    private final ListStateDescriptor<LinkedHashMap<String,Object>> listStateDescriptor 
-        = new ListStateDescriptor<>("listState",
-                                    TypeInformation.of(
-                                      new TypeHint<LinkedHashMap<String,Object>>() {
-    }));
-
-    private transient CalciteConnection calciteConnection;
-
     private static int EXPIRY_TIME = Integer.MIN_VALUE;
+    private final ListStateDescriptor<LinkedHashMap<String, Object>> listStateDescriptor = new ListStateDescriptor<>("listState", TypeInformation.of(new TypeHint<LinkedHashMap<String, Object>>() {
+    }));
+    private transient ListState<LinkedHashMap<String, Object>> listState;
+    private transient CalciteConnection calciteConnection;
 
     @Override
     public void open(Configuration parameters) throws ClassNotFoundException, SQLException {
@@ -56,20 +52,14 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     }
 
     @Override
-    public void processElement(Message message, KeyedBroadcastProcessFunction<String,
-                  Message, Rule, String>.ReadOnlyContext readOnlyContext,
-                  Collector<String> collector) throws Exception {
+    public void processElement(Message message, KeyedBroadcastProcessFunction<String, Message, Rule, String>.ReadOnlyContext readOnlyContext, Collector<String> collector) throws Exception {
 
-        ReadOnlyBroadcastState<Integer, Rule> ruleState
-              = readOnlyContext.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
+        ReadOnlyBroadcastState<Integer, Rule> ruleState = readOnlyContext.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
 
-        listState.add(
-            (LinkedHashMap<String,Object>) new JsonFlatten(new ObjectMapper()
-                                                              .readTree(message.toString()))
-                                                          .flatten());
+        listState.add(new JsonFlatten(new ObjectMapper().readTree(message.toString())).flatten());
 
         SchemaPlus rootSchema = calciteConnection.getRootSchema();
-        Iterator<LinkedHashMap<String,Object>> iterator = listState.get().iterator();
+        Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
         List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
 
         Schema schema = new Schema();
@@ -109,8 +99,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
         cleanupEventTimeThreshold.ifPresent(this::removeElementFromState);
     }
 
-    private void updateExpiryTime(Rule rule, BroadcastState<Integer, Rule> broadcastState)
-            throws Exception {
+    private void updateExpiryTime(Rule rule, BroadcastState<Integer, Rule> broadcastState) throws Exception {
         Rule widestWindowRule = broadcastState.get(EXPIRY_TIME);
 
 
