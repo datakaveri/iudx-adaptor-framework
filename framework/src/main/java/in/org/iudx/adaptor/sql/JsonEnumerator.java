@@ -26,10 +26,9 @@ public class JsonEnumerator implements Enumerator<@Nullable Object[]> {
 
   private final Enumerator<@Nullable Object[]> enumerator;
 
-  public JsonEnumerator(List<LinkedHashMap> list) {
-    final ObjectMapper objectMapper = new ObjectMapper();
+  public JsonEnumerator(List<LinkedHashMap<String, Object>> list) {
     List<@Nullable Object[]> objs = new ArrayList<>();
-    for (LinkedHashMap obj : list) {
+    for (LinkedHashMap<String, Object> obj : list) {
       objs.add((obj).values().toArray());
     }
     enumerator = Linq4j.enumerator(objs);
@@ -37,13 +36,12 @@ public class JsonEnumerator implements Enumerator<@Nullable Object[]> {
 
   /** Deduces the names and types of a table's columns by reading the first line
    * of a JSON file. */
-  static JsonDataConverter deduceRowType(RelDataTypeFactory typeFactory, List<LinkedHashMap> listSource) {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    LinkedHashMap<String, Object> jsonFieldMap = new LinkedHashMap<>(1);
-    jsonFieldMap = (LinkedHashMap) listSource.get(0);
+  static JsonDataConverter deduceRowType(RelDataTypeFactory typeFactory, List<LinkedHashMap<String, Object>> listSource) {
+    LinkedHashMap<String, Object> jsonFieldMap;
+    jsonFieldMap = listSource.get(0);
 
-    final List<RelDataType> types = new ArrayList<RelDataType>(jsonFieldMap.size());
-    final List<String> names = new ArrayList<String>(jsonFieldMap.size());
+    final List<RelDataType> types = new ArrayList<>(jsonFieldMap.size());
+    final List<String> names = new ArrayList<>(jsonFieldMap.size());
 
     for (Object key : jsonFieldMap.keySet()) {
       final RelDataType type = typeFactory.createJavaType(jsonFieldMap.get(key).getClass());
@@ -76,9 +74,9 @@ public class JsonEnumerator implements Enumerator<@Nullable Object[]> {
    */
   static class JsonDataConverter {
     private final RelDataType relDataType;
-    private final List<LinkedHashMap> dataList;
+    private final List<LinkedHashMap<String, Object>> dataList;
 
-    private JsonDataConverter(RelDataType relDataType, List<LinkedHashMap> dataList) {
+    private JsonDataConverter(RelDataType relDataType, List<LinkedHashMap<String, Object>> dataList) {
       this.relDataType = relDataType;
       this.dataList = dataList;
     }
@@ -87,7 +85,7 @@ public class JsonEnumerator implements Enumerator<@Nullable Object[]> {
       return relDataType;
     }
 
-    List<LinkedHashMap> getDataList() {
+    List<LinkedHashMap<String, Object>> getDataList() {
       return dataList;
     }
   }

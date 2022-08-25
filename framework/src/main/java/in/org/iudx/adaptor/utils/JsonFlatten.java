@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
+import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,22 +14,26 @@ import java.util.Objects;
 public class JsonFlatten {
 
     private final Map<String, ValueNode> json = new LinkedHashMap<>();
-    private final Map<String, Object> jsonObj = new LinkedHashMap<>();
+    private final LinkedHashMap<String, Object> jsonObj = new LinkedHashMap<>();
     private final JsonNode root;
 
     public JsonFlatten(JsonNode node) {
         this.root = Objects.requireNonNull(node);
     }
 
-    public Map<String, Object> flatten() {
+    public LinkedHashMap<String, Object> flatten() {
         flattenJson(root, null, json);
         for (String key : json.keySet()) {
-          if (json.get(key).isInt()) jsonObj.put(key, (Object) json.get(key).asInt());
-          if (json.get(key).isLong()) jsonObj.put(key, (Object) json.get(key).asLong());
-          if (json.get(key).isFloat()) jsonObj.put(key, (Object) json.get(key).asDouble());
-          if (json.get(key).isDouble()) jsonObj.put(key, (Object) json.get(key).asDouble());
-          if (json.get(key).isBoolean()) jsonObj.put(key, (Object) json.get(key).asBoolean());
-          if (json.get(key).isTextual()) jsonObj.put(key, (Object) json.get(key).asText());
+          if (Objects.equals(key, "observationDateTime")) {
+              jsonObj.put(key, Timestamp.valueOf(json.get(key).asText()));
+              continue;
+          }
+          if (json.get(key).isInt()) jsonObj.put(key, json.get(key).asInt());
+          if (json.get(key).isLong()) jsonObj.put(key, json.get(key).asLong());
+          if (json.get(key).isFloat()) jsonObj.put(key, json.get(key).asDouble());
+          if (json.get(key).isDouble()) jsonObj.put(key, json.get(key).asDouble());
+          if (json.get(key).isBoolean()) jsonObj.put(key, json.get(key).asBoolean());
+          if (json.get(key).isTextual()) jsonObj.put(key, json.get(key).asText());
         }
         return jsonObj;
     }

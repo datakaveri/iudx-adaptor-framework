@@ -24,11 +24,11 @@ import java.util.LinkedHashMap;
  * Table based on a JSON file.
  */
 public class JsonArrayListTable extends AbstractTable implements ScannableTable{
-  private List<LinkedHashMap> source;
+  private List<LinkedHashMap<String, Object>> source;
   private @Nullable RelDataType rowType;
-  protected @Nullable List<LinkedHashMap> dataList;
+  protected @Nullable List<LinkedHashMap<String, Object>> dataList;
 
-  public JsonArrayListTable(List<LinkedHashMap> source) {
+  public JsonArrayListTable(List<LinkedHashMap<String, Object>> source) {
     this.source = source;
   }
 
@@ -40,7 +40,7 @@ public class JsonArrayListTable extends AbstractTable implements ScannableTable{
   }
 
   /** Returns the data list of the table. */
-  public List<LinkedHashMap> getDataList(RelDataTypeFactory typeFactory) {
+  public List<LinkedHashMap<String, Object>> getDataList(RelDataTypeFactory typeFactory) {
     if (dataList == null) {
       JsonDataConverter jsonDataConverter =
           JsonEnumerator.deduceRowType(typeFactory, source);

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Schema extends AbstractSchema {
-    private List<LinkedHashMap> data;
+    private List<LinkedHashMap<String, Object>> data;
 
 
     @Override
@@ -17,7 +17,7 @@ public class Schema extends AbstractSchema {
         return Collections.singletonMap("state", new JsonArrayListTable(this.data));
     }
 
-    public void setData(List<LinkedHashMap> data) {
+    public void setData(List<LinkedHashMap<String, Object>> data) {
         this.data = data;
     }
 }

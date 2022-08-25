@@ -27,16 +27,16 @@ import in.org.iudx.adaptor.sql.JsonEnumerator.JsonDataConverter;
 public class JsonEnumeratorTest {
 
   static ObjectMapper mapper;
-  static List<LinkedHashMap> objlst;
+  static List<LinkedHashMap<String, Object>> objlst;
 
   @BeforeAll
   static void initialize() throws Exception {
     ObjectMapper mapper = new ObjectMapper();
 
 
-    LinkedHashMap r1 = (LinkedHashMap) new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test\"}, \"index\":[1,2]}")).flatten();
-    LinkedHashMap r2 = (LinkedHashMap)  new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test1\"}, \"index\":[3,4]}")).flatten();
-    objlst = new ArrayList<LinkedHashMap>();
+    LinkedHashMap<String, Object> r1 = new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test\"}, \"index\":[1,2]}")).flatten();
+    LinkedHashMap<String, Object> r2 = new JsonFlatten(mapper.readTree("{\"name\": {\"value\": \"test1\"}, \"index\":[3,4]}")).flatten();
+    objlst = new ArrayList<LinkedHashMap<String, Object>>();
     objlst.add(r1); objlst.add(r2);
   }
 

@@ -6,5 +6,5 @@ import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 public class RuleStateDescriptor {
-    public static final MapStateDescriptor<String, Rule> ruleMapStateDescriptor = new MapStateDescriptor<>("RulesBroadcastState", BasicTypeInfo.STRING_TYPE_INFO, TypeInformation.of(Rule.class));
+    public static final MapStateDescriptor<Integer, Rule> ruleMapStateDescriptor = new MapStateDescriptor<>("RulesBroadcastState", BasicTypeInfo.INT_TYPE_INFO, TypeInformation.of(Rule.class));
 }
