@@ -24,10 +24,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
-import java.util.LinkedHashMap;
+import java.util.*;
 
 
 import in.org.iudx.adaptor.utils.JsonFlatten;
@@ -42,6 +39,9 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     }));
 
     private transient CalciteConnection calciteConnection;
+
+    private static int EXPIRY_TIME = Integer.MIN_VALUE;
+
     @Override
     public void open(Configuration parameters) throws ClassNotFoundException, SQLException {
 
@@ -60,7 +60,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
                   Message, Rule, String>.ReadOnlyContext readOnlyContext,
                   Collector<String> collector) throws Exception {
 
-        ReadOnlyBroadcastState<String, Rule> ruleState 
+        ReadOnlyBroadcastState<Integer, Rule> ruleState
               = readOnlyContext.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
 
         listState.add(
@@ -70,7 +70,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
 
         SchemaPlus rootSchema = calciteConnection.getRootSchema();
         Iterator<LinkedHashMap<String,Object>> iterator = listState.get().iterator();
-        List<LinkedHashMap> list = IteratorUtils.toList(iterator);
+        List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
 
         Schema schema = new Schema();
         schema.setData(list);
@@ -90,11 +90,55 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     }
 
     @Override
-    public void processBroadcastElement(Rule rule, KeyedBroadcastProcessFunction<String,
-                                        Message, Rule, String>.Context context,
-                                        Collector<String> collector) throws Exception {
-        BroadcastState<String, Rule> broadcastState 
-                  = context.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
-        broadcastState.put(rule.sqlQuery, rule);
+    public void processBroadcastElement(Rule rule, KeyedBroadcastProcessFunction<String, Message, Rule, String>.Context context, Collector<String> collector) throws Exception {
+        BroadcastState<Integer, Rule> broadcastState = context.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
+        broadcastState.put(rule.ruleId, rule);
+
+        updateExpiryTime(rule, broadcastState);
     }
+
+
+    @Override
+    public void onTimer(final long timestamp, final OnTimerContext ctx, final Collector<String> collector) throws Exception {
+
+        Rule rule = ctx.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor).get(EXPIRY_TIME);
+
+        Optional<Long> cleanupEventTimeWindow = Optional.ofNullable(rule).map(Rule::getWindowMillis);
+        Optional<Long> cleanupEventTimeThreshold = cleanupEventTimeWindow.map(window -> timestamp - window);
+
+        cleanupEventTimeThreshold.ifPresent(this::removeElementFromState);
+    }
+
+    private void updateExpiryTime(Rule rule, BroadcastState<Integer, Rule> broadcastState)
+            throws Exception {
+        Rule widestWindowRule = broadcastState.get(EXPIRY_TIME);
+
+
+        if (widestWindowRule == null) {
+            broadcastState.put(EXPIRY_TIME, rule);
+            return;
+        }
+
+        if (widestWindowRule.getWindowMillis() < rule.getWindowMillis()) {
+            broadcastState.put(EXPIRY_TIME, rule);
+        }
+    }
+
+    private void removeElementFromState(Long threshold) {
+        try {
+            Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
+            while (iterator.hasNext()) {
+                LinkedHashMap<String, Object> obj = iterator.next();
+                long eventTime = (long) obj.get("observationDateTime");
+                if (eventTime < threshold) {
+                    iterator.remove();
+                }
+            }
+            List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
+            listState.update(list);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
 }
