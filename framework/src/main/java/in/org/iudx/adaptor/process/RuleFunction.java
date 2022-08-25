@@ -35,7 +35,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   private static int EXPIRY_TIME = Integer.MIN_VALUE;
   private ListStateDescriptor<LinkedHashMap<String, Object>> listStateDescriptor;
 
-  private transient ListState<LinkedHashMap<String, Object>> listState;
+  private ListState<LinkedHashMap<String, Object>> listState;
   private transient CalciteConnection calciteConnection;
 
   @Override
@@ -62,26 +62,20 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
     List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
 
-    System.out.println(ruleState.get(1).sqlQuery);
-    System.out.println(list.get(0).get("a"));
-
     Schema schema = new Schema();
     schema.setData(list);
     rootSchema.add("listState", schema);
 
-
-
-    try (Statement statement = calciteConnection.createStatement()) {
-      String sql = "select * from listState.state";
-      ResultSet rs = statement.executeQuery(sql);
-
-      while (rs.next()) {
-        String result = rs.getString("a");
-        collector.collect(String.valueOf(result));
-      }
-    } catch (Exception e) {
-      System.out.println(e);
-    }
+    ruleState.immutableEntries().forEach ( r -> {
+      try (Statement statement = calciteConnection.createStatement()) {
+        String q = r.getValue().sqlQuery;
+        ResultSet rs = statement.executeQuery(q);
+        while (rs.next()) {
+          String result = rs.getString("a");
+          collector.collect(String.valueOf(result));
+        }
+      } catch (Exception e){}
+    });
   }
 
   @Override

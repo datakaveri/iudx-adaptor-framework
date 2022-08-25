@@ -52,12 +52,12 @@ public class RuleFunctionTest {
   private static TwoInputStreamOperatorTestHarness<Message,Rule,String> testHarness;
 
 
-  private static class IdentityKeySelector<T> implements KeySelector<T, T> {
+  private static class IdentityKeySelector implements KeySelector<Message, String> {
       private static final long serialVersionUID = 1L;
 
       @Override
-      public T getKey(T value) throws Exception {
-          return value;
+      public String getKey(Message value) throws Exception {
+          return value.key;
       }
   }
 
@@ -66,7 +66,7 @@ public class RuleFunctionTest {
   public static void initialize() throws Exception {
 
     testHarness = getInitializedTestHarness(TypeInformation.of(String.class),
-                      (KeySelector<String,String>) new IdentityKeySelector<String>(),
+                      (KeySelector<Message,String>) new IdentityKeySelector(),
                       (KeyedBroadcastProcessFunction) new RuleFunction(),
                        1, 1, 0, null);
 
@@ -77,7 +77,7 @@ public class RuleFunctionTest {
   @Test
   public void prElem1() throws Exception {
 
-    Rule r1 = new Rule("select * from *");
+    Rule r1 = new Rule("select * from listState.state where `a`='c'", "https://out");
     r1.ruleId = 1;
     testHarness.processWatermark2(new Watermark(5L));
     testHarness.processElement2(r1, 10L);
@@ -85,12 +85,14 @@ public class RuleFunctionTest {
      Message m1 = new Message().setKey("b").setResponseBody("{\"a\": \"b\"}");
      Message m2 = new Message().setKey("c").setResponseBody("{\"a\": \"c\"}");
      testHarness.processWatermark1(new Watermark(20L));
-     testHarness.processElement1(new StreamRecord<Message>(m1, 30L));
-     testHarness.processWatermark1(new Watermark(10L));
-     testHarness.processElement1(new StreamRecord<Message>(m2, 20L));
-     System.out.println(testHarness.getOutput());
+     testHarness.processElement1(m1, 30L);
+     testHarness.processWatermark1(new Watermark(40L));
+     testHarness.processElement1(m2, 50L);
 
-    // Queue<Object> output = testHarness.getOutput();
+     Queue<Object> output = testHarness.getOutput();
+     for(Object out: output) {
+       System.out.println(out);
+     }
 
 
   }
