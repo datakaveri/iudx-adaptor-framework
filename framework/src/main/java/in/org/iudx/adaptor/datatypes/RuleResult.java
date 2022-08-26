@@ -36,7 +36,8 @@ public class RuleResult implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     RuleResult that = (RuleResult) o;
-    return Objects.equals(result, that.result) && sinkExchangeKey.equals(that.sinkExchangeKey) && sinkRoutingKey.equals(that.sinkRoutingKey);
+    return Objects.equals(result, that.result) && sinkExchangeKey.equals(
+            that.sinkExchangeKey) && sinkRoutingKey.equals(that.sinkRoutingKey);
   }
 
   @Override

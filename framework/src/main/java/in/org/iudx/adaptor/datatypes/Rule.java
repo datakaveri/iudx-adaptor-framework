@@ -9,7 +9,6 @@ public class Rule implements Serializable {
 
   public Integer ruleId;
   public String sqlQuery;
-  public String resultColumnName;
   public RuleType type;
   public String sinkExchangeKey;
   public String sinkRoutingKey;
@@ -18,11 +17,10 @@ public class Rule implements Serializable {
   public Rule() {
   }
 
-  public Rule(Integer ruleId, String sqlQuery, String resultColumnName, RuleType type,
-              Integer windowMinutes, String sinkExchangeKey, String sinkRoutingKey) {
+  public Rule(Integer ruleId, String sqlQuery, RuleType type, Integer windowMinutes,
+              String sinkExchangeKey, String sinkRoutingKey) {
     this.ruleId = ruleId;
     this.sqlQuery = sqlQuery;
-    this.resultColumnName = resultColumnName;
     this.type = type;
     this.windowMinutes = windowMinutes;
     this.sinkExchangeKey = sinkExchangeKey;
@@ -43,14 +41,6 @@ public class Rule implements Serializable {
 
   public void setSqlQuery(String sqlQuery) {
     this.sqlQuery = sqlQuery;
-  }
-
-  public String getResultColumnName() {
-    return resultColumnName;
-  }
-
-  public void setResultColumnName(String resultColumnName) {
-    this.resultColumnName = resultColumnName;
   }
 
   public RuleType getType() {
@@ -90,18 +80,21 @@ public class Rule implements Serializable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Rule rule = (Rule) o;
-    return ruleId.equals(rule.ruleId) && Objects.equals(sqlQuery, rule.sqlQuery) && Objects.equals(resultColumnName, rule.resultColumnName) && type == rule.type && Objects.equals(windowMinutes, rule.windowMinutes) && Objects.equals(sinkExchangeKey, rule.sinkExchangeKey) && Objects.equals(sinkRoutingKey, rule.sinkRoutingKey);
+    return ruleId.equals(rule.ruleId) && Objects.equals(sqlQuery,
+            rule.sqlQuery) && type == rule.type && Objects.equals(windowMinutes,
+            rule.windowMinutes) && Objects.equals(sinkExchangeKey,
+            rule.sinkExchangeKey) && Objects.equals(sinkRoutingKey, rule.sinkRoutingKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ruleId, sqlQuery, resultColumnName, type, windowMinutes, sinkExchangeKey,
-            sinkRoutingKey);
+    return Objects.hash(ruleId, sqlQuery, type, windowMinutes, sinkExchangeKey, sinkRoutingKey);
   }
 
   @Override
   public String toString() {
-    return "Rule{" + "ruleId=" + ruleId + ", sqlQuery='" + sqlQuery + '\'' + ", resultColumnName" + "='" + resultColumnName + '\'' + ", type=" + type + ", windowMinutes=" + windowMinutes + ", sinkExchangeKey='" + sinkExchangeKey + '\'' + ", sinkRoutingKey='" + sinkRoutingKey + '\'' + '}';
+    return "Rule{" + "ruleId=" + ruleId + ", sqlQuery='" + sqlQuery + '\'' + ", type=" + type +
+            ", windowMinutes=" + windowMinutes + ", sinkExchangeKey='" + sinkExchangeKey + '\'' + ", sinkRoutingKey='" + sinkRoutingKey + '\'' + '}';
   }
 
   public enum RuleType {

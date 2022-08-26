@@ -19,6 +19,8 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.KeyedBroadcastProcessFunction;
 import org.apache.flink.util.Collector;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.sql.*;
 import java.util.*;
@@ -42,20 +44,21 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
 
     listStateDescriptor = new ListStateDescriptor<>("listState",
             TypeInformation.of(new TypeHint<LinkedHashMap<String, Object>>() {
-    }));
+            }));
     listState = getRuntimeContext().getListState(listStateDescriptor);
   }
 
   @Override
-  public void processElement(Message message, KeyedBroadcastProcessFunction<String, Message, Rule
-          , RuleResult>.ReadOnlyContext readOnlyContext, Collector<RuleResult> collector) throws Exception {
-    ReadOnlyBroadcastState<Integer, Rule> ruleState =
-            readOnlyContext.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
+  public void processElement(Message message,
+                             KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult>.ReadOnlyContext readOnlyContext,
+                             Collector<RuleResult> collector) throws Exception {
+    ReadOnlyBroadcastState<Integer, Rule> ruleState = readOnlyContext.getBroadcastState(
+            RuleStateDescriptor.ruleMapStateDescriptor);
 
     SchemaPlus rootSchema = calciteConnection.getRootSchema();
 
-    LinkedHashMap<String, Object> obj =
-            new JsonFlatten(new ObjectMapper().readTree(message.toString())).flatten();
+    LinkedHashMap<String, Object> obj = new JsonFlatten(
+            new ObjectMapper().readTree(message.toString())).flatten();
 
     Timestamp currentEventTime = (Timestamp) obj.get("observationDateTime");
 
@@ -76,12 +79,19 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
         String q = rule.getValue().sqlQuery;
         q = q.replace("TABLE", "listState.state");
         ResultSet rs = statement.executeQuery(q);
+        JSONArray json = new JSONArray();
         while (rs.next()) {
-          String result = rs.getString(rule.getValue().resultColumnName);
-          RuleResult ruleResult = new RuleResult(String.valueOf(result),
-                  rule.getValue().sinkExchangeKey, rule.getValue().sinkRoutingKey);
-          collector.collect(ruleResult);
+          int columnCount = rs.getMetaData().getColumnCount();
+          JSONObject jsonObject = new JSONObject();
+          for (int i = 1; i <= columnCount; i++) {
+            String column = rs.getMetaData().getColumnName(i);
+            jsonObject.put(column, rs.getObject(column));
+          }
+          json.put(jsonObject);
         }
+        RuleResult ruleResult = new RuleResult(json.toString(), rule.getValue().sinkExchangeKey,
+                rule.getValue().sinkRoutingKey);
+        collector.collect(ruleResult);
       } catch (Exception e) {
         System.out.println(e);
       }
@@ -89,10 +99,12 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   }
 
   @Override
-  public void processBroadcastElement(Rule rule, KeyedBroadcastProcessFunction<String, Message,
-          Rule, RuleResult>.Context context, Collector<RuleResult> collector) throws Exception {
-    BroadcastState<Integer, Rule> broadcastState =
-            context.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor);
+  public void processBroadcastElement(Rule rule,
+                                      KeyedBroadcastProcessFunction<String, Message, Rule,
+                                              RuleResult>.Context context,
+                                      Collector<RuleResult> collector) throws Exception {
+    BroadcastState<Integer, Rule> broadcastState = context.getBroadcastState(
+            RuleStateDescriptor.ruleMapStateDescriptor);
     if (rule.type == Rule.RuleType.RULE) {
       broadcastState.put(rule.ruleId, rule);
       updateExpiryTime(rule, broadcastState);
@@ -106,17 +118,18 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   public void onTimer(final long timestamp, final OnTimerContext ctx,
                       final Collector<RuleResult> collector) throws Exception {
 
-    Rule rule =
-            ctx.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor).get(EXPIRY_TIME_RULE_ID);
+    Rule rule = ctx.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor)
+            .get(EXPIRY_TIME_RULE_ID);
 
     Optional<Long> cleanupEventTimeWindow = Optional.ofNullable(rule).map(Rule::getWindowMillis);
-    Optional<Long> cleanupEventTimeThreshold =
-            cleanupEventTimeWindow.map(window -> timestamp - window);
+    Optional<Long> cleanupEventTimeThreshold = cleanupEventTimeWindow.map(
+            window -> timestamp - window);
 
     cleanupEventTimeThreshold.ifPresent(this::removeElementFromState);
   }
 
-  private void updateExpiryTime(Rule rule, BroadcastState<Integer, Rule> broadcastState) throws Exception {
+  private void updateExpiryTime(Rule rule, BroadcastState<Integer, Rule> broadcastState)
+          throws Exception {
     Rule widestWindowRule = broadcastState.get(EXPIRY_TIME_RULE_ID);
 
 
