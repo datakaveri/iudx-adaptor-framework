@@ -6,6 +6,10 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
+import org.apache.commons.collections.IteratorUtils;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ListStateDescriptor;
+import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.runtime.checkpoint.OperatorSubtaskState;
@@ -22,17 +26,21 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class RuleFunctionTest {
 
   private static TwoInputStreamOperatorTestHarness<Message, Rule, RuleResult> testHarness;
+  private static RuleFunction ruleFunction = new RuleFunction();
 
   @BeforeAll
   public static void initialize() throws Exception {
     testHarness = getInitializedTestHarness(TypeInformation.of(String.class),
             (KeySelector<Message, String>) new IdentityKeySelector(),
-            (KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult>) new RuleFunction(),
-            1, 1, 0, null);
+            (KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult>) ruleFunction, 1, 1,
+            0, null);
   }
 
   private static <KEY, IN1, IN2, OUT> TwoInputStreamOperatorTestHarness<IN1, IN2, OUT> getInitializedTestHarness(
@@ -42,9 +50,9 @@ public class RuleFunctionTest {
           final OperatorSubtaskState initState) throws Exception {
     final TwoInputStreamOperatorTestHarness<IN1, IN2, OUT> testHarness =
             new KeyedTwoInputStreamOperatorTestHarness<>(
-                    new CoBroadcastWithKeyedOperator<>(Preconditions.checkNotNull(function),
-                            Collections.singletonList(RuleStateDescriptor.ruleMapStateDescriptor)),
-                    keyKeySelector, null, keyTypeInfo, maxParallelism, numTasks, taskIdx);
+            new CoBroadcastWithKeyedOperator<>(Preconditions.checkNotNull(function),
+                    Collections.singletonList(RuleStateDescriptor.ruleMapStateDescriptor)),
+            keyKeySelector, null, keyTypeInfo, maxParallelism, numTasks, taskIdx);
 
     testHarness.setup();
     testHarness.open();
@@ -90,7 +98,12 @@ public class RuleFunctionTest {
 
   @Test
   void testTimer() throws Exception {
-    testHarness.setProcessingTime(10L);
+    ListStateDescriptor<LinkedHashMap<String, Object>> listStateDescriptor =
+            new ListStateDescriptor<>(
+            "listState", TypeInformation.of(new TypeHint<LinkedHashMap<String, Object>>() {
+    }));
+    ListState<LinkedHashMap<String, Object>> listState = ruleFunction.getRuntimeContext()
+            .getListState(listStateDescriptor);
     ObjectMapper mapper = new ObjectMapper();
     Rule r1 = mapper.readValue(
             "{\"ruleId\":1,\"sqlQuery\":\"select * from TABLE where " + "`deviceId`='abc-456'\"," + "\"type\":\"RULE\",\"windowMinutes\": 1," + "\"sinkExchangeKey\": " + "\"test\",\"sinkRoutingKey\": \"test\"}",
@@ -104,33 +117,37 @@ public class RuleFunctionTest {
 
     Message m1 = new Message().setKey("abc-456").setResponseBody(
             "{\"deviceId\":\"abc-456\"," + "\"k1\":606,\"observationDateTime\":\"" + msg1Time.toString() + "\"}");
+
     LocalDateTime localDateTime = DateParserUtils.parseDateTime(msg1Time.toString());
-    long timestamp = (Timestamp.valueOf(localDateTime).getTime() / 1000) * 1000;
+    long timestamp = Timestamp.valueOf(localDateTime).toInstant().toEpochMilli();
 
+    testHarness.processElement1(m1, timestamp);
+
+    System.out.println(testHarness.numEventTimeTimers());
+    testHarness.processBothWatermarks(new Watermark(timestamp));
+
+    Instant msg2Time = Instant.now();
     Message m2 = new Message().setKey("abc-456").setResponseBody(
-            "{\"deviceId\":\"abc-456\"," + "\"k1\":128,\"observationDateTime\":\"" + Instant.now()
-                    .toString() + "\"}");
-    testHarness.processWatermark1(new Watermark(20L));
-    testHarness.processElement1(m1, 30L);
+            "{\"deviceId\":\"abc-456\"," + "\"k1\":128,\"observationDateTime\":\"" + msg2Time.toString() + "\"}");
 
-    System.out.println(
-            testHarness.numProcessingTimeTimers() + " " + testHarness.numEventTimeTimers());
+    localDateTime = DateParserUtils.parseDateTime(msg2Time.toString());
+    timestamp = Timestamp.valueOf(localDateTime).toInstant().toEpochMilli();
 
-//    try {
-    testHarness.setProcessingTime(40L);
-//    testHarness.setProcessingTime(timestamp);
-//    } catch (Exception e) {
-//      System.out.println(e);
-//    }
+    testHarness.processElement1(m2, timestamp);
 
-    testHarness.processWatermark1(new Watermark(40L));
-    testHarness.processElement1(m2, 50L);
+    System.out.println("List state before executing event timer");
+    Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
+    List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
+    System.out.println(list);
 
-    System.out.println(
-            testHarness.numProcessingTimeTimers() + " " + testHarness.numEventTimeTimers());
+    testHarness.processBothWatermarks(new Watermark(timestamp));
+
+    System.out.println("List state after executing event timer");
+    iterator = listState.get().iterator();
+    list = IteratorUtils.toList(iterator);
+    System.out.println(list);
 
 
-    System.out.println((testHarness.getOutput()));
 
     testHarness.close();
   }

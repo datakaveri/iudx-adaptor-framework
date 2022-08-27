@@ -23,7 +23,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.sql.*;
-import java.sql.Timestamp;
 import java.util.*;
 
 public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult> {
@@ -61,21 +60,13 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     LinkedHashMap<String, Object> obj = new JsonFlatten(
             new ObjectMapper().readTree(message.toString())).flatten();
 
-//    Timestamp currentEventTime = (Timestamp) obj.get("observationDateTime");
+    Timestamp currentEventTime = (Timestamp) obj.get("observationDateTime");
 
     listState.add(obj);
 
-//    long cleanupTime = (currentEventTime.getTime() / 1000) * 1000;
-    System.out.println("===============================");
-    System.out.println(readOnlyContext.timestamp());
-//    System.out.println(cleanupTime);
-    System.out.println(readOnlyContext.timerService().currentProcessingTime());
-    System.out.println("===============================");
+    long cleanupTime = currentEventTime.toInstant().toEpochMilli();
 
-    // TODO hardcoded timer to see if test works
-
-    readOnlyContext.timerService().registerProcessingTimeTimer(40L);
-//    readOnlyContext.timerService().registerEventTimeTimer(40L);
+    readOnlyContext.timerService().registerEventTimeTimer(cleanupTime);
 
     Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
     List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
@@ -127,8 +118,6 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   @Override
   public void onTimer(final long timestamp, final OnTimerContext ctx,
                       final Collector<RuleResult> collector) throws Exception {
-
-    System.out.println("============Execution in Timer===================");
     Rule rule = ctx.getBroadcastState(RuleStateDescriptor.ruleMapStateDescriptor)
             .get(EXPIRY_TIME_RULE_ID);
 
