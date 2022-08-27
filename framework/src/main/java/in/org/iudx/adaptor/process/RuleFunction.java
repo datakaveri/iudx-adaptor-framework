@@ -23,6 +23,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.sql.*;
+import java.sql.Timestamp;
 import java.util.*;
 
 public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult> {
@@ -158,7 +159,8 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
       Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
       while (iterator.hasNext()) {
         LinkedHashMap<String, Object> obj = iterator.next();
-        long eventTime = (long) obj.get("observationDateTime");
+        Timestamp eventTimestamp = (Timestamp) obj.get("observationDateTime");
+        Long eventTime = eventTimestamp.toInstant().toEpochMilli();
         if (eventTime < threshold) {
           iterator.remove();
         }
