@@ -5,7 +5,7 @@ import org.apache.flink.api.common.time.Time;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class Rule implements Serializable {
+public class Rule implements Serializable, AdaptorRecord {
 
   public Integer ruleId;
   public String sqlQuery;
@@ -100,4 +100,10 @@ public class Rule implements Serializable {
   public enum RuleType {
     RULE, DELETE
   }
+
+
+  public String getClassName() {
+    return this.getClassName();
+  }
+
 }

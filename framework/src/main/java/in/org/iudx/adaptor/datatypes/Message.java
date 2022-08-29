@@ -14,7 +14,7 @@ import java.io.Serializable;
  *  - Getters and setters according to specification
  *  - Validations
  */
-public class Message implements Serializable {
+public class Message implements AdaptorRecord, Serializable {
 
   public String body;
   public String key;
@@ -106,6 +106,10 @@ public class Message implements Serializable {
      *    - Return Instance time
      **/
     return timestamp.toEpochMilli();
+  }
+
+  public String getClassName() {
+    return this.getClassName();
   }
 
 }
