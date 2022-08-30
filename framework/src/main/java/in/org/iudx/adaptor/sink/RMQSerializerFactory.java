@@ -6,7 +6,7 @@ import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 
 public class RMQSerializerFactory<T> {
-  public SerializationSchema getDeserializer(TypeInformation typeinfo) {
+  public SerializationSchema getSerializer(TypeInformation typeinfo) {
     if (typeinfo.getTypeClass().equals(Message.class)) {
       return new RMQMessageSerializer();
     }

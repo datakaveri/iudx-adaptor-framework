@@ -101,9 +101,4 @@ public class Rule implements Serializable, AdaptorRecord {
     RULE, DELETE
   }
 
-
-  public String getClassName() {
-    return this.getClassName();
-  }
-
 }

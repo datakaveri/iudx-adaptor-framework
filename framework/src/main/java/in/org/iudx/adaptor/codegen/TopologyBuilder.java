@@ -7,6 +7,8 @@ import in.org.iudx.adaptor.process.JSPathProcessFunction;
 import in.org.iudx.adaptor.process.JSProcessFunction;
 import in.org.iudx.adaptor.process.JoltTransformer;
 import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
+import in.org.iudx.adaptor.sink.RMQGenericSink;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -283,15 +285,13 @@ public class TopologyBuilder {
 
         if ("rmq".equals(publishType)) {
             mainBuilder.addStatement("$T rmqConfig = new $T()",
-                    RMQConfig.class, RMQConfig.class);
-
-            mainBuilder.addStatement("rmqConfig.setPublisher(new $T($S, $S))",
-                    StaticStringPublisher.class,
-                    publishSpec.getString("sinkName"),
-                    publishSpec.getString("tagName"));
-            mainBuilder.addStatement("rmqConfig.builder.setUri($S)",
+                    RMQSourceConfig.class, RMQSourceConfig.class);
+            mainBuilder.addStatement("rmqConfig.setUri($S)",
                                           publishSpec.getString("uri"));
-            mainBuilder.addStatement("rmqConfig.getConfig()");
+            mainBuilder.addStatement("rmqConfig.setExchange($S)",
+                    publishSpec.getString("sinkName"));
+            mainBuilder.addStatement("rmqConfig.setRoutingKey($S)",
+                    publishSpec.getString("tagName"));
 
         }
     }
@@ -368,7 +368,8 @@ public class TopologyBuilder {
 
         /* TODO: Loki config */
 
-        mainBuilder.addStatement("ds.addSink(new $T(rmqConfig))", AMQPSink.class);
+        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class))",
+                RMQGenericSink.class, TypeInformation.class, Message.class);
 
         mainBuilder.beginControlFlow("try");
         mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");

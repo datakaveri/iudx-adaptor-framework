@@ -18,14 +18,13 @@ import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
 public class RMQGenericSink<T> extends RMQSink<T> {
 
   transient CustomLogger logger;
-  private RMQSourceConfig rmqConfig;
   private TypeInformation typeInformation;
   private transient Counter counter;
 
   public RMQGenericSink(RMQSourceConfig rmqConfig, TypeInformation typeInfo) {
-    super(rmqConfig.build(), new RMQSerializerFactory<>().getDeserializer(typeInfo),
+    super(rmqConfig.build(), new RMQSerializerFactory<>().getSerializer(typeInfo),
             new RMQPublisherFactory<>().getPublisher(typeInfo, rmqConfig));
-    this.rmqConfig = rmqConfig;
+    this.typeInformation= typeInfo;
   }
 
   @Override
@@ -42,6 +41,7 @@ public class RMQGenericSink<T> extends RMQSink<T> {
 
   @Override
   public void invoke(T value, Context context) throws Exception {
+    System.out.println(typeInformation.getTypeClass());
     try {
       if (typeInformation.getTypeClass().equals(Message.class)) {
         Message data = (Message) value;

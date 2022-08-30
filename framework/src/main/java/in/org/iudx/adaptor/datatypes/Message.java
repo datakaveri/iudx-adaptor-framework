@@ -108,8 +108,4 @@ public class Message implements AdaptorRecord, Serializable {
     return timestamp.toEpochMilli();
   }
 
-  public String getClassName() {
-    return this.getClassName();
-  }
-
 }

@@ -3,7 +3,7 @@ package in.org.iudx.adaptor.datatypes;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class RuleResult implements Serializable {
+public class RuleResult implements Serializable, AdaptorRecord {
   public String result;
   public String sinkExchangeKey;
   public String sinkRoutingKey;

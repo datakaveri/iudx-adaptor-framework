@@ -1,14 +1,11 @@
 package in.org.iudx.adaptor.source;
 
-import in.org.iudx.adaptor.logger.CustomLogger;
-import in.org.iudx.adaptor.datatypes.Message;
-import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.codegen.RMQSourceConfig;
-
-import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
-import org.apache.flink.streaming.connectors.rabbitmq.RMQDeserializationSchema;
+import in.org.iudx.adaptor.datatypes.Message;
+import in.org.iudx.adaptor.logger.CustomLogger;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
-
+import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
 
 
 /**
@@ -24,14 +21,13 @@ import org.apache.flink.configuration.Configuration;
 public class RMQGenericSource<T> extends RMQSource<T> {
 
   private static final long serialVersionUID = 1L;
-  private RMQSourceConfig rmqConfig;
-  private RMQDeserializationSchema<T> deser;
-
   transient CustomLogger logger;
+  private RMQSourceConfig rmqConfig;
 
-  public RMQGenericSource(RMQSourceConfig rmqConfig, RMQDeserializationSchema<T> deser) {
-    super(rmqConfig.build(), rmqConfig.getQueueName(), deser);
-    this.deser = deser;
+  public RMQGenericSource(RMQSourceConfig rmqConfig, TypeInformation typeInformation,
+                          String appName, String parseSpec) {
+    super(rmqConfig.build(), rmqConfig.getQueueName(),
+            new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, parseSpec));
     this.rmqConfig = rmqConfig;
   }
 
