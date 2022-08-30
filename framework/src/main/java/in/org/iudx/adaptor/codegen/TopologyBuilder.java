@@ -366,7 +366,7 @@ public class TopologyBuilder {
 
         /* TODO: Loki config */
 
-        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class))",
+        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
                 RMQGenericSink.class, TypeInformation.class, Message.class);
 
         mainBuilder.beginControlFlow("try");

@@ -22,7 +22,7 @@ public class RMQMessagePublisher implements RMQSinkPublishOptions<Message> {
   @Override
   public AMQP.BasicProperties computeProperties(Message message) {
     // TODO check if headers is required
-    return new AMQP.BasicProperties.Builder().expiration("10000").build();
+    return new AMQP.BasicProperties.Builder().build();
   }
 
   @Override

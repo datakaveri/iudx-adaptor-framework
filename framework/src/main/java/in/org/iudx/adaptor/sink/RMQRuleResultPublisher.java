@@ -14,7 +14,7 @@ public class RMQRuleResultPublisher implements RMQSinkPublishOptions<RuleResult>
   @Override
   public AMQP.BasicProperties computeProperties(RuleResult result) {
     // TODO check if headers is required
-    return new AMQP.BasicProperties.Builder().expiration("10000").build();
+    return new AMQP.BasicProperties.Builder().build();
   }
 
   @Override

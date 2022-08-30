@@ -3,7 +3,7 @@
 
     "inputSpec": {
         "type": "http",
-        "url": "http://mockserver.adaptor-framework.svc.cluster.local:8080/simpleB",
+        "url": "http://mockserver:8080/simpleB",
         "requestType": "GET",
         "pollingInterval": 1000
     },
@@ -32,10 +32,7 @@
 
     "publishSpec": {
         "type": "rmq",
-        "url": "amqp://rmq-rabbitmq",
-        "port": 5672,
-        "uname": "guest",
-        "password": "guest",
+        "uri": "amqp://guest:guest@rmq:5672",
         "sinkName": "adaptor-test",
         "tagName": "joltjob"
     }
