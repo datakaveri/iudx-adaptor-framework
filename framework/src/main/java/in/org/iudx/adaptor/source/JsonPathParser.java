@@ -43,6 +43,11 @@ public class JsonPathParser<T> implements Parser<T> {
 
   public JsonPathParser(String parseSpecString) {
 
+    // TODO: Safety here
+    if (parseSpec == null || parseSpecString.isEmpty()) {
+      return;
+    }
+
     this.parseSpec = new JSONObject(parseSpecString);
 
     this.timestampPath = parseSpec.optString("timestampPath");

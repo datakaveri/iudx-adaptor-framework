@@ -14,18 +14,19 @@ import in.org.iudx.adaptor.datatypes.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-public class RMQRuleDeserializer implements RMQDeserializationSchema<Rule> {
+public class RMQRuleDeserializer extends JsonPathParser<Rule>
+                                implements RMQDeserializationSchema<Rule> {
 
   private ObjectMapper mapper;
   private String appName;
   transient CustomLogger logger;
+  private String parseSpec;
 
 
-  public RMQRuleDeserializer() {
-  }
-
-  public RMQRuleDeserializer(String appName) {
+  public RMQRuleDeserializer(String appName, String parseSpec) {
+    super(parseSpec);
     this.appName = appName;
+    this.parseSpec = parseSpec;
   }
 
   @Override
@@ -39,7 +40,7 @@ public class RMQRuleDeserializer implements RMQDeserializationSchema<Rule> {
       Rule rule = mapper.readValue(body, Rule.class);
       collector.collect(rule);
     } catch (Exception e) {
-      logger.error("Couldn't parse RMQ Message");
+      logger.error(e);
     }
   }
 

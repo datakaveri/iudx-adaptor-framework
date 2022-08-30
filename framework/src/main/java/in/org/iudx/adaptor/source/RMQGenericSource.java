@@ -7,7 +7,6 @@ import in.org.iudx.adaptor.codegen.RMQSourceConfig;
 
 import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQDeserializationSchema;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 
 
@@ -30,12 +29,10 @@ public class RMQGenericSource<T> extends RMQSource<T> {
 
   transient CustomLogger logger;
 
-  public RMQGenericSource(RMQSourceConfig rmqConfig, TypeInformation typeInfo) {
-    super(rmqConfig.build(), rmqConfig.getQueueName(),
-           new RMQDeserializerFactory().getDeserializer(typeInfo));
-  }
-
-  public void start() {
+  public RMQGenericSource(RMQSourceConfig rmqConfig, RMQDeserializationSchema<T> deser) {
+    super(rmqConfig.build(), rmqConfig.getQueueName(), deser);
+    this.deser = deser;
+    this.rmqConfig = rmqConfig;
   }
 
   @Override

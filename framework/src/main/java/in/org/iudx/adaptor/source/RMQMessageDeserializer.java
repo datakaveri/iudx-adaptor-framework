@@ -9,23 +9,38 @@ import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.AMQP.BasicProperties;
 import java.text.ParseException;
 
+import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.datatypes.Message;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class RMQMessageDeserializer implements Parser<Message>, RMQDeserializationSchema<Message> {
 
+public class RMQMessageDeserializer extends JsonPathParser<Message>
+                                  implements RMQDeserializationSchema<Message> {
+
+  private ObjectMapper mapper;
   private String appName;
+  private String parseSpec;
+  transient CustomLogger logger;
+  private JsonPathParser<Message> parser;
 
-  public RMQMessageDeserializer() {
-  }
 
-  public RMQMessageDeserializer(String appName) {
+  public RMQMessageDeserializer(String appName, String parseSpec) {
+    super(parseSpec);
     this.appName = appName;
+    this.parseSpec = parseSpec;
   }
 
   @Override
-  public void deserialize(Envelope envelope, BasicProperties properties, byte[] body, RMQDeserializationSchema.RMQCollector<Message> collector) {
+  public void deserialize(Envelope envelope, BasicProperties properties, byte[] body,
+                          RMQDeserializationSchema.RMQCollector<Message> collector) {
+    try {
+      Message msg = parse(new String(body));
+      collector.collect(msg);
+    } catch (Exception e) {
+      logger.error(e);
+    }
   }
 
   @Override
@@ -44,7 +59,7 @@ public class RMQMessageDeserializer implements Parser<Message>, RMQDeserializati
 
 
   @Override
-  public Parser<Message> initialize() {
+  public JsonPathParser<Message> initialize() {
     return this;
   }
 
