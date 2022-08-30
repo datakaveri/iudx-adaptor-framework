@@ -36,7 +36,7 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
   public void deserialize(Envelope envelope, BasicProperties properties, byte[] body,
                           RMQDeserializationSchema.RMQCollector<Message> collector) {
     try {
-      Message msg = parse(new String(body));
+      Message msg = super.parse(new String(body));
       collector.collect(msg);
     } catch (Exception e) {
       logger.error(e);
@@ -56,18 +56,6 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
   public  TypeInformation<Message> getProducedType() {
     return TypeInformation.of(new TypeHint<Message>() {});
   }
-
-
-  @Override
-  public JsonPathParser<Message> initialize() {
-    return this;
-  }
-
-  @Override
-  public Message parse(String data) throws ParseException {
-    return new Message();
-  }
-
 
   public RMQMessageDeserializer setAppName(String appName) {
     this.appName = appName;

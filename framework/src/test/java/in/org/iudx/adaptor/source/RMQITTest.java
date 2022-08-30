@@ -18,6 +18,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.json.JSONObject;
+import org.json.JSONArray;
+
+import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbWatermarkSink;
+import in.org.iudx.adaptor.datatypes.Message;
+
 public class RMQITTest {
 
   public static MiniClusterWithClientResource flinkCluster;
@@ -52,7 +59,6 @@ public class RMQITTest {
     pub.initialize();
     for (int i = 0; i < numMsgs; i++) {
       pub.sendMessage();
-      pub.sendMessage();
     }
 
     String parseSpecObj = new JSONObject().put("timestampPath", "$.time").put("keyPath", "$.id")
@@ -81,5 +87,47 @@ public class RMQITTest {
     } catch (TimeoutException | ExecutionException e) {
       handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
     }
+  }
+
+  @Test
+  void testWatermark() throws Exception {
+
+    int numMsgs = 2;
+    pub.initialize();
+    for (int i=0;i< numMsgs;i++) {
+      pub.sendMessage();
+    }
+
+    String parseSpecObj = new JSONObject()
+      .put("timestampPath", "$.time")
+      .put("keyPath", "$.id")
+      .put("inputTimeFormat","yyyy-MM-dd HH:mm:ss")
+      .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
+      .toString();
+
+    RMQConfig config = new RMQConfig();
+    config.setUri("amqp://guest:guest@localhost:5672");
+    config.setQueueName("adaptor-test");
+    RMQGenericSource source = new RMQGenericSource<Message>(config,
+            TypeInformation.of(Message.class), "test", parseSpecObj);
+
+    DataStreamSource<Message> so = env.addSource(source);
+    so.assignTimestampsAndWatermarks(new MessageWatermarkStrategy());
+    so.addSink(new DumbWatermarkSink());
+
+    CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
+      try {
+        env.execute("Simple Get");
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+    });
+    try {
+      handle.get(10, TimeUnit.SECONDS);
+    } catch (TimeoutException | ExecutionException e) {
+      handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
+    }
+
+
   }
 }

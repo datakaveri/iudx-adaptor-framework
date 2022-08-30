@@ -44,7 +44,7 @@ public class JsonPathParser<T> implements Parser<T> {
   public JsonPathParser(String parseSpecString) {
 
     // TODO: Safety here
-    if (parseSpec == null || parseSpecString.isEmpty()) {
+    if (parseSpecString == null || parseSpecString.isEmpty()) {
       return;
     }
 
@@ -53,6 +53,7 @@ public class JsonPathParser<T> implements Parser<T> {
     this.timestampPath = parseSpec.optString("timestampPath");
     this.keyPath = parseSpec.getString("keyPath");
 
+    // TODO: Appropriate error messages if these aren't right
     this.containerPath = parseSpec.optString("containerPath");
     this.inputTimeFormat = parseSpec.optString("inputTimeFormat");
     this.outputTimeFormat = parseSpec.optString("outputTimeFormat");

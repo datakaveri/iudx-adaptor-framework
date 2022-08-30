@@ -34,7 +34,7 @@ public class JsonPathTest {
     String data = new JSONObject()
       .put("time", "2021-04-01 12:00:01")
       .put("id", "123")
-      .put("k", 1.5)
+      .put("k", "a")
       .toString();
 
     JsonPathParser<Message> parser = new JsonPathParser<Message>(parseSpecObj);
