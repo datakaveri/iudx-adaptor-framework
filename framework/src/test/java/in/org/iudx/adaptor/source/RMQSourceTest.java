@@ -1,6 +1,6 @@
 package in.org.iudx.adaptor.source;
 
-import in.org.iudx.adaptor.codegen.RMQSourceConfig;
+import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Rule;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
@@ -32,7 +32,7 @@ public class RMQSourceTest {
   @BeforeEach
   public void beforeTest() throws Exception {
 
-    RMQSourceConfig config = new RMQSourceConfig();
+    RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
     config.setQueueName("adaptor-test");
 

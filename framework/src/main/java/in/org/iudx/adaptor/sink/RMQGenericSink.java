@@ -1,6 +1,6 @@
 package in.org.iudx.adaptor.sink;
 
-import in.org.iudx.adaptor.codegen.RMQSourceConfig;
+import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.logger.CustomLogger;
@@ -12,7 +12,7 @@ import org.apache.flink.streaming.connectors.rabbitmq.RMQSink;
 
 
 /**
- * {@link AMQPSink} - Extends Flink native RMQSink {@link RMQSink}
+ * Extends Flink native RMQSink {@link RMQSink}
  * This is a wrapper to extend functionality to RMQSink for posterity.
  */
 public class RMQGenericSink<T> extends RMQSink<T> {
@@ -21,7 +21,7 @@ public class RMQGenericSink<T> extends RMQSink<T> {
   private TypeInformation typeInformation;
   private transient Counter counter;
 
-  public RMQGenericSink(RMQSourceConfig rmqConfig, TypeInformation typeInfo) {
+  public RMQGenericSink(RMQConfig rmqConfig, TypeInformation typeInfo) {
     super(rmqConfig.build(), new RMQSerializerFactory<>().getSerializer(typeInfo),
             new RMQPublisherFactory<>().getPublisher(typeInfo, rmqConfig));
     this.typeInformation= typeInfo;

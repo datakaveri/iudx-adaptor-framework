@@ -31,8 +31,6 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.source.HttpSource;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import in.org.iudx.adaptor.source.JsonPathParser;
-import in.org.iudx.adaptor.sink.AMQPSink;
-import in.org.iudx.adaptor.sink.StaticStringPublisher;
 
 import java.util.List;
 import java.util.HashMap;
@@ -285,7 +283,7 @@ public class TopologyBuilder {
 
         if ("rmq".equals(publishType)) {
             mainBuilder.addStatement("$T rmqConfig = new $T()",
-                    RMQSourceConfig.class, RMQSourceConfig.class);
+                    RMQConfig.class, RMQConfig.class);
             mainBuilder.addStatement("rmqConfig.setUri($S)",
                                           publishSpec.getString("uri"));
             mainBuilder.addStatement("rmqConfig.setExchange($S)",

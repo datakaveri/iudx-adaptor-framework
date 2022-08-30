@@ -1,6 +1,6 @@
 package in.org.iudx.adaptor.source;
 
-import in.org.iudx.adaptor.codegen.RMQSourceConfig;
+import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.logger.CustomLogger;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -22,9 +22,9 @@ public class RMQGenericSource<T> extends RMQSource<T> {
 
   private static final long serialVersionUID = 1L;
   transient CustomLogger logger;
-  private RMQSourceConfig rmqConfig;
+  private RMQConfig rmqConfig;
 
-  public RMQGenericSource(RMQSourceConfig rmqConfig, TypeInformation typeInformation,
+  public RMQGenericSource(RMQConfig rmqConfig, TypeInformation typeInformation,
                           String appName, String parseSpec) {
     super(rmqConfig.build(), rmqConfig.getQueueName(),
             new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, parseSpec));

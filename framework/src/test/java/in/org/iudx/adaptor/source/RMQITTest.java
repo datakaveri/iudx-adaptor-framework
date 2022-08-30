@@ -1,6 +1,6 @@
 package in.org.iudx.adaptor.source;
 
-import in.org.iudx.adaptor.codegen.RMQSourceConfig;
+import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -59,7 +59,7 @@ public class RMQITTest {
             .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
             .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
 
-    RMQSourceConfig config = new RMQSourceConfig();
+    RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
     config.setQueueName("adaptor-test");
     RMQGenericSource source = new RMQGenericSource<Message>(config,

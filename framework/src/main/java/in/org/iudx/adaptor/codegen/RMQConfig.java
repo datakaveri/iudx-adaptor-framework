@@ -1,75 +1,45 @@
 package in.org.iudx.adaptor.codegen;
 
-import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig.Builder;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
-import org.apache.flink.streaming.connectors.rabbitmq.RMQSinkPublishOptions;
 
-import in.org.iudx.adaptor.datatypes.Message;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.AMQP.BasicProperties;
-import java.util.Collections;
+import java.io.Serializable;
 
-/**
- * {@link RMQConfig} - Extends Flink native rmq config builder {@link RMQConnectionConfig}
- * This is a wrapper to extend more connection configurations in posterity.
- */
-public class RMQConfig implements SinkConfig<RMQConnectionConfig>,RMQSinkPublishOptions<Message> {
 
-  private static final long serialVersionUID = 13L;
-  private boolean mandatory = false;
-  private boolean immediate = false;
+public class RMQConfig extends RMQConnectionConfig.Builder implements Serializable {
 
-  /* User provided */
-  public Publisher publisher;
-  public transient Builder builder;
-  public RMQConnectionConfig connectionConfig;
+  private String queueName;
 
+  private String exchange;
+
+  private String routingKey;
 
   public RMQConfig() {
-    builder = new Builder();
+    super();
   }
 
-  public RMQConnectionConfig getConfig() {
-    this.connectionConfig = builder.build();
-    return this.connectionConfig;
+  public String getQueueName() {
+    return queueName;
   }
 
-  /* TODO: Why? */
-  private static AMQP.BasicProperties props =
-    new AMQP.BasicProperties.Builder()
-    .headers(Collections.singletonMap("iudx-adaptor", "iudx-adaptor"))
-    .expiration("10000")
-    .build();
-
-  public RMQConfig setPublisher(Publisher publisher) {
-    this.publisher = publisher;
+  public RMQConfig setQueueName(String queueName) {
+    this.queueName = queueName;
     return this;
   }
 
-  @Override
-  public String computeRoutingKey(Message msg) {
-    return publisher.computeMessageTag(msg);
+  public String getExchange() {
+    return exchange;
   }
 
-  @Override
-  public BasicProperties computeProperties(Message msg) {
-    return props;
+  public void setExchange(String exchange) {
+    this.exchange = exchange;
   }
 
-  @Override
-  public String computeExchange(Message msg) {
-    return publisher.computeSinkName(msg);
+  public String getRoutingKey() {
+    return routingKey;
   }
 
-  @Override
-  public boolean computeMandatory(Message msg) {
-    return mandatory;
+  public void setRoutingKey(String routingKey) {
+    this.routingKey = routingKey;
   }
 
-  @Override
-  public boolean computeImmediate(Message msg) {
-    return immediate;
-  }
 }
-

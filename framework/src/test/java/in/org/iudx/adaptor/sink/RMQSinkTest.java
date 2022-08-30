@@ -20,7 +20,6 @@ public class RMQSinkTest {
   public static MiniClusterWithClientResource flinkCluster;
   private static AMQP.BasicProperties props = new AMQP.BasicProperties.Builder().headers(
           Collections.singletonMap("Test", "My Value")).expiration("10000").build();
-  private AMQPSink amqpSink;
 
   @BeforeAll
   public static void initialize() {
@@ -50,7 +49,7 @@ public class RMQSinkTest {
             .setRequestType("GET").setPollingInterval(1000L);
 
 
-    RMQSourceConfig amqconfig = new RMQSourceConfig();
+    RMQConfig amqconfig = new RMQConfig();
     amqconfig.setUri("amqp://guest:guest@localhost:5672");
     amqconfig.setExchange("adaptor-test");
     amqconfig.setRoutingKey("test");
