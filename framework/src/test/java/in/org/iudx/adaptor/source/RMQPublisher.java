@@ -61,14 +61,23 @@ public class RMQPublisher {
   }
 
   @Test
-  void sendMessage() throws Exception {
+  void sendMessage(int i) throws Exception {
     String data = new JSONObject()
-      .put("time", "2021-04-01 12:00:01")
+      .put("time", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
       .put("id", "123")
       .put("k", 1.5)
       .toString();
     channel.basicPublish("adaptor-test", "test", null, data.getBytes("UTF-8"));
     System.out.println(" [x] Sent");
  
+  }
+
+  @Test
+  void sendMessageAsync() throws Exception {
+    int numMsgs = 5;
+    for (int i=0;i< numMsgs;i++) {
+      this.sendMessage(i);
+      Thread.sleep(1000);
+    }
   }
 }

@@ -3,11 +3,12 @@ package in.org.iudx.adaptor.source;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.sink.DumbWatermarkSink;
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.test.util.MiniClusterResourceConfiguration;
 import org.apache.flink.test.util.MiniClusterWithClientResource;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
@@ -17,13 +18,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import org.json.JSONObject;
-import org.json.JSONArray;
-
-import in.org.iudx.adaptor.sink.DumbSink;
-import in.org.iudx.adaptor.sink.DumbWatermarkSink;
-import in.org.iudx.adaptor.datatypes.Message;
 
 public class RMQITTest {
 
@@ -35,17 +29,17 @@ public class RMQITTest {
 
   @BeforeAll
   public static void initialize() {
-    flinkCluster = new MiniClusterWithClientResource(
-            new MiniClusterResourceConfiguration.Builder().setNumberSlotsPerTaskManager(2)
-                    .setNumberTaskManagers(1).build());
 
     StreamExecutionEnvironment.createLocalEnvironment();
+    ExecutionConfig executionConfig = env.getConfig();
     env.setParallelism(1);
+    executionConfig.setAutoWatermarkInterval(1);
 
-    env.enableCheckpointing(10000L);
-    CheckpointConfig config = env.getCheckpointConfig();
-    config.enableExternalizedCheckpoints(
-            CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+
+   env.enableCheckpointing(10000L);
+   CheckpointConfig config = env.getCheckpointConfig();
+   config.enableExternalizedCheckpoints(
+           CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
 
 
     pub = new RMQPublisher();
@@ -58,7 +52,7 @@ public class RMQITTest {
     int numMsgs = 2;
     pub.initialize();
     for (int i = 0; i < numMsgs; i++) {
-      pub.sendMessage();
+      pub.sendMessage(i);
     }
 
     String parseSpecObj = new JSONObject().put("timestampPath", "$.time").put("keyPath", "$.id")
@@ -92,18 +86,18 @@ public class RMQITTest {
   @Test
   void testWatermark() throws Exception {
 
-    int numMsgs = 2;
-    pub.initialize();
-    for (int i=0;i< numMsgs;i++) {
-      pub.sendMessage();
-    }
+//    int numMsgs = 5;
+//    pub.initialize();
+//    for (int i = 0; i < numMsgs; i++) {
+//      pub.sendMessage(i);
+//    }
 
     String parseSpecObj = new JSONObject()
-      .put("timestampPath", "$.time")
-      .put("keyPath", "$.id")
-      .put("inputTimeFormat","yyyy-MM-dd HH:mm:ss")
-      .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
-      .toString();
+            .put("timestampPath", "$.time")
+            .put("keyPath", "$.id")
+            .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
+            .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
+            .toString();
 
     RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
@@ -112,8 +106,10 @@ public class RMQITTest {
             TypeInformation.of(Message.class), "test", parseSpecObj);
 
     DataStreamSource<Message> so = env.addSource(source);
-    so.assignTimestampsAndWatermarks(new MessageWatermarkStrategy());
-    so.addSink(new DumbWatermarkSink());
+//    so.assignTimestampsAndWatermarks(WatermarkStrategy.forMonotonousTimestamps());
+
+    so.assignTimestampsAndWatermarks(new MessageWatermarkStrategy())
+            .addSink(new DumbWatermarkSink());
 
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {
@@ -123,7 +119,7 @@ public class RMQITTest {
       }
     });
     try {
-      handle.get(10, TimeUnit.SECONDS);
+      handle.get(40, TimeUnit.SECONDS);
     } catch (TimeoutException | ExecutionException e) {
       handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
     }

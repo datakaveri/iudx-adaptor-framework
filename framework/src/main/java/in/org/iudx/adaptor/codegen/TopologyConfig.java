@@ -18,6 +18,11 @@ public class TopologyConfig {
   public boolean isBoundedJob;
   public long pollingInterval;
 
+  public AdaptorType adaptorType;
+  public JSONObject ruleSourceSpec;
+  public JSONObject ruleSourceParseSpec;
+  public JSONObject inputSourceParseSpec;
+
   public TopologyConfig(String configString) throws Exception {
 
     config = new JSONObject(configString);
@@ -25,6 +30,12 @@ public class TopologyConfig {
 
     hasFailureRecovery = false;
     isBoundedJob = false;
+
+    if (config.has("adaptorType")) {
+      adaptorType = config.getEnum(AdaptorType.class, "adaptorType");
+    } else {
+      adaptorType = AdaptorType.ETL;
+    }
     
     // TODO: Run validations
     if (config.has("failureRecoverySpec")) {
@@ -32,16 +43,41 @@ public class TopologyConfig {
       hasFailureRecovery = true;
     }
     inputSpec = config.getJSONObject("inputSpec");
-    parseSpec = config.getJSONObject("parseSpec");
-    deduplicationSpec = config.getJSONObject("deduplicationSpec");
-    transformSpec = config.getJSONObject("transformSpec");
+
+    if (adaptorType == AdaptorType.ETL) {
+      parseSpec = config.getJSONObject("parseSpec");
+      deduplicationSpec = config.getJSONObject("deduplicationSpec");
+      transformSpec = config.getJSONObject("transformSpec");
+    }
+
     publishSpec = config.getJSONObject("publishSpec");
     if (inputSpec.has("boundedJob") && inputSpec.getBoolean("boundedJob")) {
       isBoundedJob = true;
     }
-    pollingInterval = inputSpec.getLong("pollingInterval");
+
+    if (inputSpec.has("pollingInterval")) {
+      pollingInterval = inputSpec.getLong("pollingInterval");
+    }
+
+    if (adaptorType.equals(AdaptorType.RULES)) {
+      if (config.has("ruleSourceSpec")) {
+        ruleSourceSpec = config.getJSONObject("ruleSourceSpec");
+      }
+
+      if (ruleSourceSpec.has("parseSpec")) {
+        ruleSourceParseSpec = ruleSourceSpec.getJSONObject("parseSpec");
+      }
+
+      if (inputSpec.has("parseSpec")) {
+        inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
+      }
+    }
   }
   
 
   // TODO: Add getters so the caller doesn't do json parsing
+
+  public enum AdaptorType {
+    ETL, RULES
+  }
 }

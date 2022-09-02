@@ -1,14 +1,15 @@
 package in.org.iudx.adaptor.codegen;
 
 
-import in.org.iudx.adaptor.process.BoundedProcessFunction;
-import in.org.iudx.adaptor.process.GenericProcessFunction;
-import in.org.iudx.adaptor.process.JSPathProcessFunction;
-import in.org.iudx.adaptor.process.JSProcessFunction;
-import in.org.iudx.adaptor.process.JoltTransformer;
-import in.org.iudx.adaptor.process.TimeBasedDeduplicator;
+import in.org.iudx.adaptor.datatypes.Rule;
+import in.org.iudx.adaptor.datatypes.RuleResult;
+import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
+import in.org.iudx.adaptor.process.*;
 import in.org.iudx.adaptor.sink.RMQGenericSink;
+import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
+import in.org.iudx.adaptor.source.RMQGenericSource;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -87,7 +88,7 @@ public class TopologyBuilder {
                         StreamExecutionEnvironment.class);
 
         // setting checkpointing
-        if (!tc.isBoundedJob) {
+        if (!tc.isBoundedJob && tc.adaptorType != TopologyConfig.AdaptorType.RULES) {
             mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
         }
 
@@ -97,12 +98,34 @@ public class TopologyBuilder {
         } else {
             failureRecoverySpecBuilder(mainBuilder, tc.inputSpec);
         }
-        inputSpecBuilder(mainBuilder, tc.inputSpec);
-        parseSpecBuilder(mainBuilder, tc.parseSpec);
-        deduplicationSpecBuilder(mainBuilder, tc.deduplicationSpec);
-        transformSpecBuilder(mainBuilder, tc.transformSpec);
+        inputSpecBuilder(mainBuilder, tc.inputSpec, tc.inputSourceParseSpec);
+
+        // for RMQ source parseSpec is passed in inputSpec itself
+        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL && !"rmq".equals(tc.inputSpec.getString("type"))) {
+            parseSpecBuilder(mainBuilder, tc.parseSpec);
+        }
+
+        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL) {
+            deduplicationSpecBuilder(mainBuilder, tc.deduplicationSpec);
+        }
+
+        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL) {
+            transformSpecBuilder(mainBuilder, tc.transformSpec);
+        }
+
+        if (tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
+            ruleSourceSpecBuilder(mainBuilder, tc.ruleSourceSpec, tc.ruleSourceParseSpec);
+        }
+
+
         publishSpecBuilder(mainBuilder, tc.publishSpec);
-        buildTopology(mainBuilder);
+
+
+        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL) {
+            buildTopologyForETL(mainBuilder);
+        } else if (tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
+            buildTopologyForRules(mainBuilder);
+        }
 
 
         TypeSpec adaptor = TypeSpec.classBuilder("Adaptor")
@@ -153,7 +176,11 @@ public class TopologyBuilder {
         // if failure recovery strategy not specified, use fixed-delay strategy
         // with max restarts = 10, and delay = pollingInterval (in case of streaming jobs)
 
-        long delay = inputSpec.getLong("pollingInterval");
+
+        long delay = -1L;
+        if (inputSpec.has("pollingInterval")) {
+            delay = inputSpec.getLong("pollingInterval");
+        }
         if (delay == -1L) {
             delay = DEFAULT_RESTART_DELAY;
         }
@@ -168,7 +195,8 @@ public class TopologyBuilder {
     }
 
     // TODO: Why are we building api config like this instead of directly passing json
-    private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec) {
+    private void inputSpecBuilder(Builder mainBuilder, JSONObject inputSpec,
+                                  JSONObject inputParseSpec) {
 
         if ("http".equals(inputSpec.getString("type"))) {
             mainBuilder
@@ -216,6 +244,21 @@ public class TopologyBuilder {
                         minioConfigSpec.getString("accessKey"), minioConfigSpec.getString(("secretKey")));
             }
         }
+
+        if ("rmq".equals(inputSpec.getString("type"))) {
+
+            mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
+            mainBuilder.addStatement("config.setUri($S)", inputSpec.getString("uri"));
+            mainBuilder.addStatement("config.setQueueName($S)", inputSpec.getString("queueName"));
+
+            mainBuilder.addStatement("$T source = new $T<>(config, $T.of($T.class), $S, $S)",
+                    RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
+                    Message.class, tc.name, inputParseSpec);
+
+            mainBuilder.addStatement(
+                    "$T<$T> so = env.addSource(source)",
+                    DataStreamSource.class, Message.class);
+        }
     }
 
     private void parseSpecBuilder(Builder mainBuilder, JSONObject parseSpec) {
@@ -245,6 +288,24 @@ public class TopologyBuilder {
                         DataStreamSource.class, Message.class,
                         HttpSource.class, Message.class);
             }
+        }
+    }
+
+    private void ruleSourceSpecBuilder(Builder mainBuilder, JSONObject ruleSourceSpec,
+                                       JSONObject ruleSourceParseSpec) {
+        if ("rmq".equals(ruleSourceSpec.getString("type"))) {
+
+            mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
+            mainBuilder.addStatement("config.setUri($S)", ruleSourceSpec.getString("uri"));
+            mainBuilder.addStatement("config.setQueueName($S)", ruleSourceSpec.getString("queueName"));
+
+            mainBuilder.addStatement("$T ruleSource = new $T<>(config, $T.of($T.class), $S, $S)",
+                    RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
+                    Rule.class, tc.name, ruleSourceParseSpec);
+
+            mainBuilder.addStatement(
+                    "$T<$T> rules = env.addSource(source)",
+                    DataStreamSource.class, Rule.class);
         }
     }
 
@@ -286,15 +347,21 @@ public class TopologyBuilder {
                     RMQConfig.class, RMQConfig.class);
             mainBuilder.addStatement("rmqConfig.setUri($S)",
                                           publishSpec.getString("uri"));
-            mainBuilder.addStatement("rmqConfig.setExchange($S)",
-                    publishSpec.getString("sinkName"));
-            mainBuilder.addStatement("rmqConfig.setRoutingKey($S)",
-                    publishSpec.getString("tagName"));
+
+            if (publishSpec.has("sinkName")) {
+                mainBuilder.addStatement("rmqConfig.setExchange($S)",
+                        publishSpec.getString("sinkName"));
+            }
+
+            if (publishSpec.has("tagName")) {
+                mainBuilder.addStatement("rmqConfig.setRoutingKey($S)",
+                        publishSpec.getString("tagName"));
+            }
 
         }
     }
 
-    private void buildTopology(Builder mainBuilder) {
+    private void buildTopologyForETL(Builder mainBuilder) {
 
         /* TODO: Parse and perform
          * TODO: Break this construction logic further
@@ -368,6 +435,31 @@ public class TopologyBuilder {
 
         mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
                 RMQGenericSink.class, TypeInformation.class, Message.class);
+
+        mainBuilder.beginControlFlow("try");
+        mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");
+        mainBuilder.addStatement("env.execute($S)", tc.name);
+        mainBuilder.nextControlFlow("catch (Exception e)");
+        mainBuilder.endControlFlow();
+
+    }
+
+    private void buildTopologyForRules(Builder mainBuilder) {
+
+        mainBuilder.addStatement("$T<$T> ruleBroadcastStream = rules.broadcast($T" +
+                ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class,
+                RuleStateDescriptor.class);
+
+        mainBuilder.addStatement("$T<$T> ds = so.keyBy(($T msg) -> msg.key)" +
+                ".assignTimestampsAndWatermarks(new $T())" +
+                ".connect(ruleBroadcastStream)" +
+                ".process(new $T())" +
+                ".setParallelism(1)",
+                SingleOutputStreamOperator.class, RuleResult.class, Message.class,
+                MessageWatermarkStrategy.class, RuleFunction.class);
+
+        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
+                RMQGenericSink.class, TypeInformation.class, RuleResult.class);
 
         mainBuilder.beginControlFlow("try");
         mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");

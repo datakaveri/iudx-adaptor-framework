@@ -1,0 +1,24 @@
+{
+  "name": "Job Name",
+  "adaptorType": "RULES",
+  "inputSpec": {
+    "type": "rmq",
+    "uri": "amqp://guest:guest@rmq:5672",
+    "queueName": "data",
+    "parseSpec": {
+      "type": "json",
+      "messageContainer": "single",
+      "keyPath": "$.deviceId",
+      "timestampPath": "$.time"
+    }
+  },
+  "ruleSourceSpec": {
+    "type": "rmq",
+    "uri": "amqp://guest:guest@rmq:5672",
+    "queueName": "rules"
+  },
+  "publishSpec": {
+    "type": "rmq",
+    "uri": "amqp://guest:guest@rmq:5672"
+  }
+}

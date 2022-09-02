@@ -60,11 +60,9 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     LinkedHashMap<String, Object> obj = new JsonFlatten(
             new ObjectMapper().readTree(message.toString())).flatten();
 
-    Timestamp currentEventTime = (Timestamp) obj.get("observationDateTime");
-
     listState.add(obj);
 
-    long cleanupTime = currentEventTime.toInstant().toEpochMilli();
+    long cleanupTime = readOnlyContext.timestamp();
 
     readOnlyContext.timerService().registerEventTimeTimer(cleanupTime);
 
@@ -113,7 +111,6 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
       broadcastState.remove(rule.ruleId);
     }
   }
-
 
   @Override
   public void onTimer(final long timestamp, final OnTimerContext ctx,
