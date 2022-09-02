@@ -16,6 +16,8 @@ public class RMQPublisher {
   private static Connection connection;
   private static Channel channel;
 
+  private static Channel ruleChannel;
+
   @BeforeAll
   public static void initialize() throws Exception {
 
@@ -26,6 +28,9 @@ public class RMQPublisher {
     connection = factory.newConnection();
     channel = connection.createChannel(); 
     channel.exchangeDeclare("adaptor-test", "direct", true);
+
+    ruleChannel = connection.createChannel();
+    ruleChannel.exchangeDeclare("rules-test", "direct", true);
   }
 
   @Test
@@ -37,13 +42,13 @@ public class RMQPublisher {
   }
 
   @Test
-  void sendRuleMessage() throws Exception {
+  public void sendRuleMessage() throws Exception {
     String rule = "{\"ruleId\":1,\"sqlQuery\":\"select * from TABLE where " 
-                  + "`deviceId`='abc-456'\"," 
+                  + "`id`='123'\","
                   + "\"type\":\"RULE\",\"windowMinutes\": 1000," 
                   + "\"sinkExchangeKey\": " 
-                  + "\"test\",\"sinkRoutingKey\": \"test\"}";
-    channel.basicPublish("adaptor-test", "test", null, rule.getBytes("UTF-8"));
+                  + "\"rule-result-test\",\"sinkRoutingKey\": \"rule-result-test\"}";
+    ruleChannel.basicPublish("rules-test", "test", null, rule.getBytes("UTF-8"));
     System.out.println(" [x] Sent");
  
   }
@@ -51,19 +56,19 @@ public class RMQPublisher {
   @Test
   void sendBadRuleMessage() throws Exception {
     String rule = "\"ruleId\":1,\"sqlQuery\":\"select * from TABLE where " 
-                  + "`deviceId`='abc-456'\"," 
+                  + "`k`='123'\","
                   + "\"type\":\"RULE\",\"windowMinutes\": 1000," 
                   + "\"sinkExchangeKey\": " 
                   + "\"test\",\"sinkRoutingKey\": \"test\"}";
-    channel.basicPublish("adaptor-test", "test", null, rule.getBytes("UTF-8"));
+    channel.basicPublish("rules-test", "test", null, rule.getBytes("UTF-8"));
     System.out.println(" [x] Sent");
  
   }
 
   @Test
-  void sendMessage(int i) throws Exception {
+  public void sendMessage(int i) throws Exception {
     String data = new JSONObject()
-      .put("time", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
+      .put("observationDateTime", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
       .put("id", "123")
       .put("k", 1.5)
       .toString();

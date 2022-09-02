@@ -1,0 +1,24 @@
+{
+    "name": "rulejob",
+    "adaptorType": "RULES",
+    "inputSpec": {
+      "type": "rmq",
+      "uri": "amqp://guest:guest@rmq:5672",
+      "queueName": "adaptor-test",
+      "parseSpec": {
+        "type": "json",
+        "messageContainer": "single",
+        "keyPath": "$.id",
+        "timestampPath": "$.observationDateTime"
+      }
+    },
+    "ruleSourceSpec": {
+      "type": "rmq",
+      "uri": "amqp://guest:guest@rmq:5672",
+      "queueName": "rules-test"
+    },
+    "publishSpec": {
+      "type": "rmq",
+      "uri": "amqp://guest:guest@rmq:5672"
+    }
+  }

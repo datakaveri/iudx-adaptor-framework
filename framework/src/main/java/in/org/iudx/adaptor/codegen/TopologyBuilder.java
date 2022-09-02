@@ -295,16 +295,16 @@ public class TopologyBuilder {
                                        JSONObject ruleSourceParseSpec) {
         if ("rmq".equals(ruleSourceSpec.getString("type"))) {
 
-            mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
-            mainBuilder.addStatement("config.setUri($S)", ruleSourceSpec.getString("uri"));
-            mainBuilder.addStatement("config.setQueueName($S)", ruleSourceSpec.getString("queueName"));
+            mainBuilder.addStatement("$T ruleConfig = new $T()", RMQConfig.class, RMQConfig.class);
+            mainBuilder.addStatement("ruleConfig.setUri($S)", ruleSourceSpec.getString("uri"));
+            mainBuilder.addStatement("ruleConfig.setQueueName($S)", ruleSourceSpec.getString("queueName"));
 
-            mainBuilder.addStatement("$T ruleSource = new $T<>(config, $T.of($T.class), $S, $S)",
+            mainBuilder.addStatement("$T ruleSource = new $T<>(ruleConfig, $T.of($T.class), $S, $S)",
                     RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
                     Rule.class, tc.name, ruleSourceParseSpec);
 
             mainBuilder.addStatement(
-                    "$T<$T> rules = env.addSource(source)",
+                    "$T<$T> rules = env.addSource(ruleSource)",
                     DataStreamSource.class, Rule.class);
         }
     }
@@ -450,13 +450,13 @@ public class TopologyBuilder {
                 ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class,
                 RuleStateDescriptor.class);
 
-        mainBuilder.addStatement("$T<$T> ds = so.keyBy(($T msg) -> msg.key)" +
-                ".assignTimestampsAndWatermarks(new $T())" +
+        mainBuilder.addStatement("$T<$T> ds = so.assignTimestampsAndWatermarks(new $T())" +
+                ".keyBy(($T msg) -> msg.key)" +
                 ".connect(ruleBroadcastStream)" +
                 ".process(new $T())" +
                 ".setParallelism(1)",
-                SingleOutputStreamOperator.class, RuleResult.class, Message.class,
-                MessageWatermarkStrategy.class, RuleFunction.class);
+                SingleOutputStreamOperator.class, RuleResult.class,
+                MessageWatermarkStrategy.class, Message.class, RuleFunction.class);
 
         mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
                 RMQGenericSink.class, TypeInformation.class, RuleResult.class);
