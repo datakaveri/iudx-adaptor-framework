@@ -27,7 +27,7 @@ import java.util.*;
 
 public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult> {
 
-  private static int EXPIRY_TIME_RULE_ID = Integer.MIN_VALUE;
+  private int EXPIRY_TIME_RULE_ID = Integer.MIN_VALUE;
   private ListStateDescriptor<LinkedHashMap<String, Object>> listStateDescriptor;
 
   private ListState<LinkedHashMap<String, Object>> listState;
@@ -69,6 +69,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
     List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
 
+    System.out.println(list);
     Schema schema = new Schema();
     schema.setData(list);
     rootSchema.add("listState", schema);
@@ -109,6 +110,16 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
       updateExpiryTime(rule, broadcastState);
     } else if (rule.type == Rule.RuleType.DELETE) {
       broadcastState.remove(rule.ruleId);
+      if (rule.ruleId == EXPIRY_TIME_RULE_ID) {
+        EXPIRY_TIME_RULE_ID = Integer.MIN_VALUE;
+      }
+      broadcastState.immutableEntries().forEach(ruleEntry -> {
+        try {
+          updateExpiryTime(rule, broadcastState);
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
     }
   }
 
@@ -129,14 +140,15 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
           throws Exception {
     Rule widestWindowRule = broadcastState.get(EXPIRY_TIME_RULE_ID);
 
-
     if (widestWindowRule == null) {
-      broadcastState.put(EXPIRY_TIME_RULE_ID, rule);
+      broadcastState.put(rule.ruleId, rule);
+      EXPIRY_TIME_RULE_ID = rule.ruleId;
       return;
     }
 
     if (widestWindowRule.getWindowMillis() < rule.getWindowMillis()) {
-      broadcastState.put(EXPIRY_TIME_RULE_ID, rule);
+      broadcastState.put(rule.ruleId, rule);
+      EXPIRY_TIME_RULE_ID = rule.ruleId;
     }
   }
 

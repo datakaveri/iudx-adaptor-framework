@@ -54,6 +54,15 @@ public class RMQPublisher {
   }
 
   @Test
+  public void sendDeleteRule() throws Exception {
+    String rule = "{\"ruleId\":1, "
+            + "\"type\":\"DELETE\"}";
+    ruleChannel.basicPublish("rules-test", "test", null, rule.getBytes("UTF-8"));
+    System.out.println(" [x] Sent");
+
+  }
+
+  @Test
   void sendBadRuleMessage() throws Exception {
     String rule = "\"ruleId\":1,\"sqlQuery\":\"select * from TABLE where " 
                   + "`k`='123'\","

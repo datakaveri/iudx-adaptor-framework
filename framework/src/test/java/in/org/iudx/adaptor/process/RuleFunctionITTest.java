@@ -5,6 +5,7 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
+import in.org.iudx.adaptor.sink.DumbRuleResultSink;
 import in.org.iudx.adaptor.sink.RMQGenericSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
@@ -46,16 +47,16 @@ public class RuleFunctionITTest {
 
   @Test
   void testRule() throws Exception {
-//    pub.initialize();
-//    pub.sendRuleMessage();
-//
-//    int numMsgs = 5;
-//    pub.initialize();
-//    for (int i = 0; i < numMsgs; i++) {
-//      pub.sendMessage(i);
-//    }
+    pub.initialize();
+    pub.sendRuleMessage();
 
-    String parseSpecObj = new JSONObject().put("observationDateTime", "$.time").put("keyPath", "$.id")
+    int numMsgs = 5;
+    pub.initialize();
+    for (int i = 0; i < numMsgs; i++) {
+      pub.sendMessage(i);
+    }
+
+    String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime").put("keyPath", "$.id")
             .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
             .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
 
@@ -81,9 +82,10 @@ public class RuleFunctionITTest {
             .connect(ruleBroadcastStream).process(new RuleFunction()).setParallelism(1);
 
     RMQConfig rmqConfig = new RMQConfig();
-    rmqConfig.setUri("amqp://guest:guest@rmq:5672");
+    rmqConfig.setUri("amqp://guest:guest@localhost:5672");
     ds.addSink(new RMQGenericSink<>(rmqConfig, TypeInformation.of(RuleResult.class)));
 
+//    ds.addSink(new DumbRuleResultSink());
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {
         env.execute("Simple Get");

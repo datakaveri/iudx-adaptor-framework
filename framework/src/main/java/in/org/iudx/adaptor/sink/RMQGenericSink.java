@@ -41,7 +41,6 @@ public class RMQGenericSink<T> extends RMQSink<T> {
 
   @Override
   public void invoke(T value, Context context) throws Exception {
-    System.out.println(typeInformation.getTypeClass());
     try {
       if (typeInformation.getTypeClass().equals(Message.class)) {
         Message data = (Message) value;
