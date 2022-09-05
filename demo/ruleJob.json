@@ -8,8 +8,8 @@
       "parseSpec": {
         "type": "json",
         "messageContainer": "single",
-        "keyPath": "$.id",
-        "timestampPath": "$.observationDateTime"
+        "timestampPath": "$.observationDateTime",
+        "staticKey": "rules"
       }
     },
     "ruleSourceSpec": {

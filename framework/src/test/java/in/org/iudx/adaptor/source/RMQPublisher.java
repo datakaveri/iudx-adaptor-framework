@@ -78,7 +78,7 @@ public class RMQPublisher {
   public void sendMessage(int i) throws Exception {
     String data = new JSONObject()
       .put("observationDateTime", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
-      .put("id", "123")
+      .put("id", "123".replace("3", String.valueOf(i)))
       .put("k", 1.5)
       .toString();
     channel.basicPublish("adaptor-test", "test", null, data.getBytes("UTF-8"));

@@ -39,6 +39,8 @@ public class JsonPathParser<T> implements Parser<T> {
 
   private boolean hasTrickleKeys;
 
+  private String staticKey = "";
+
   private static final Logger LOGGER = LogManager.getLogger(JsonPathParser.class);
 
   public JsonPathParser(String parseSpecString) {
@@ -51,7 +53,14 @@ public class JsonPathParser<T> implements Parser<T> {
     this.parseSpec = new JSONObject(parseSpecString);
 
     this.timestampPath = parseSpec.optString("timestampPath");
-    this.keyPath = parseSpec.getString("keyPath");
+
+    if (parseSpec.has("keyPath")) {
+      this.keyPath = parseSpec.getString("keyPath");
+    }
+
+    if (parseSpec.has("staticKey") && !parseSpec.has("trickle")) {
+      this.staticKey = parseSpec.getString("staticKey");
+    }
 
     // TODO: Appropriate error messages if these aren't right
     this.containerPath = parseSpec.optString("containerPath");
@@ -138,7 +147,11 @@ public class JsonPathParser<T> implements Parser<T> {
     /* Parse into Message */
     if (containerPath.isEmpty()) {
       Message msg = new Message();
-      msg.setKey(ctx.read(keyPath).toString());
+      if (!staticKey.isEmpty()) {
+        msg.setKey(staticKey);
+      } else {
+        msg.setKey(ctx.read(keyPath).toString());
+      }
       msg = parseTime(ctx, msg);
       return (T) msg;
     }

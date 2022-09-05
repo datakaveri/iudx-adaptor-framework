@@ -56,7 +56,9 @@ public class RuleFunctionITTest {
       pub.sendMessage(i);
     }
 
-    String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime").put("keyPath", "$.id")
+    String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime")
+//            .put("keyPath", "$.id")
+            .put("staticKey", "ruleTest")
             .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
             .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
 
@@ -98,8 +100,5 @@ public class RuleFunctionITTest {
     } catch (TimeoutException | ExecutionException e) {
       handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
     }
-
-
   }
 }
-

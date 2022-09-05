@@ -9,7 +9,8 @@
       "type": "json",
       "messageContainer": "single",
       "keyPath": "$.deviceId",
-      "timestampPath": "$.time"
+      "timestampPath": "$.time",
+      "staticKey": "rules"
     }
   },
   "ruleSourceSpec": {
