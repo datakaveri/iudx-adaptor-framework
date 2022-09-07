@@ -11,7 +11,6 @@ import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
 import org.apache.commons.collections.IteratorUtils;
 import org.apache.flink.api.common.state.*;
-import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
@@ -30,13 +29,10 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   private ListState<LinkedHashMap<String, Object>> listState;
   private transient CalciteConnection calciteConnection;
 
+  private boolean enabledProcessTimer = true;
+
   @Override
   public void open(Configuration parameters) throws ClassNotFoundException, SQLException {
-    StateTtlConfig ttlConfig = StateTtlConfig
-            .newBuilder(Time.seconds(50))
-            .setUpdateType(StateTtlConfig.UpdateType.OnCreateAndWrite)
-            .setStateVisibility(StateTtlConfig.StateVisibility.NeverReturnExpired)
-            .build();
 
     Properties info = new Properties();
     info.setProperty("lex", "JAVA");
@@ -48,7 +44,6 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
             "listState",
             TypeInformation.of(new TypeHint<LinkedHashMap<String, Object>>() {
             }));
-    listStateDescriptor.enableTimeToLive(ttlConfig);
     listState = getRuntimeContext().getListState(listStateDescriptor);
   }
 
@@ -66,15 +61,12 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
 
     listState.add(obj);
 
-    System.out.println("====================");
-    System.out.println(readOnlyContext.timestamp());
-    System.out.println(readOnlyContext.timerService().currentProcessingTime());
-    System.out.println(readOnlyContext.timerService().currentWatermark());
-    System.out.println("====================");
     long cleanupTime = getCleanupTime(ruleState, readOnlyContext, message);
 
-    System.out.println(cleanupTime);
-    readOnlyContext.timerService().registerProcessingTimeTimer(cleanupTime);
+    if (enabledProcessTimer) {
+      readOnlyContext.timerService().registerProcessingTimeTimer(cleanupTime);
+      enabledProcessTimer = false;
+    }
 
     Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
     List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
@@ -144,7 +136,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     Optional<Long> cleanupEventTimeThreshold = cleanupEventTimeWindow.map(
             window -> timestamp - window);
 
-//    cleanupEventTimeThreshold.ifPresent(this::removeElementFromState);
+    cleanupEventTimeThreshold.ifPresent(this::removeElementFromState);
   }
 
   private long getCleanupTime(ReadOnlyBroadcastState<Integer, Rule> ruleState,
@@ -175,6 +167,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
   }
 
   private void removeElementFromState(Long threshold) {
+    enabledProcessTimer = true;
     System.out.println("=======Removing element=======");
     try {
       Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
