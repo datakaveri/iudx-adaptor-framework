@@ -5,7 +5,6 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
-import in.org.iudx.adaptor.sink.DumbRuleResultSink;
 import in.org.iudx.adaptor.sink.RMQGenericSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
@@ -51,7 +50,6 @@ public class RuleFunctionITTest {
     pub.sendRuleMessage();
 
     int numMsgs = 5;
-    pub.initialize();
     for (int i = 0; i < numMsgs; i++) {
       pub.sendMessage(i);
     }
@@ -59,6 +57,7 @@ public class RuleFunctionITTest {
     String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime")
 //            .put("keyPath", "$.id")
             .put("staticKey", "ruleTest")
+//            .put("expiry", 200)
             .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
             .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
 
@@ -96,7 +95,8 @@ public class RuleFunctionITTest {
       }
     });
     try {
-      handle.get(40, TimeUnit.SECONDS);
+      // increased time to 4 minutes to test timer
+      handle.get(4, TimeUnit.MINUTES);
     } catch (TimeoutException | ExecutionException e) {
       handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
     }

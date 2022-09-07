@@ -11,6 +11,9 @@ import com.rabbitmq.client.ConnectionFactory;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public class RMQPublisher {
 
   private static Connection connection;
@@ -35,7 +38,6 @@ public class RMQPublisher {
 
   @Test
   void sendHelloMessage() throws Exception {
-
     String message = "info: Hello World!";
     channel.basicPublish("adaptor-test", "test", null, message.getBytes("UTF-8"));
     System.out.println(" [x] Sent '" + message + "'");
@@ -43,9 +45,9 @@ public class RMQPublisher {
 
   @Test
   public void sendRuleMessage() throws Exception {
-    String rule = "{\"ruleId\":1,\"sqlQuery\":\"select * from TABLE where " 
-                  + "`id`='123'\","
-                  + "\"type\":\"RULE\",\"windowMinutes\": 1000," 
+    String rule = "{\"ruleId\":1,\"sqlQuery\":\"select * from TABLE \" ,"
+//                  + "`id`='123'\","
+                  + "\"type\":\"RULE\",\"windowMinutes\": 1,"
                   + "\"sinkExchangeKey\": " 
                   + "\"rule-result-test\",\"sinkRoutingKey\": \"rule-result-test\"}";
     ruleChannel.basicPublish("rules-test", "test", null, rule.getBytes("UTF-8"));
@@ -71,19 +73,18 @@ public class RMQPublisher {
                   + "\"test\",\"sinkRoutingKey\": \"test\"}";
     channel.basicPublish("rules-test", "test", null, rule.getBytes("UTF-8"));
     System.out.println(" [x] Sent");
- 
   }
 
   @Test
   public void sendMessage(int i) throws Exception {
     String data = new JSONObject()
-      .put("observationDateTime", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
+//      .put("observationDateTime", "2021-04-01 13:00:01".replace("3", String.valueOf(i)))
+      .put("observationDateTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()).toString())
       .put("id", "123".replace("3", String.valueOf(i)))
       .put("k", 1.5)
       .toString();
     channel.basicPublish("adaptor-test", "test", null, data.getBytes("UTF-8"));
     System.out.println(" [x] Sent");
- 
   }
 
   @Test
@@ -91,7 +92,8 @@ public class RMQPublisher {
     int numMsgs = 5;
     for (int i=0;i< numMsgs;i++) {
       this.sendMessage(i);
-      Thread.sleep(1000);
+      // increased to 30s to test timer
+      Thread.sleep(30000);
     }
   }
 }

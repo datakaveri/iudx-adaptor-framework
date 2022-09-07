@@ -20,6 +20,7 @@ public class Message implements AdaptorRecord, Serializable {
   public String key;
   public Instant timestamp;
   public String timestampString;
+  public long expiry;
 
   private static final long serialVersionUID = 11L;
 
@@ -106,6 +107,15 @@ public class Message implements AdaptorRecord, Serializable {
      *    - Return Instance time
      **/
     return timestamp.toEpochMilli();
+  }
+
+  public Message setExpiry(long expiry) {
+    this.expiry = expiry;
+    return this;
+  }
+
+  public long getExpiry() {
+    return expiry;
   }
 
 }

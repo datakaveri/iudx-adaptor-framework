@@ -246,7 +246,9 @@ public class TopologyBuilder {
         }
 
         if ("rmq".equals(inputSpec.getString("type"))) {
-
+            if (inputSpec.has("expiry")) {
+                inputParseSpec.append("expiry", inputParseSpec.getLong("expiry"));
+            }
             mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
             mainBuilder.addStatement("config.setUri($S)", inputSpec.getString("uri"));
             mainBuilder.addStatement("config.setQueueName($S)", inputSpec.getString("queueName"));

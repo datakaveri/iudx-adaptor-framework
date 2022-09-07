@@ -7,36 +7,37 @@ import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.AMQP.BasicProperties;
-import java.text.ParseException;
 
 import in.org.iudx.adaptor.logger.CustomLogger;
-import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.datatypes.Message;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONObject;
 
 
 public class RMQMessageDeserializer extends JsonPathParser<Message>
                                   implements RMQDeserializationSchema<Message> {
 
-  private ObjectMapper mapper;
   private String appName;
-  private String parseSpec;
   transient CustomLogger logger;
-  private JsonPathParser<Message> parser;
+  private long expiry = Integer.MIN_VALUE;
 
 
   public RMQMessageDeserializer(String appName, String parseSpec) {
     super(parseSpec);
     this.appName = appName;
-    this.parseSpec = parseSpec;
+    if (parseSpec != null && !parseSpec.isEmpty()) {
+     JSONObject parseSpecObj = new JSONObject(parseSpec);
+
+     if (parseSpecObj.has("expiry")) {
+      this.expiry = parseSpecObj.getLong("expiry");
+     }
+    }
   }
 
   @Override
   public void deserialize(Envelope envelope, BasicProperties properties, byte[] body,
                           RMQDeserializationSchema.RMQCollector<Message> collector) {
     try {
-      Message msg = super.parse(new String(body));
+      Message msg = super.parse(new String(body)).setExpiry(expiry);
       collector.collect(msg);
     } catch (Exception e) {
       logger.error(e);
@@ -65,6 +66,4 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
   public String getAppName() {
     return appName;
   }
-
-
 }
