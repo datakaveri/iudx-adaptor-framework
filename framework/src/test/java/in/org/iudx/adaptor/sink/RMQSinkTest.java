@@ -59,7 +59,6 @@ class RMQSinkTest {
     amqconfig.setExchange("adaptor-test");
     amqconfig.setRoutingKey("test");
 
-
     env.addSource(new HttpSource<Message>(apiConfig, parser)).keyBy((Message msg) -> msg.key)
             .process(new GenericProcessFunction(trans, dedup))
             .addSink(new RMQGenericSink<>(amqconfig, TypeInformation.of(Message.class)));

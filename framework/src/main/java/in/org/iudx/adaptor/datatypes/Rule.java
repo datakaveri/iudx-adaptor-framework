@@ -93,8 +93,8 @@ public class Rule implements Serializable, AdaptorRecord {
 
   @Override
   public String toString() {
-    return "Rule{" + "ruleId=" + ruleId + ", sqlQuery='" + sqlQuery + '\'' + ", type=" + type +
-            ", windowMinutes=" + windowMinutes + ", sinkExchangeKey='" + sinkExchangeKey + '\'' + ", sinkRoutingKey='" + sinkRoutingKey + '\'' + '}';
+    return "{\"ruleId\":" + ruleId + ", \"sqlQuery\":\"" + sqlQuery + "\", \"type\": \"" + type +
+            "\", \"windowMinutes\": " + windowMinutes + ", \"sinkExchangeKey\": \"" + sinkExchangeKey + "\", \"sinkRoutingKey\": \"" + sinkRoutingKey + "\" }";
   }
 
   public enum RuleType {

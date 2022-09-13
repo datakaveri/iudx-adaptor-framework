@@ -14,6 +14,8 @@ DROP TABLE IF EXISTS QRTZ_CALENDARS;
 
 DROP TABLE IF EXISTS public."user";
 DROP TABLE IF EXISTS public.adaptor;
+DROP TABLE IF EXISTS public.rulesource;
+DROP TABLE IF EXISTS public.rules;
 DROP TABLE IF EXISTS public.codegen_status;
 DROP TABLE IF EXISTS public.flink_job;
 
@@ -183,6 +185,35 @@ CREATE TABLE public.adaptor (
 	CONSTRAINT adaptor_pk PRIMARY KEY (id),
 	CONSTRAINT adaptor_fk2 FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE public.rulesource (
+	id serial NOT NULL,
+	adaptor_id varchar NOT NULL,
+	source_id varchar NOT NULL,
+  ruleexchange varchar NOT NULL,
+  rulequeue varchar NOT NULL,
+	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
+	user_id serial NOT NULL,
+	CONSTRAINT rulesource_id_key UNIQUE (adaptor_id),
+	CONSTRAINT rulesource_pk PRIMARY KEY (id),
+	CONSTRAINT adaptor_fk2 FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+);
+
+CREATE TABLE public.rules (
+  id serial NOT NULL,
+	adaptor_id varchar NOT NULL,
+	source_id varchar NOT NULL,
+  exchangename varchar NOT NULL,
+  queuename varchar NOT NULL,
+  routingkey varchar NOT NULL,
+  sqlquery varchar NOT NULL,
+  ruletype varchar NOT NULL,
+  windowminutes  INTEGER NOT NULL,
+  timestamp timestamp default current_timestamp,
+	user_id serial NOT NULL
+);
+
 
 CREATE TABLE public.codegen_status (
 	id serial NOT NULL,

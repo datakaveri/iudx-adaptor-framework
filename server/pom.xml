@@ -32,7 +32,8 @@
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<quartz.version>2.3.2</quartz.version>
 		<postgres.version>42.2.19</postgres.version>
-        <latest.jolt.version>0.1.1</latest.jolt.version>
+    <latest.jolt.version>0.1.1</latest.jolt.version>
+		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
 	</properties>
 
 	<repositories>
@@ -120,6 +121,48 @@
 			<version>5.7.0</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-junit5</artifactId>
+      <version>${vertx.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-rabbitmq-client</artifactId>
+      <version>${vertx.version}</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${apache-commons-lang3.version}</version>
+		</dependency>
+
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+      <version>4.3-beta1</version>
+    </dependency>
+
+
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-inline</artifactId>
+			<version>3.11.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>3.11.1</version>
+			<scope>test</scope>
+		</dependency>
+
+
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>

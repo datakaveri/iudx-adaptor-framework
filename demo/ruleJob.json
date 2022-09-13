@@ -1,10 +1,11 @@
 {
-    "name": "rulejob",
+    "name": "rulejob5",
     "adaptorType": "RULES",
     "inputSpec": {
       "type": "rmq",
       "uri": "amqp://guest:guest@rmq:5672",
       "queueName": "adaptor-test",
+      "sourceId": "test1",
       "parseSpec": {
         "type": "json",
         "messageContainer": "single",

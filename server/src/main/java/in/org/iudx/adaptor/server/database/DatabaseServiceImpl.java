@@ -66,6 +66,86 @@ public class DatabaseServiceImpl implements DatabaseService {
     return this;
   }
 
+
+
+  @Override
+  public DatabaseService getRuleSource(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+
+    JsonArray response = new JsonArray();
+    String username = request.getString(USERNAME);
+    String adaptorId = request.getString(ADAPTOR_ID);
+        
+    LOGGER.debug("Getting rule source");
+    String query;
+    query = GET_ONE_RULE_FROM_ADAPTORID.replace("$1", username)
+                                      .replace("$2", adaptorId);
+    LOGGER.debug("Query is   " + query);
+    
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        RowSet<Row> result = pgHandler.result();
+        LOGGER.debug("Got results");
+        for (Row row : result) {
+          JsonObject rowJson = new JsonObject();
+          JsonObject tempJson = row.toJson();
+          LOGGER.debug(tempJson.toString());
+          
+          rowJson.put(ID, tempJson.getValue("adaptor_id"))
+                 .put(SOURCE_ID, tempJson.getString("source_id"))
+                 .put(EXCHANGE_NAME, tempJson.getString("ruleexchange"))
+                 .put(QUEUE_NAME, tempJson.getString("rulequeue"))
+                  .put(STATUS, tempJson.getString(STATUS));
+          response.add(rowJson);
+        }
+        
+        handler.handle(
+            Future.succeededFuture(
+                new JsonObject().put(STATUS, SUCCESS).put(ADAPTORS, response)));
+      } else {
+        LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    return this;
+  }
+
+
+  @Override
+  public DatabaseService getRuleSources(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+
+    JsonArray response = new JsonArray();
+    String username = request.getString(USERNAME);
+        
+    String query;
+    query = GET_ALL_RULES.replace("$1", username);
+    
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        RowSet<Row> result = pgHandler.result();
+        for (Row row : result) {
+          JsonObject rowJson = new JsonObject();
+          JsonObject tempJson = row.toJson();
+          
+          rowJson.put(ID, tempJson.getValue("adaptor_id"))
+                 .put(SOURCE_ID, tempJson.getString("source_id"))
+                 .put(EXCHANGE_NAME, tempJson.getString("ruleexchange"))
+                 .put(QUEUE_NAME, tempJson.getString("rulequeue"))
+                  .put(STATUS, tempJson.getString(STATUS));
+          response.add(rowJson);
+        }
+        
+        handler.handle(
+            Future.succeededFuture(
+                new JsonObject().put(STATUS, SUCCESS).put(ADAPTORS, response)));
+      } else {
+        LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    return this;
+  }
+
+
   /**
    * {@inheritDoc}
    */
@@ -194,6 +274,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     String username = request.getString(USERNAME);
     String adaptorId = request.getString(ADAPTOR_ID);
     String data = request.getString(DATA).replace("'", "\\\"");
+    String adaptorType = request.getString(ADAPTOR_TYPE);
     
     String query = CREATE_ADAPTOR
                       .replace("$1", adaptorId)
@@ -203,8 +284,22 @@ public class DatabaseServiceImpl implements DatabaseService {
     
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
+        if (adaptorType.equals(ADAPTOR_RULE)) {
+          String sourceId = request.getString(SOURCE_ID);
+          String ruleQuery = CREATE_RULESOURCE.replace("$1", adaptorId)
+                              .replace("$5", username)
+                              .replace("$2", sourceId)
+                              .replace("$3", adaptorId+"_exchange")
+                              .replace("$4", adaptorId+"_queue");
+          client.executeAsync(ruleQuery).onComplete(pgHandler1 -> {
+            LOGGER.debug("Info: Database query succeeded");
+            handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
+            return;
+          });
+        }
         LOGGER.debug("Info: Database query succeeded");
         handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
+        return;
 
       } else {
         LOGGER.error("Info: Database query failed; " + pgHandler.cause().getMessage());
@@ -214,6 +309,55 @@ public class DatabaseServiceImpl implements DatabaseService {
 
     return this;
   }
+
+
+
+  @Override
+  public DatabaseService createRule(JsonObject request,
+      Handler<AsyncResult<JsonObject>> handler) {
+    
+    LOGGER.debug("Creating rule in db");
+    LOGGER.debug(request.toString());
+
+    String username = request.getString(USERNAME);
+    String adaptorId = request.getString(ADAPTOR_ID);
+    String sqlQuery = request.getString(SQL_QUERY);
+    int windowMinutes = request.getInteger(WINDOW_MINUTES);
+    String ruleType = request.getString(RULE_TYPE);
+    String exchangeName = request.getString(EXCHANGE_NAME);
+    String queueName = request.getString(QUEUE_NAME);
+    String routingKey = request.getString(ROUTING_KEY);
+    
+    String query = CREATE_RULE
+                      .replace("$1", adaptorId)
+                      .replace("$2", exchangeName)
+                      .replace("$3", queueName)
+                      .replace("$4", routingKey)
+                      .replace("$5", sqlQuery)
+                      .replace("$6", String.valueOf(windowMinutes))
+                      .replace("$7", ruleType)
+                      .replace("$8", username);
+
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        LOGGER.debug("Info: Database query succeeded");
+        int uuid = -1;
+        // TODO: Ensure only one row is returned
+        for(Row row: pgHandler.result()) {
+          uuid = row.getInteger(0);
+        }
+        handler.handle(Future.succeededFuture(new JsonObject()
+                                              .put(STATUS, SUCCESS)
+                                                .put("uuid", uuid)));
+      } else {
+        LOGGER.error("Info: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+
+    return this;
+  }
+
 
   /**
    * {@inheritDoc}

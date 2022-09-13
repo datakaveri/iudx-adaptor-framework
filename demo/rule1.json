@@ -1,0 +1,6 @@
+{
+  "adaptorId": "testuser_rulejob5",
+  "ruleType": "RULE",
+  "sqlQuery": "select * from table;",
+  "windowMinutes": 60
+}

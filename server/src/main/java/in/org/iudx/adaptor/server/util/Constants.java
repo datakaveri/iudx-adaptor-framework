@@ -24,6 +24,14 @@ public class Constants {
   public static final String TEMPLATE_PATH = "templatePath";
   public static final String JAR_OUT_PATH = "jarOutPath";
 
+  /** RMQ **/
+  public static final String RMQ_HOST = "rmqHost";
+  public static final String RMQ_PORT = "rmqPort";
+  public static final String RMQ_MANAGEMENT_PORT = "rmqMgmtPort";
+  public static final String RMQ_VHOST = "rmqVhost";
+  public static final String RMQ_USERNAME = "rmqUsername";
+  public static final String RMQ_PASSWORD = "rmqPassword";
+
   /** Accept Headers and CORS */
   public static final String HEADER_ACCEPT = "Accept";
   public static final String HEADER_USERNAME = "username";
@@ -69,6 +77,7 @@ public class Constants {
   public static final String DELETE_SCHEDULER_JOB = basePath + "/schedule/:id";
 
   public static final String ADAPTOR_ROUTE = "/adaptor";
+  public static final String RULE_ROUTE = "/rule";
   public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
   public static final String ADAPTOR_START_ROUTE = ADAPTOR_ROUTE +"/:id/start";
   public static final String ADAPTOR_STOP_ROUTE = ADAPTOR_ROUTE +"/:id/stop";
@@ -152,6 +161,12 @@ public class Constants {
 
   /* Database query */
   public static final String ADAPTOR_ID = "adaptorId";
+  public static final String ADAPTOR_TYPE = "adaptorType";
+  public static final String ADAPTOR_DEFAULT = "ETL";
+  public static final String ADAPTOR_RULE = "RULES";
+  public static final String ADAPTOR_ETL = "ETL";
+  public static final String SOURCE_ID = "sourceId";
+  public static final String RULE_TYPE = "ruleType";
   public static final String JAR_ID = "jarId";
   public static final String JOB_ID = "jobId";
   public static final String COMPILING = "cg-compiling";
@@ -163,6 +178,11 @@ public class Constants {
   public static final String LASTSEEN = "lastSeen";
   public static final String TIMESTAMP = "timestamp";
   public static final String ADAPTORS = "adaptors";
+  public static final String QUEUE_NAME = "queueName";
+  public static final String ROUTING_KEY = "routingKey";
+  public static final String EXCHANGE_NAME = "exchangeName";
+  public static final String WINDOW_MINUTES = "windowMinutes";
+  public static final String SQL_QUERY = "sqlQuery";
   public static final Set<String> ALLOWED_USER_STATUS =
       new HashSet<String>(Arrays.asList("active","inactive"));
 
@@ -171,6 +191,13 @@ public class Constants {
   public static final String CREATE_ADAPTOR =
       "INSERT into adaptor(adaptor_id,\"data\",\"timestamp\",user_id) SELECT '$1', '$2'::json, now(), us.\"id\" from public.\"user\" us where username = '$3';"
       + "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$4', now(),'$1')";
+
+  public static final String CREATE_RULESOURCE =
+      "INSERT into rulesource(adaptor_id,source_id,ruleexchange,rulequeue,\"timestamp\",user_id)" +
+      "SELECT '$1', '$2', '$3', '$4', now(), us.\"id\" from public.\"user\" us where username = '$5';";
+
+  public static final String CREATE_RULE =
+      "INSERT into rules(adaptor_id,source_id,exchangename,queuename,routingkey,sqlquery,windowminutes,ruletype, user_id) VALUES('$1', (select \"source_id\" from rulesource  where adaptor_id='$1'), '$2', '$3', '$4', '$5', $6, '$7', (select \"id\" from public.user where username = '$8')) returning id;";
 
   public static final String UPDATE_STATUS = "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$1', now(),'$2')";
 
@@ -232,6 +259,15 @@ public class Constants {
       "     AND adaptor_id = '$2'\n" +
       ")\n" +
       "SELECT * FROM get_filter_job";
+
+  /* TODO Better query */
+  public static final String GET_ALL_RULES = 
+    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username,us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1'";
+
+  public static final String GET_ONE_RULE_FROM_ADAPTORID = 
+    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username,us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1' and rs.adaptor_id = '$2'";
+
+
 
   public static final String REGISTER_USER = "INSERT INTO public.user "
       + "(username, password, status,\"timestamp\") VALUES ('$1','$2','$3',now());";

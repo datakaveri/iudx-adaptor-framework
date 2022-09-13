@@ -49,6 +49,9 @@ public interface DatabaseService {
   @Fluent
   DatabaseService createAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
 
+  @Fluent
+  DatabaseService createRule(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
   /**
    * Updates the status of the Adaptor process in PostgreSQL database.
    * @param request
@@ -66,6 +69,13 @@ public interface DatabaseService {
    */
   @Fluent
   DatabaseService getAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
+
+  @Fluent
+  DatabaseService getRuleSources(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
+  @Fluent
+  DatabaseService getRuleSource(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
  
   /**
    * Delete Adaptor from the the PostgreSQL database in CASCADE mode.

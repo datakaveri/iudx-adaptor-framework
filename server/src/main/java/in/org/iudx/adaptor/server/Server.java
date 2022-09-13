@@ -34,6 +34,15 @@ import java.util.Set;
 import in.org.iudx.adaptor.server.specEndpoints.InputSpecEndpoint;
 import in.org.iudx.adaptor.server.specEndpoints.ParseSpecEndpoint;
 
+import in.org.iudx.adaptor.datatypes.Rule;
+import in.org.iudx.adaptor.datatypes.Rule.RuleType;
+
+import io.vertx.ext.web.client.WebClientOptions;
+import in.org.iudx.adaptor.server.databroker.RabbitClient;
+import in.org.iudx.adaptor.server.databroker.RabbitWebClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
+import io.vertx.core.Future;
+
 /**
  * The Adaptor API Server API Verticle.
  *
@@ -62,6 +71,20 @@ public class Server extends AbstractVerticle {
   private DatabaseService databaseService;
   private DbFlinkSync dbFlinkSync;
 
+  private RabbitClient rmqClient;
+  private RabbitWebClient rmqWebClient;
+
+  private String rmqHost;
+  private int rmqMgmtPort;
+  private int rmqPort;
+  private String rmqVHost;
+  private String rmqUName;
+  private String rmqPassword;
+
+  private WebClientOptions webConfig;
+  private RabbitMQOptions rmqConfig;
+
+
   private static final Logger LOGGER = LogManager.getLogger(Server.class);
 
   @Override
@@ -76,11 +99,56 @@ public class Server extends AbstractVerticle {
     quartzPropertiesPath = config().getString(QUARTZ_PROPERTIES_PATH);
     jarOutPath = config().getString(JAR_OUT_PATH);
 
+
+    rmqHost = config().getString(RMQ_HOST);
+    rmqPort = config().getInteger(RMQ_PORT);
+    rmqMgmtPort = config().getInteger(RMQ_MANAGEMENT_PORT);
+    rmqVHost = config().getString(RMQ_VHOST);
+    rmqUName = config().getString(RMQ_USERNAME);
+    rmqPassword = config().getString(RMQ_PASSWORD);
+
+    webConfig = new WebClientOptions();
+    webConfig.setKeepAlive(true);
+    webConfig.setConnectTimeout(86400000);
+    webConfig.setDefaultHost(rmqHost);
+    webConfig.setDefaultPort(rmqMgmtPort);
+    webConfig.setKeepAliveTimeout(86400000);
+    /** TODO **/
+    webConfig.setSsl(false);
+
+    JsonObject propObj = new JsonObject();
+
+    propObj.put("userName", rmqUName);
+    propObj.put("password", rmqPassword);
+    propObj.put("vHost", rmqVHost);
+    if (rmqVHost.equals("%2F")) {
+      propObj.put("vHost", "/");
+    }
+
+
+    rmqConfig = new RabbitMQOptions();
+    rmqConfig.setUser(rmqUName);
+    rmqConfig.setPassword(rmqPassword);
+    rmqConfig.setHost(rmqHost);
+    rmqConfig.setPort(rmqPort);
+    rmqConfig.setVirtualHost(rmqVHost);
+    if (rmqVHost.equals("%2F")) {
+      rmqConfig.setVirtualHost("/");
+    }
+    rmqConfig.setAutomaticRecoveryEnabled(true);
+
+
+    rmqWebClient = new RabbitWebClient(vertx, webConfig, propObj);
+    rmqClient =
+        new RabbitClient(vertx, rmqConfig, rmqWebClient);
+
     databaseService = DatabaseService.createProxy(vertx, DATABASE_SERVICE_ADDRESS);
     HttpServerOptions serverOptions = new HttpServerOptions();
 
     InputSpecEndpoint ise = new InputSpecEndpoint();
     ParseSpecEndpoint pse = new ParseSpecEndpoint();
+
+
 
     if (isSsl) {
       serverOptions.setSsl(true)
@@ -231,6 +299,17 @@ public class Server extends AbstractVerticle {
           .handler(routingContext -> {
             createAdaptorHandler(routingContext);
           });
+
+
+    /* New rule */
+    router.post(RULE_ROUTE)
+          .consumes(MIME_APPLICATION_JSON)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .handler(routingContext -> {
+            newRuleHander(routingContext);
+          });
+
     
     /* Running a Adaptor */ 
     router.post(ADAPTOR_START_ROUTE)
@@ -262,6 +341,14 @@ public class Server extends AbstractVerticle {
           .handler(AuthHandler.create(databaseService))
           .handler(routingContext -> {
             getAdaptorHandler(routingContext);
+          });
+
+    /*Get all rules status*/
+    router.get(RULE_ROUTE)
+          .produces(MIME_APPLICATION_JSON)
+          .handler(AuthHandler.create(databaseService))
+          .handler(routingContext -> {
+            getRulesHandler(routingContext);
           });
     
     /*Delete a adaptor*/
@@ -712,11 +799,13 @@ public class Server extends AbstractVerticle {
     JsonObject jsonBody = routingContext.getBodyAsJson();
     String fileName = jsonBody.getString(NAME);
     String filePath = jarOutPath + "/" + fileName;
+    String adaptorType = jsonBody.getString(ADAPTOR_TYPE, ADAPTOR_DEFAULT);
     JsonObject request = new JsonObject();
     String adaptorId = username+"_"+fileName;
 
     FileSystem fileSystem = vertx.fileSystem();
-    request.put(ADAPTOR_ID, adaptorId).put(USERNAME, username);
+    request.put(ADAPTOR_ID, adaptorId).put(USERNAME, username)
+          .put(ADAPTOR_TYPE, adaptorType);
     
     databaseService.getAdaptor(request, getHandler -> {
       if(getHandler.succeeded()) {
@@ -734,16 +823,52 @@ public class Server extends AbstractVerticle {
                      .put(NAME, fileName + ".jar")
                      .put(PATH, path)
                      .put(URI, JAR_UPLOAD_API)
+                     .put(ADAPTOR_TYPE, adaptorType)
                      .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
+
+              if (adaptorType.equals(ADAPTOR_RULE)) {
+                request.put(SOURCE_ID, jsonBody.getJsonObject(INPUT_SPEC).getString(SOURCE_ID));
+              }
               
               codegenInit.mvnPkg(request, handler -> {
               });
-              response.setStatusCode(202)
-                      .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                      .end(new JsonObject().put(ID, adaptorId)
-                                           .put(NAME, fileName)
-                                           .put(STATUS, COMPILING)
-                                           .toString());
+
+
+              if (adaptorType.equals(ADAPTOR_RULE)) {
+                Future<JsonObject> futExch = rmqClient.createExchange(
+                                              new JsonObject()
+                                                .put("exchangeName", adaptorId+"_exchange"),
+                                              rmqVHost);
+                
+                futExch.compose(resExch -> {
+                  Future<JsonObject> futQueue = rmqClient.createQueue(
+                                                new JsonObject()
+                                                  .put("queueName", adaptorId+"_queue"),
+                                                  rmqVHost);
+                  return futQueue;
+                }).compose(resQueue -> {
+
+                  Future<JsonObject> futBind = rmqClient.bindQueue(
+                                                new JsonObject()
+                                                      .put("exchangeName", adaptorId+"_exchange")
+                                                      .put("queueName", adaptorId+"_queue")
+                                                      .put("entities",
+                                                          new JsonArray()
+                                                            .add("rules")),
+                                                      rmqVHost);
+                  return futBind;
+
+                }).onSuccess( sucHandler -> {
+                  response.setStatusCode(202)
+                          .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .end(new JsonObject().put(ID, adaptorId)
+                                               .put(NAME, fileName)
+                                               .put(STATUS, COMPILING)
+                                               .toString());
+                });
+
+              }
+
             } else if (fileHandler.failed()) {
               LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
               response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -761,6 +886,100 @@ public class Server extends AbstractVerticle {
         }
       }
     });
+  }
+
+
+  private void newRuleHander(RoutingContext routingContext) {
+
+    LOGGER.debug("Adding new rule");
+    HttpServerResponse response = routingContext.response();
+    String username = routingContext.request().getHeader(USERNAME);
+    JsonObject req = routingContext.getBodyAsJson();
+
+    String adaptorId = req.getString(ADAPTOR_ID);
+    String sqlQuery = req.getString(SQL_QUERY);
+    String ruleType = req.getString(RULE_TYPE);
+    int windowMinutes = req.getInteger(WINDOW_MINUTES);
+
+
+    LOGGER.debug("Processing request");
+    JsonObject request = new JsonObject().put(USERNAME, username)
+                                          .put(ADAPTOR_ID, adaptorId);
+    LOGGER.debug(request.toString());
+
+    databaseService.getRuleSource(request, getHandler -> {
+      if(getHandler.succeeded()) {
+        JsonObject resp = getHandler.result().getJsonArray("adaptors").getJsonObject(0);
+          String ruleExchangeName = resp.getString("exchangeName");
+          String ruleQueueName = resp.getString("queueName");
+
+          if (ruleType.equals("RULE")) {
+            String ruleOutputExchangeName = adaptorId+"_output_exchange";
+            String ruleOutputQueueName = adaptorId+"_output_queue";
+            // TODO: Something better
+            String ruleOutputRoutingKey = "results";
+            Future<JsonObject> futExch = rmqClient.createExchange(
+                                          new JsonObject()
+                                          .put("exchangeName", adaptorId+"_output_exchange"),
+                                          rmqVHost);
+            futExch.compose(resExch -> {
+              Future<JsonObject> futQueue = rmqClient.createQueue(
+                  new JsonObject()
+                  .put("queueName", adaptorId+"_output_queue"),
+                  rmqVHost);
+              return futQueue;
+            }).compose(resQueue -> {
+              Future<JsonObject> futBind = rmqClient.bindQueue(
+                  new JsonObject()
+                  .put("exchangeName", adaptorId+"_output_exchange")
+                  .put("queueName", adaptorId+"_output_queue")
+                  .put("entities",
+                    new JsonArray()
+                    .add(ruleOutputRoutingKey)),
+                  rmqVHost);
+              return futBind;
+
+            }).onSuccess(rmqSuccessHandler -> {
+              req.put("exchangeName", ruleOutputExchangeName);
+              req.put("queueName", ruleOutputQueueName);
+              req.put("routingKey", ruleOutputRoutingKey);
+              req.put("username", username);
+              req.put("ruleType", ruleType);
+              databaseService.createRule(req, crHandler -> {
+                Rule rule = new Rule(crHandler.result().getInteger("uuid"),
+                                    sqlQuery, RuleType.RULE, windowMinutes,
+                                    ruleOutputExchangeName, ruleOutputRoutingKey);
+
+                Future<Void> fut = rmqClient.client.basicPublish(
+                                    ruleExchangeName, "rules", Buffer.buffer(rule.toString()));
+                fut.onComplete(res2 -> {
+                  response.setStatusCode(202)
+                          .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                          .end(new JsonObject().put(ID, adaptorId)
+                                               .put(STATUS, SUCCESS)
+                                               .toString());
+                  return;
+
+                });
+              });
+            });
+          }
+
+
+
+          }
+        else {
+            LOGGER.error("Error: Job starting failed; " + getHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+          .setStatusCode(400)
+          .end(getHandler.cause().getMessage());
+
+      }});
+
+
+
+
+
   }
   
   /**
@@ -973,6 +1192,28 @@ public class Server extends AbstractVerticle {
                 .end(databaseHandler.result().toString());
       } else if (databaseHandler.failed()) {
         LOGGER.error("Error: Get adptor query failed; " + databaseHandler.cause());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(databaseHandler.cause().getMessage());
+      }
+    });
+  }
+
+  private void getRulesHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Getting adaptor status");
+
+    HttpServerResponse response = routingContext.response();
+    String username = routingContext.request().getHeader(USERNAME);
+
+    JsonObject requestBody = new JsonObject().put(USERNAME, username);
+     
+    databaseService.getRuleSources(requestBody, databaseHandler ->{
+      if(databaseHandler.succeeded()) {
+        LOGGER.info("Success: Get rules query");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(databaseHandler.result().toString());
+      } else if (databaseHandler.failed()) {
+        LOGGER.error("Error: Get rules query failed; " + databaseHandler.cause());
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                 .setStatusCode(400)
                 .end(databaseHandler.cause().getMessage());
