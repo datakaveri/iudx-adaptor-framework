@@ -5,7 +5,7 @@ import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
-import in.org.iudx.adaptor.sink.RMQGenericSink;
+import in.org.iudx.adaptor.sink.DumbRuleResultSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
 import in.org.iudx.adaptor.source.RMQPublisher;
@@ -84,9 +84,8 @@ public class RuleFunctionITTest {
 
     RMQConfig rmqConfig = new RMQConfig();
     rmqConfig.setUri("amqp://guest:guest@localhost:5672");
-    ds.addSink(new RMQGenericSink<>(rmqConfig, TypeInformation.of(RuleResult.class)));
 
-//    ds.addSink(new DumbRuleResultSink());
+    ds.addSink(new DumbRuleResultSink());
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {
         env.execute("Simple Get");
