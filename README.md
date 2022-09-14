@@ -15,7 +15,7 @@ The above necessitates the need for a tool which:
 - Ensures data deduplication and late message rejections to give out a stream of novel data
 - Transforms the data format into the formats required by the exchange
 - Publishes the transformed data into the exchange with flexibility in choosing the sink
-- Supporta a fully configuration file based specification and operation of the entire pipeline
+- Supports a configuration file based specification and operation of the entire pipeline
 
 
 ## Overview
@@ -51,55 +51,14 @@ It maybe possible for a developer to pass their own implementation of the interf
 
 ## Usage
 
-Using the framework as an ordinary consumer involves writing a specification file for the entire pipeline (source -> transform -> sink)
-and using a hosted instances api to publish the spec and perform the pipeline operations.
-There are two fundamental modes of operation - 
-1. Bounded mode - The pipeline runs once based on the specified schedule
-2. Unbounded mode - The pipeline is always running
+Framework can be used in 2 applications
 
-### Pipeline Specification file
-
-A pipeline maybe specified in Json format and submitted to the framework server
-to auto-generate JAR files and run them. 
-The following is the spec outline to be followed in making a configuration file.
-
-#### Spec Outline
-``` 
-{
-    "name": "<unique name for this adaptor",
-    "schedulePattern": "<cron like schedule pattern >",
-
-    "failureRecoverySpec": {
-    },
-    
-    "inputSpec": {
-    },
-    
-    "parseSpec": {
-    },
-    
-    "deduplicationSpec": {
-    },
-    
-    "transformSpec": {
-    },
-    
-    "publishSpec": {
-    }
-}
-``` 
-
-Detailed explanation of the individual specs are given below.  
-- [Meta spec](docs/meta_spec.md)  
-- [Failure Recovery Spec](docs/failurerecovery_spec.md)  
-- [Input Spec](docs/input_spec.md)  
-- [Parse Spec](docs/parse_spec.md)  
-- [Deduplication Spec](docs/parse_spec.md)  
-- [Transformation Spec](docs/transform_spec.md)  
-- [Publish Spec](docs/publish_spec.md)  
-
-The spec can then be submitted to the adaptor server which will validate it and generate a JAR for the entire pipeline.
-
+1. [ETL Pipeline](docs/etl_usage.md) - Framework can be used in ETL (extract, transform, 
+   load) pipeline. Consumer can write a specification file for the entire pipeline (source -> 
+   transform -> sink) and use hosted instances api to publish the spec and perform the pipeline 
+   operations.
+2. [Rules Engine](docs/rules_usage.md) - Framework can also be used for executing rules 
+   on streaming data. Consumer can submit the rule using API and receive alerts. 
 
 ### Apis
 The framework provides Apis to manage the lifecycle of the adaptor pipeline and to monitor it.

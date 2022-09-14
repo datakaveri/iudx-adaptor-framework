@@ -9,7 +9,9 @@ The schema of the publishSpec is as shown below. **Bold** implies that the prope
   - rmq (RabbitMQ)
 - uri(String): Fully qualified URI with protocol information including port, vhost and authentication information. For e.g amqps://user:password@databroker.iudx.org.in:24567/vhostname
 - sinkName(String): The RMQ exchange name
+  - Note: For Rule engine jobs this config is not required.
 - tagName(String): The RMQ routing key
+  - Note: For Rule engine jobs this config is not required
 
 ``` 
 {

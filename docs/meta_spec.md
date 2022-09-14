@@ -9,13 +9,14 @@ The schema of the metaSpec is as shown below. **Bold** implies that the property
 - **name**(String): Unique name (per user) of the adaptor. No spaces.
 - 
 - schedulerPattern(String): Cron like pattern for long running jobs. More information on constructing the pattern can be found from [here](http://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html)
-
+- adaptorType (ENUM) (ETL, RULES): Defines the type of adaptor defaults to ETL. in case if its a rule job the value will be RULES
 
 Example:
 ``` 
 {
     "name": "myAdaptor",
     "schedulePattern": "0 * * * * ?"
+    "adaptorType": "ETL",
     
     "inputSpec": { },
     "parseSpec": { }
