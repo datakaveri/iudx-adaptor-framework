@@ -327,6 +327,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     String exchangeName = request.getString(EXCHANGE_NAME);
     String queueName = request.getString(QUEUE_NAME);
     String routingKey = request.getString(ROUTING_KEY);
+    String ruleName = request.getString(RULE_NAME);
     
     String query = CREATE_RULE
                       .replace("$1", adaptorId)
@@ -336,7 +337,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                       .replace("$5", sqlQuery)
                       .replace("$6", String.valueOf(windowMinutes))
                       .replace("$7", ruleType)
-                      .replace("$8", username);
+                      .replace("$8", username)
+                      .replace("$9", ruleName);
+
+    LOGGER.debug("QUery is " + query);
 
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {

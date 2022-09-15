@@ -180,6 +180,7 @@ public class Constants {
   public static final String ADAPTORS = "adaptors";
   public static final String QUEUE_NAME = "queueName";
   public static final String ROUTING_KEY = "routingKey";
+  public static final String RULE_NAME = "ruleName";
   public static final String EXCHANGE_NAME = "exchangeName";
   public static final String WINDOW_MINUTES = "windowMinutes";
   public static final String SQL_QUERY = "sqlQuery";
@@ -197,7 +198,7 @@ public class Constants {
       "SELECT '$1', '$2', '$3', '$4', now(), us.\"id\" from public.\"user\" us where username = '$5';";
 
   public static final String CREATE_RULE =
-      "INSERT into rules(adaptor_id,source_id,exchangename,queuename,routingkey,sqlquery,windowminutes,ruletype, user_id) VALUES('$1', (select \"source_id\" from rulesource  where adaptor_id='$1'), '$2', '$3', '$4', '$5', $6, '$7', (select \"id\" from public.user where username = '$8')) returning id;";
+      "INSERT into rules(adaptor_id,source_id,exchangename,queuename,routingkey,sqlquery,windowminutes,ruletype, user_id,rule_name) VALUES('$1', (select \"source_id\" from rulesource  where adaptor_id='$1'), '$2', '$3', '$4', '$5', $6, '$7', (select \"id\" from public.user where username = '$8'), '$9') returning id;";
 
   public static final String UPDATE_STATUS = "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$1', now(),'$2')";
 

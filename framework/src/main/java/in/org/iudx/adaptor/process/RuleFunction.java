@@ -103,6 +103,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
       try (Statement statement = calciteConnection.createStatement()) {
         String q = rule.getValue().sqlQuery;
         q = q.replace("TABLE", "listState.state");
+        q = q.replace("''", "'");
         ResultSet rs = statement.executeQuery(q);
         JSONArray json = new JSONArray();
         while (rs.next()) {

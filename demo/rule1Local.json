@@ -1,0 +1,7 @@
+{
+  "ruleName": "myAwesomeRule",
+  "adaptorId": "testuser_rulejobLocal8",
+  "ruleType": "RULE",
+  "sqlQuery": "select * from TABLE where `deviceId`=''abc-123''",
+  "windowMinutes": 60
+}

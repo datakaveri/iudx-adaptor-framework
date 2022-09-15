@@ -793,8 +793,11 @@ public class Server extends AbstractVerticle {
 
     LOGGER.debug("Info: Processing config file");
 
+    final String ruleSourceExchange;
+    final String ruleSourceQueue;
+    final String ruleSourceRoutingKey;
+
     HttpServerResponse response = routingContext.response();
-    Buffer buffBody = routingContext.getBody();
     String username = routingContext.request().getHeader(USERNAME);
     JsonObject jsonBody = routingContext.getBodyAsJson();
     String fileName = jsonBody.getString(NAME);
@@ -806,11 +809,34 @@ public class Server extends AbstractVerticle {
     FileSystem fileSystem = vertx.fileSystem();
     request.put(ADAPTOR_ID, adaptorId).put(USERNAME, username)
           .put(ADAPTOR_TYPE, adaptorType);
-    
+
+
+    if( ! jsonBody.containsKey("ruleSourceSpec") 
+        && jsonBody.getString(ADAPTOR_TYPE).equals(ADAPTOR_RULE)) {
+      ruleSourceExchange = adaptorId + "_exchange";
+      ruleSourceQueue = adaptorId + "_queue";
+      ruleSourceRoutingKey = "rules";
+
+      JsonObject ruleSourceSpec = new JsonObject().put("type", "rmq")
+        .put("uri", "amqp://" + rmqUName + ":" 
+            + rmqPassword + "@" + rmqHost 
+            + ":" + rmqPort + "/" + rmqVHost)
+        .put("queueName", ruleSourceQueue);
+      jsonBody.put("ruleSourceSpec", ruleSourceSpec);
+    } else {
+      ruleSourceExchange = "";
+      ruleSourceQueue = "";
+      ruleSourceRoutingKey = "";
+    }
+
+    Buffer buffBody = Buffer.buffer(jsonBody.toString());
+
     databaseService.getAdaptor(request, getHandler -> {
       if(getHandler.succeeded()) {
         JsonArray results = getHandler.result().getJsonArray(ADAPTORS);
+        LOGGER.debug("Got results from db");
         if(results.isEmpty()) {
+          LOGGER.debug("No such adaptor exists, creating adaptor");
           fileSystem.writeFile(filePath, buffBody, fileHandler -> {
             if (fileHandler.succeeded()) {
               String path = FileSystems.getDefault()
@@ -826,48 +852,73 @@ public class Server extends AbstractVerticle {
                      .put(ADAPTOR_TYPE, adaptorType)
                      .put(SCHEDULE_PATTERN, jsonBody.getString(SCHEDULE_PATTERN));
 
-              if (adaptorType.equals(ADAPTOR_RULE)) {
-                request.put(SOURCE_ID, jsonBody.getJsonObject(INPUT_SPEC).getString(SOURCE_ID));
-              }
-              
-              codegenInit.mvnPkg(request, handler -> {
-              });
 
+              LOGGER.debug("File read complete");
 
               if (adaptorType.equals(ADAPTOR_RULE)) {
-                Future<JsonObject> futExch = rmqClient.createExchange(
-                                              new JsonObject()
-                                                .put("exchangeName", adaptorId+"_exchange"),
-                                              rmqVHost);
-                
-                futExch.compose(resExch -> {
-                  Future<JsonObject> futQueue = rmqClient.createQueue(
+                if (!ruleSourceQueue.equals("")) {
+                  request.put(SOURCE_ID, jsonBody.getJsonObject(INPUT_SPEC).getString(SOURCE_ID));
+                  Future<JsonObject> futExch = rmqClient.createExchange(
                                                 new JsonObject()
-                                                  .put("queueName", adaptorId+"_queue"),
-                                                  rmqVHost);
-                  return futQueue;
-                }).compose(resQueue -> {
+                                                  .put("exchangeName", ruleSourceExchange),
+                                                rmqVHost);
+                  
+                  futExch.compose(resExch -> {
+                    Future<JsonObject> futQueue = rmqClient.createQueue(
+                                                  new JsonObject()
+                                                    .put("queueName", ruleSourceQueue),
+                                                    rmqVHost);
+                    return futQueue;
+                  }).compose(resQueue -> {
 
-                  Future<JsonObject> futBind = rmqClient.bindQueue(
-                                                new JsonObject()
-                                                      .put("exchangeName", adaptorId+"_exchange")
-                                                      .put("queueName", adaptorId+"_queue")
-                                                      .put("entities",
-                                                          new JsonArray()
-                                                            .add("rules")),
-                                                      rmqVHost);
-                  return futBind;
+                    Future<JsonObject> futBind = rmqClient.bindQueue(
+                                                  new JsonObject()
+                                                        .put("exchangeName", ruleSourceExchange)
+                                                        .put("queueName", ruleSourceQueue)
+                                                        .put("entities",
+                                                            new JsonArray()
+                                                              .add(ruleSourceRoutingKey)),
+                                                        rmqVHost);
+                    return futBind;
 
-                }).onSuccess( sucHandler -> {
+                  }).onSuccess( sucHandler -> {
+                    LOGGER.debug("Created RMQ Stuff");
+
+                    LOGGER.debug(request.getJsonObject(DATA).toString());
+                    codegenInit.mvnPkg(request, mvnHandler  -> {
+                      if (mvnHandler.succeeded()) {
+                        response.setStatusCode(202)
+                                .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                                .end(new JsonObject().put(ID, adaptorId)
+                                                     .put(NAME, fileName)
+                                                     .put(STATUS, COMPILING)
+                                                     .toString());
+                        return;
+                      }
+                    });
+                  });
+              } else {
+                codegenInit.mvnPkg(request, mvnHandler  -> {
+                  if (mvnHandler.succeeded()) {
+                    response.setStatusCode(202)
+                      .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(new JsonObject().put(ID, adaptorId)
+                          .put(NAME, fileName)
+                          .put(STATUS, COMPILING)
+                          .toString());
+                    return;
+                  }});
+            }
+              codegenInit.mvnPkg(request, mvnHandler  -> {
+                if (mvnHandler.succeeded()) {
                   response.setStatusCode(202)
-                          .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                          .end(new JsonObject().put(ID, adaptorId)
-                                               .put(NAME, fileName)
-                                               .put(STATUS, COMPILING)
-                                               .toString());
-                });
-
-              }
+                    .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .end(new JsonObject().put(ID, adaptorId)
+                        .put(NAME, fileName)
+                        .put(STATUS, COMPILING)
+                        .toString());
+                }
+              });
 
             } else if (fileHandler.failed()) {
               LOGGER.error("Error: Adaptor config failure: "+ fileHandler.cause().getMessage());
@@ -876,6 +927,7 @@ public class Server extends AbstractVerticle {
                       .end(new ResponseHandler.Builder()
                                   .withStatus(FAILED)
                                   .build().toJsonString());
+            }
             }
           });
         } else {
@@ -899,6 +951,7 @@ public class Server extends AbstractVerticle {
     String adaptorId = req.getString(ADAPTOR_ID);
     String sqlQuery = req.getString(SQL_QUERY);
     String ruleType = req.getString(RULE_TYPE);
+    final String ruleName = username + "_" + req.getString(RULE_NAME);
     int windowMinutes = req.getInteger(WINDOW_MINUTES);
 
 
@@ -914,25 +967,25 @@ public class Server extends AbstractVerticle {
           String ruleQueueName = resp.getString("queueName");
 
           if (ruleType.equals("RULE")) {
-            String ruleOutputExchangeName = adaptorId+"_output_exchange";
-            String ruleOutputQueueName = adaptorId+"_output_queue";
+            String ruleOutputExchangeName = ruleName+"_output_exchange";
+            String ruleOutputQueueName = ruleName+"_output_queue";
             // TODO: Something better
             String ruleOutputRoutingKey = "results";
             Future<JsonObject> futExch = rmqClient.createExchange(
                                           new JsonObject()
-                                          .put("exchangeName", adaptorId+"_output_exchange"),
+                                          .put("exchangeName", ruleOutputExchangeName),
                                           rmqVHost);
             futExch.compose(resExch -> {
               Future<JsonObject> futQueue = rmqClient.createQueue(
                   new JsonObject()
-                  .put("queueName", adaptorId+"_output_queue"),
+                  .put("queueName", ruleOutputQueueName),
                   rmqVHost);
               return futQueue;
             }).compose(resQueue -> {
               Future<JsonObject> futBind = rmqClient.bindQueue(
                   new JsonObject()
-                  .put("exchangeName", adaptorId+"_output_exchange")
-                  .put("queueName", adaptorId+"_output_queue")
+                  .put("exchangeName", ruleOutputExchangeName)
+                  .put("queueName", ruleOutputQueueName)
                   .put("entities",
                     new JsonArray()
                     .add(ruleOutputRoutingKey)),
@@ -945,6 +998,7 @@ public class Server extends AbstractVerticle {
               req.put("routingKey", ruleOutputRoutingKey);
               req.put("username", username);
               req.put("ruleType", ruleType);
+              req.put("ruleName", ruleName);
               databaseService.createRule(req, crHandler -> {
                 Rule rule = new Rule(crHandler.result().getInteger("uuid"),
                                     sqlQuery, RuleType.RULE, windowMinutes,

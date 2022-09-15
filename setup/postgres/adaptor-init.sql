@@ -211,7 +211,8 @@ CREATE TABLE public.rules (
   ruletype varchar NOT NULL,
   windowminutes  INTEGER NOT NULL,
   timestamp timestamp default current_timestamp,
-	user_id serial NOT NULL
+	user_id serial NOT NULL,
+	rule_name varchar NOT NULL
 );
 
 

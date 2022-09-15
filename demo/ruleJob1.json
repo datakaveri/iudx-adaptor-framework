@@ -1,11 +1,11 @@
 {
-    "name": "rulejobA",
+    "name": "rulejobX",
     "adaptorType": "RULES",
     "inputSpec": {
       "type": "rmq",
-      "uri": "amqp://guest:guest@rmq:5672/%2F",
+      "uri": "amqp://guest:guest@rmq:5672",
       "queueName": "adaptor-test",
-      "sourceId": "surat-itms",
+      "sourceId": "test1",
       "parseSpec": {
         "type": "json",
         "messageContainer": "single",
@@ -13,8 +13,13 @@
         "staticKey": "rules"
       }
     },
+    "ruleSourceSpec": {
+      "type": "rmq",
+      "uri": "amqp://guest:guest@rmq:5672",
+      "queueName": "rules-test"
+    },
     "publishSpec": {
       "type": "rmq",
-      "uri": "amqp://guest:guest@rmq:5672/%2F"
+      "uri": "amqp://guest:guest@rmq:5672"
     }
   }

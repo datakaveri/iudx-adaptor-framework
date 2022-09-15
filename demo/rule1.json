@@ -1,6 +1,7 @@
 {
-  "adaptorId": "testuser_rulejob5",
+  "ruleName": "myAwesomeRule1",
+  "adaptorId": "testuser_rulejobA",
   "ruleType": "RULE",
-  "sqlQuery": "select * from table;",
+  "sqlQuery": "SELECT * FROM ( SELECT * FROM TABLE ORDER BY `index` DESC LIMIT 1) where `deviceId`=''abc-123''",
   "windowMinutes": 60
 }

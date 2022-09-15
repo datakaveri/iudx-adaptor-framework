@@ -1,5 +1,5 @@
 {
-    "name": "rulejobA",
+    "name": "rulejobLocal8",
     "adaptorType": "RULES",
     "inputSpec": {
       "type": "rmq",
