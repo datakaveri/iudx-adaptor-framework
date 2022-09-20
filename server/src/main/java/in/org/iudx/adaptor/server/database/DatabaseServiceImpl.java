@@ -497,6 +497,7 @@ public class DatabaseServiceImpl implements DatabaseService {
           LOGGER.debug(tempJson.toString());
 
           rowJson.put(ID, tempJson.getValue("id"))
+                 .put(RULE_NAME, tempJson.getString("rule_name"))
                  .put(ADAPTOR_ID, tempJson.getString("adaptor_id"))
                  .put(EXCHANGE_NAME, tempJson.getString("exchangename"))
                  .put(QUEUE_NAME, tempJson.getString("queuename"))
@@ -507,7 +508,7 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         handler.handle(
                 Future.succeededFuture(
-                        new JsonObject().put(STATUS, SUCCESS).put(ADAPTOR_RULE, response)));
+                        new JsonObject().put(STATUS, SUCCESS).put(RULES, response)));
       } else {
         LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));

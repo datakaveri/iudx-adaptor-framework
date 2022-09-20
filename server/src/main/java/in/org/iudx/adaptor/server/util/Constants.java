@@ -168,6 +168,8 @@ public class Constants {
   public static final String ADAPTOR_DEFAULT = "ETL";
   public static final String ADAPTOR_RULE = "RULES";
   public static final String ADAPTOR_ETL = "ETL";
+
+  public static final String RULES = "rules";
   public static final String SOURCE_ID = "sourceId";
   public static final String RULE_TYPE = "ruleType";
   public static final String RULE_ID = "ruleId";
