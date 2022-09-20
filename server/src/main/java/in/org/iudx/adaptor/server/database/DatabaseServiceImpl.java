@@ -36,7 +36,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     } else {
       query = GET_ALL_ADAPTOR.replace("$1", username);
     }
-    
+
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
         RowSet<Row> result = pgHandler.result();
@@ -51,7 +51,8 @@ public class DatabaseServiceImpl implements DatabaseService {
                  .put(SCHEDULE_PATTERN, configData.getString(SCHEDULE_PATTERN,null))
                  .put(JOB_ID, tempJson.getString("job_id"))
                  .put(LASTSEEN, tempJson.getString(TIMESTAMP))
-                 .put(STATUS, tempJson.getString(STATUS));
+                 .put(STATUS, tempJson.getString(STATUS))
+                 .put(ADAPTOR_TYPE, tempJson.getString("adaptor_type"));
           response.add(rowJson);
         }
         
@@ -77,7 +78,7 @@ public class DatabaseServiceImpl implements DatabaseService {
         
     LOGGER.debug("Getting rule source");
     String query;
-    query = GET_ONE_RULE_FROM_ADAPTORID.replace("$1", username)
+    query = GET_RULE_SOURCE_FROM_ADAPTOR_ID.replace("$1", username)
                                       .replace("$2", adaptorId);
     LOGGER.debug("Query is   " + query);
     
@@ -94,7 +95,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                  .put(SOURCE_ID, tempJson.getString("source_id"))
                  .put(EXCHANGE_NAME, tempJson.getString("ruleexchange"))
                  .put(QUEUE_NAME, tempJson.getString("rulequeue"))
-                  .put(STATUS, tempJson.getString(STATUS));
+                 .put(STATUS, tempJson.getString(STATUS));
           response.add(rowJson);
         }
         
@@ -117,7 +118,7 @@ public class DatabaseServiceImpl implements DatabaseService {
     String username = request.getString(USERNAME);
         
     String query;
-    query = GET_ALL_RULES.replace("$1", username);
+    query = GET_ALL_RULE_SOURCES.replace("$1", username);
     
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
@@ -130,7 +131,7 @@ public class DatabaseServiceImpl implements DatabaseService {
                  .put(SOURCE_ID, tempJson.getString("source_id"))
                  .put(EXCHANGE_NAME, tempJson.getString("ruleexchange"))
                  .put(QUEUE_NAME, tempJson.getString("rulequeue"))
-                  .put(STATUS, tempJson.getString(STATUS));
+                 .put(STATUS, tempJson.getString(STATUS));
           response.add(rowJson);
         }
         
@@ -270,6 +271,7 @@ public class DatabaseServiceImpl implements DatabaseService {
   @Override
   public DatabaseService createAdaptor(JsonObject request,
       Handler<AsyncResult<JsonObject>> handler) {
+    System.out.println("Creating adaptor");
     
     String username = request.getString(USERNAME);
     String adaptorId = request.getString(ADAPTOR_ID);
@@ -280,8 +282,10 @@ public class DatabaseServiceImpl implements DatabaseService {
                       .replace("$1", adaptorId)
                       .replace("$3", username)
                       .replace("$4", COMPILING)
-                      .replace("$2",data);
-    
+                      .replace("$2",data)
+                      .replace("$5", adaptorType);
+
+    LOGGER.debug(query);
     client.executeAsync(query).onComplete(pgHandler -> {
       if (pgHandler.succeeded()) {
         if (adaptorType.equals(ADAPTOR_RULE)) {
@@ -467,5 +471,69 @@ public class DatabaseServiceImpl implements DatabaseService {
     });
 
     return null;
+  }
+
+  @Override
+  public DatabaseService getRulesByAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+
+    JsonArray response = new JsonArray();
+    String username = request.getString(USERNAME);
+    String adaptorId = request.getString(ADAPTOR_ID);
+
+    LOGGER.debug("Getting rules");
+    String query;
+    query = GET_RULES_FROM_ADAPTOR_ID.replace("$1", username)
+            .replace("$2", adaptorId);
+
+    LOGGER.debug("Query is   " + query);
+
+    client.executeAsync(query).onComplete(pgHandler -> {
+      if (pgHandler.succeeded()) {
+        RowSet<Row> result = pgHandler.result();
+        LOGGER.debug("Got results");
+        for (Row row : result) {
+          JsonObject rowJson = new JsonObject();
+          JsonObject tempJson = row.toJson();
+          LOGGER.debug(tempJson.toString());
+
+          rowJson.put(ID, tempJson.getValue("id"))
+                 .put(ADAPTOR_ID, tempJson.getString("adaptor_id"))
+                 .put(EXCHANGE_NAME, tempJson.getString("exchangename"))
+                 .put(QUEUE_NAME, tempJson.getString("queuename"))
+                 .put(SQL_QUERY, tempJson.getString("sqlquery"))
+                 .put("createdAt", tempJson.getString(TIMESTAMP));
+          response.add(rowJson);
+        }
+
+        handler.handle(
+                Future.succeededFuture(
+                        new JsonObject().put(STATUS, SUCCESS).put(ADAPTORS, response)));
+      } else {
+        LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    return this;
+  }
+
+  @Override
+  public DatabaseService deleteRule(JsonObject request, Handler<AsyncResult<JsonObject>> handler) {
+    String adaptorId = request.getString(ADAPTOR_ID);
+    String ruleId = request.getString(RULE_ID);
+
+    String deleteQuery = DELETE_RULE.replace("$1", adaptorId).replace("$2", ruleId);
+
+    LOGGER.debug("Info: Handling rule delete queries");
+
+    client.executeAsync(deleteQuery).onComplete(deleteHandler ->{
+      if(deleteHandler.succeeded()) {
+        LOGGER.debug("Info: Database query rule delete succeeded");
+        handler.handle(Future.succeededFuture(new JsonObject().put(STATUS, SUCCESS)));
+      } else {
+        LOGGER.error("Error: Database rule delete query failed; " + deleteHandler.cause().getMessage());
+        handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
+      }
+    });
+    return this;
   }
 }

@@ -113,12 +113,16 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
             String column = rs.getMetaData().getColumnName(i);
             jsonObject.put(column, rs.getObject(column));
           }
-          json.put(jsonObject);
+          if (jsonObject.length() > 0) {
+            json.put(jsonObject);
+          }
         }
-        RuleResult ruleResult = new RuleResult(json.toString(), rule.getValue().sinkExchangeKey,
-                rule.getValue().sinkRoutingKey);
-        collector.collect(ruleResult);
-        this.alertCounter.inc();
+        if (json.length() > 0) {
+          RuleResult ruleResult = new RuleResult(json.toString(), rule.getValue().sinkExchangeKey,
+                  rule.getValue().sinkRoutingKey);
+          collector.collect(ruleResult);
+          this.alertCounter.inc();
+        }
       } catch (Exception e) {
         logger.error("Error in executing query", e);
       }

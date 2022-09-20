@@ -27,6 +27,11 @@ public class Rule implements Serializable, AdaptorRecord {
     this.sinkRoutingKey = sinkRoutingKey;
   }
 
+  public Rule(Integer ruleId, RuleType type) {
+    this.ruleId = ruleId;
+    this.type = type;
+  }
+
   public Integer getRuleId() {
     return ruleId;
   }

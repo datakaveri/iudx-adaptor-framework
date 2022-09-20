@@ -443,6 +443,15 @@ public class Server extends AbstractVerticle {
                         .end(r.toString());
             });
 
+    router.get(ADAPTOR_RULE_ROUTE)
+            .produces(MIME_APPLICATION_JSON)
+            .handler(AuthHandler.create(databaseService))
+            .handler(this::getRulesByAdaptorHandler);
+
+    router.delete(ADAPTOR_RULE_DELETE_ROUTE)
+            .produces(MIME_APPLICATION_JSON)
+            .handler(AuthHandler.create(databaseService))
+            .handler(this::deleteRuleHandler);
 
     /* Start server */
     server.requestHandler(router).listen(port);
@@ -1018,22 +1027,13 @@ public class Server extends AbstractVerticle {
               });
             });
           }
-
-
-
           }
         else {
             LOGGER.error("Error: Job starting failed; " + getHandler.cause().getMessage());
         response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
           .setStatusCode(400)
           .end(getHandler.cause().getMessage());
-
       }});
-
-
-
-
-
   }
   
   /**
@@ -1436,5 +1436,75 @@ public class Server extends AbstractVerticle {
   }
 
 
+  private void getRulesByAdaptorHandler(RoutingContext routingContext) {
+    LOGGER.debug("Info: Getting rules for the adaptor");
 
+    HttpServerResponse response = routingContext.response();
+    String adaptorId = routingContext.pathParam(ID);
+    String username = routingContext.request().getHeader(USERNAME);
+
+    JsonObject requestBody = new JsonObject().put(USERNAME, username).put(ADAPTOR_ID, adaptorId);
+
+    databaseService.getRulesByAdaptor(requestBody, databaseHandler -> {
+      if(databaseHandler.succeeded()) {
+        LOGGER.info("Success: Get rules query by adaptor id");
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .end(databaseHandler.result().toString());
+      } else if (databaseHandler.failed()) {
+        LOGGER.error("Error: Get rules query by adaptor id failed; " + databaseHandler.cause());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(databaseHandler.cause().getMessage());
+      }
+    });
+  }
+
+
+  private void deleteRuleHandler(RoutingContext routingContext) {
+    LOGGER.debug("Deleting rule");
+    HttpServerResponse response = routingContext.response();
+    String username = routingContext.request().getHeader(USERNAME);
+
+    String adaptorId = routingContext.pathParam(ADAPTOR_ID);
+    String ruleId = routingContext.pathParam(RULE_ID);
+
+    JsonObject request = new JsonObject().put(USERNAME, username)
+            .put(ADAPTOR_ID, adaptorId);
+
+    LOGGER.debug(request.toString());
+
+    databaseService.getRuleSource(request, getHandler -> {
+      if(getHandler.succeeded()) {
+        JsonObject resp = getHandler.result().getJsonArray("adaptors").getJsonObject(0);
+        String ruleExchangeName = resp.getString("exchangeName");
+
+        Rule rule = new Rule(Integer.parseInt(ruleId), RuleType.DELETE);
+        Future<Void> fut = rmqClient.client.basicPublish(ruleExchangeName, "rules", Buffer.buffer(rule.toString()));
+        fut.onComplete(res2 -> {
+          JsonObject deleteRequest = new JsonObject().put(USERNAME, username)
+                  .put(ADAPTOR_ID, adaptorId).put(RULE_ID, ruleId);
+          databaseService.deleteRule(deleteRequest, handler -> {
+            if (handler.succeeded()) {
+              response.setStatusCode(202)
+                      .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .end(new JsonObject().put(ID, adaptorId)
+                              .put(STATUS, SUCCESS)
+                              .toString());
+
+            } else if (handler.failed()) {
+              LOGGER.error("Error: Delete rule failed; " + handler.cause());
+              response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                      .setStatusCode(400)
+                      .end(handler.cause().getMessage());
+            }
+          });
+        });
+      }
+      else {
+        LOGGER.error("Error: Job starting failed; " + getHandler.cause().getMessage());
+        response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                .setStatusCode(400)
+                .end(getHandler.cause().getMessage());
+      }});
+  }
 }

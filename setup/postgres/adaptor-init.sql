@@ -181,6 +181,7 @@ CREATE TABLE public.adaptor (
 	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
 	user_id serial NOT NULL,
 	jar_id varchar NULL,
+	adaptor_type varchar NOT NULL,
 	CONSTRAINT adaptor_adaptor_id_key UNIQUE (adaptor_id),
 	CONSTRAINT adaptor_pk PRIMARY KEY (id),
 	CONSTRAINT adaptor_fk2 FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE

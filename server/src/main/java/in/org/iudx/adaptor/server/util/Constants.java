@@ -78,6 +78,9 @@ public class Constants {
 
   public static final String ADAPTOR_ROUTE = "/adaptor";
   public static final String RULE_ROUTE = "/rule";
+  public static final String ADAPTOR_RULE_ROUTE = "/adaptor/:id/rules";
+
+  public static final String ADAPTOR_RULE_DELETE_ROUTE = "/adaptor/:adaptorId/rules/:ruleId";
   public static final String ADAPTOR_ROUTE_ID = ADAPTOR_ROUTE + "/:id";
   public static final String ADAPTOR_START_ROUTE = ADAPTOR_ROUTE +"/:id/start";
   public static final String ADAPTOR_STOP_ROUTE = ADAPTOR_ROUTE +"/:id/stop";
@@ -167,6 +170,7 @@ public class Constants {
   public static final String ADAPTOR_ETL = "ETL";
   public static final String SOURCE_ID = "sourceId";
   public static final String RULE_TYPE = "ruleType";
+  public static final String RULE_ID = "ruleId";
   public static final String JAR_ID = "jarId";
   public static final String JOB_ID = "jobId";
   public static final String COMPILING = "cg-compiling";
@@ -190,8 +194,9 @@ public class Constants {
   public static final String AUTHENTICATE_USER =
       "SELECT EXISTS ( SELECT * FROM public.\"user\" WHERE username = '$1' and password = '$2' and status = 'active')";
   public static final String CREATE_ADAPTOR =
-      "INSERT into adaptor(adaptor_id,\"data\",\"timestamp\",user_id) SELECT '$1', '$2'::json, now(), us.\"id\" from public.\"user\" us where username = '$3';"
-      + "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$4', now(),'$1')";
+      "INSERT into adaptor(adaptor_id,\"data\",\"timestamp\",user_id,adaptor_type) " +
+      "SELECT '$1', '$2'::json, now(), us.\"id\", '$5' from public.\"user\" us where username = '$3';" +
+      "INSERT into codegen_status(status, \"timestamp\", adaptor_id) values ('$4', now(),'$1')";
 
   public static final String CREATE_RULESOURCE =
       "INSERT into rulesource(adaptor_id,source_id,ruleexchange,rulequeue,\"timestamp\",user_id)" +
@@ -230,7 +235,7 @@ public class Constants {
 
   public static final String GET_ALL_ADAPTOR =
       "WITH get_user_adaptor AS (\n" +
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, ad.adaptor_type\n," +
       "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
       "    FROM adaptor AS ad\n" +
       "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
@@ -246,7 +251,7 @@ public class Constants {
 
   public static final String GET_ONE_ADAPTOR =
       "WITH get_user_adaptor AS (\n" +
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data,\n" +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, ad.adaptor_type\n," +
       "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
       "    FROM adaptor AS ad\n" +
       "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
@@ -262,14 +267,21 @@ public class Constants {
       "SELECT * FROM get_filter_job";
 
   /* TODO Better query */
-  public static final String GET_ALL_RULES = 
-    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username,us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1'";
+  public static final String GET_ALL_RULE_SOURCES =
+    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username," +
+    "us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1'";
 
-  public static final String GET_ONE_RULE_FROM_ADAPTORID = 
-    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username,us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1' and rs.adaptor_id = '$2'";
+  public static final String GET_RULE_SOURCE_FROM_ADAPTOR_ID =
+    "select rs.adaptor_id,rs.source_id,rs.ruleexchange,rs.rulequeue,rs.timestamp,us.username," +
+    "us.status from rulesource rs  inner join public.user us on rs.user_id = us.id where us.username = '$1' and rs.adaptor_id = '$2'";
 
+  public static final String GET_RULES_FROM_ADAPTOR_ID =
+    "select rule.id, rule.rule_name,rule.adaptor_id,rule.exchangename,rule.queuename,rule.timestamp," +
+    "rule.sqlquery,us.username,us.status from rules rule  inner join public.user us on\n" +
+    "rule.user_id = us.id where us.username = '$1' and rule.adaptor_id = '$2'";
 
-
+  public static final String DELETE_RULE = "DELETE FROM rules where adaptor_id = '$1'\n" +
+          "and id = '$2'";
   public static final String REGISTER_USER = "INSERT INTO public.user "
       + "(username, password, status,\"timestamp\") VALUES ('$1','$2','$3',now());";
 

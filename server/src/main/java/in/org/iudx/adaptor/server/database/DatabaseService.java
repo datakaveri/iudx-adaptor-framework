@@ -76,7 +76,13 @@ public interface DatabaseService {
 
   @Fluent
   DatabaseService getRuleSource(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
- 
+
+  @Fluent
+  DatabaseService getRulesByAdaptor(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
+  @Fluent
+  DatabaseService deleteRule(JsonObject request, Handler<AsyncResult<JsonObject>> handler);
+
   /**
    * Delete Adaptor from the the PostgreSQL database in CASCADE mode.
    * @param query
