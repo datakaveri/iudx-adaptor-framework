@@ -1487,7 +1487,7 @@ public class Server extends AbstractVerticle {
             if (handler.succeeded()) {
               response.setStatusCode(202)
                       .putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
-                      .end(new JsonObject().put(ID, adaptorId)
+                      .end(new JsonObject().put(RULE_ID, ruleId)
                               .put(STATUS, SUCCESS)
                               .toString());
 

@@ -507,7 +507,7 @@ public class DatabaseServiceImpl implements DatabaseService {
 
         handler.handle(
                 Future.succeededFuture(
-                        new JsonObject().put(STATUS, SUCCESS).put(ADAPTORS, response)));
+                        new JsonObject().put(STATUS, SUCCESS).put(ADAPTOR_RULE, response)));
       } else {
         LOGGER.error("Error: Database query failed; " + pgHandler.cause().getMessage());
         handler.handle(Future.failedFuture(new JsonObject().put(STATUS, FAILED).toString()));
