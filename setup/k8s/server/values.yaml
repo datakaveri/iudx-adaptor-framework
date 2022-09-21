@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: datakaveri/adaptor-server:1.13.4
+  repository: datakaveri/adaptor-server:latest
   pullPolicy: Always
 
 service:
