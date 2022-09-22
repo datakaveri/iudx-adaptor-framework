@@ -1,6 +1,6 @@
 {
     "name": "jsPathJob",
-
+    "adaptorType": "ETL",
     "inputSpec": {
         "type": "http",
         "url": "http://mockserver:8080/simpleB",
