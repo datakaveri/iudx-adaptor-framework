@@ -65,6 +65,24 @@ extraSecrets:
             "arguments":{
               "x-queue-type":"classic"
             }
+          },
+          { 
+            "name": "rule-result-test", 
+            "vhost": "/", 
+            "durable": true, 
+            "auto_delete": false, 
+            "arguments": { 
+              "x-queue-type": "classic" 
+            } 
+          },
+          { 
+            "name": "rules-test", 
+            "vhost": "/", 
+            "durable": true, 
+            "auto_delete": false, 
+            "arguments": { 
+              "x-queue-type": "classic" 
+            } 
           }
         ],
         "exchanges":[
@@ -75,9 +93,25 @@ extraSecrets:
             "durable":false,
             "auto_delete":false,
             "internal":false,
-            "arguments":{
-
-            }
+            "arguments":{}
+          },
+          { 
+            "name": "rule-result-test", 
+            "vhost": "/", 
+            "type": "direct", 
+            "durable": true, 
+            "auto_delete": false, 
+            "internal": false, 
+            "arguments": {} 
+          },
+          { 
+            "name": "rules-test", 
+            "vhost": "/", 
+            "type": "direct", 
+            "durable": true, 
+            "auto_delete": false, 
+            "internal": false, 
+            "arguments": {} 
           }
         ],
         "bindings":[
@@ -87,9 +121,23 @@ extraSecrets:
             "destination":"adaptor-test",
             "destination_type":"queue",
             "routing_key":"test",
-            "arguments":{
-
-            }
+            "arguments":{}
+          },
+          { 
+            "source": "rule-result-test", 
+            "vhost": "/", 
+            "destination": "rule-result-test", 
+            "destination_type": "queue", 
+            "routing_key": "rule-result-test", 
+            "arguments": {} 
+          },
+          { 
+            "source": "rules-test", 
+            "vhost": "/", 
+            "destination": "rules-test", 
+            "destination_type": "queue", 
+            "routing_key": "test", 
+            "arguments": {} 
           }
         ]
       }
