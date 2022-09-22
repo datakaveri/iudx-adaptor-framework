@@ -21,7 +21,7 @@ data:
           "adminAuth": {
             "username": "admin",
             "password": "admin"
-          }
+          },
           "rmqHost": "rmq-rabbitmq",
           "rmqMgmtPort": 15672,
           "rmqPort": 5672,
