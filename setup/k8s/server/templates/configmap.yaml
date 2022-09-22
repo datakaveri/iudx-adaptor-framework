@@ -22,6 +22,12 @@ data:
             "username": "admin",
             "password": "admin"
           }
+          "rmqHost": "rmq-rabbitmq",
+          "rmqMgmtPort": 15672,
+          "rmqPort": 5672,
+          "rmqVhost": "%2F",
+          "rmqUsername": "guest",
+          "rmqPassword": "guest"
         },
         {
           "id": "in.org.iudx.adaptor.server.flink.FlinkClientVerticle",
