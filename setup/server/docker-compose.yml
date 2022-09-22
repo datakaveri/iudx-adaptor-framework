@@ -6,7 +6,7 @@ networks:
 
 services:
   server:
-    image: datakaveri/adaptor-server:2.3.3
+    image: datakaveri/adaptor-server:latest
     ports:
       - "8080:8080"
     networks: 

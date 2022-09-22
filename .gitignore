@@ -212,3 +212,4 @@ demo/vad_amb.json
 template/template.iml
 test/benchmarks/http-client-latency-test/http-client-latency-test.iml
 test/rocks-db-calcite/broadcast-stream-table-api.iml
+demo/surat-rule-job.json
