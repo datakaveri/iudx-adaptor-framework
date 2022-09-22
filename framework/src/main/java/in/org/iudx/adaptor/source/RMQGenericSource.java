@@ -26,7 +26,7 @@ public class RMQGenericSource<T> extends RMQSource<T> {
 
   public RMQGenericSource(RMQConfig rmqConfig, TypeInformation typeInformation,
                           String appName, String parseSpec) {
-    super(rmqConfig.build(), rmqConfig.getQueueName(),
+    super(rmqConfig.build(), rmqConfig.getQueueName(), false,
             new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, parseSpec));
     this.rmqConfig = rmqConfig;
   }
@@ -34,6 +34,10 @@ public class RMQGenericSource<T> extends RMQSource<T> {
   @Override
   public void open(Configuration config) throws Exception {
     super.open(config);
+  }
+
+  @Override
+  protected void setupQueue() {
   }
 
 }
