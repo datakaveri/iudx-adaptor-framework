@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FLINK_VERSION=1.15.1
+FLINK_VERSION=1.15.2
 SCALA_VERSION=2.12
 
 wget https://dlcdn.apache.org/flink/flink-${FLINK_VERSION}/flink-${FLINK_VERSION}-bin-scala_${SCALA_VERSION}.tgz -O flink.tgz
