@@ -7,8 +7,8 @@ spec = {"inputSpec": {"type": "http", "url": "http://127.0.0.1:8888/simpleA", "r
 url = "http://localhost:8080/onboard/run-input-spec"
 
 headers = {
-  'username': 'user',
-  'password': 'user-password',
+  'username': 'testuser',
+  'password': 'testuserpassword',
   'Content-Type': 'application/json'
 }
 

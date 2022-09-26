@@ -55,6 +55,7 @@ public class Server extends AbstractVerticle {
   private boolean isSsl;
   private int port;
   private Validator validator;
+  private Validator onboardingValidator;
   private JobScheduler jobScheduler;
   private CodegenInitService codegenInit;
   private JsonObject authCred;
@@ -282,7 +283,7 @@ public class Server extends AbstractVerticle {
             .produces(MIME_APPLICATION_JSON)
             .handler(AuthHandler.create(databaseService))
             .handler(routingContext -> {
-              createAdaptorHandler(routingContext);
+                createAdaptorHandler(routingContext);
             });
 
 
@@ -803,6 +804,28 @@ public class Server extends AbstractVerticle {
     String adaptorType = jsonBody.getString(ADAPTOR_TYPE, ADAPTOR_DEFAULT);
     JsonObject request = new JsonObject();
     String adaptorId = username + "_" + fileName;
+
+    if(adaptorType.equals(ADAPTOR_ETL)) {
+        try {
+            onboardingValidator = new Validator("/onboardingETLSchema.json");
+        } catch (Exception e) {
+            LOGGER.error("Error: Exception caught");
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(new JsonObject().put(STATUS, DUPLICATE_ADAPTOR).toString());
+        }
+
+        if(!onboardingValidator.validate(jsonBody.encode())) {
+            LOGGER.error("Error: Invalid Onboarding ETL Schema");
+            response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
+                    .setStatusCode(400)
+                    .end(new JsonObject().put(STATUS, DUPLICATE_ADAPTOR).toString());
+            return;
+        } else {
+            LOGGER.debug("Valid Onboarding ETL Schema");
+        }
+    }
+
 
     FileSystem fileSystem = vertx.fileSystem();
     request.put(ADAPTOR_ID, adaptorId).put(USERNAME, username)

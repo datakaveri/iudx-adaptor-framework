@@ -1,35 +1,34 @@
 {
-    "name": "jsJob2",
-    "adaptorType": "ETL",
-    "inputSpec": {
-        "type": "http",
-        "url": "http://mockserver:8080/simpleB",
-        "requestType": "GET",
-        "pollingInterval": 1000
-    },
+	"name": "jsJob2",
+	"adaptorType": "ETL",
+	"inputSpec": {
+		"type": "http",
+		"url": "http://mockserver:8080/simpleB",
+		"requestType": "GET",
+		"pollingInterval": 1000
+	},
 
-    "parseSpec": {
-        "type": "json",
-        "messageContainer": "array",
-        "containerPath": "$.data",
-        "keyPath": "$.deviceId",
-        "timestampPath": "$.time"
-    },
-    
-    "deduplicationSpec": {
-        "type": "timeBased"
-    },
-    
-    "transformSpec": {
-        "type": "js",
-        "script": "function main(obj) { var out = {}; var inp = JSON.parse(obj); out[\"id\"] = \"datakaveri.org/a/b\" + inp[\"id\"]; out[\"k1\"] = inp[\"k1\"]; out[\"observationDateTime\"] = inp[\"time\"]; return JSON.stringify(out); }"
-    },
+	"parseSpec": {
+		"type": "json",
+		"messageContainer": "array",
+		"containerPath": "$.data",
+		"keyPath": "$.deviceId",
+		"timestampPath": "$.time"
+	},
 
-    "publishSpec": {
-        "type": "rmq",
-        "uri": "amqp://guest:guest@rmq:5672",
-        "sinkName": "adaptor-test",
-        "tagName": "jsJob"
-    }
+	"deduplicationSpec": {
+		"type": "timeBased"
+	},
+
+	"transformSpec": {
+		"type": "js",
+		"script": "function main(obj) { var out = {}; var inp = JSON.parse(obj); out[\"id\"] = \"datakaveri.org/a/b\" + inp[\"id\"]; out[\"k1\"] = inp[\"k1\"]; out[\"observationDateTime\"] = inp[\"time\"]; return JSON.stringify(out); }"
+	},
+
+	"publishSpec": {
+		"type": "rmq",
+		"uri": "amqp://guest:guest@rmq:5672",
+		"sinkName": "adaptor-test",
+		"tagName": "jsJob"
+	}
 }
-
