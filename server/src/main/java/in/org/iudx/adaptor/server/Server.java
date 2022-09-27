@@ -55,7 +55,8 @@ public class Server extends AbstractVerticle {
   private boolean isSsl;
   private int port;
   private Validator validator;
-  private Validator onboardingValidator;
+  private Validator etlOnboardingValidator;
+  private Validator rulesOnboardingValidator;
   private JobScheduler jobScheduler;
   private CodegenInitService codegenInit;
   private JsonObject authCred;
@@ -807,7 +808,7 @@ public class Server extends AbstractVerticle {
 
     if(adaptorType.equals(ADAPTOR_ETL)) {
         try {
-            onboardingValidator = new Validator("onboardingETLSchema.json");
+            etlOnboardingValidator = new Validator("onboardingETLSchema.json");
         } catch (Exception e) {
             LOGGER.error("Error: ETL Onboarding Schema file exception");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -815,7 +816,7 @@ public class Server extends AbstractVerticle {
                     .end(new JsonObject().put(STATUS, DUPLICATE_ADAPTOR).toString());
         }
 
-        if(!onboardingValidator.validate(jsonBody.encode())) {
+        if(!etlOnboardingValidator.validate(jsonBody.encode())) {
             LOGGER.error("Error: Invalid Onboarding ETL Schema");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                     .setStatusCode(400)
@@ -824,9 +825,11 @@ public class Server extends AbstractVerticle {
         } else {
             LOGGER.debug("Info: Valid Onboarding ETL Schema");
         }
-    } else if(adaptorType.equals(ADAPTOR_RULE)) {
+    }
+
+    if(adaptorType.equals(ADAPTOR_RULE)) {
       try {
-          onboardingValidator = new Validator("onboardingRulesSchema.json");
+          rulesOnboardingValidator = new Validator("onboardingRulesSchema.json");
       } catch (Exception e) {
             LOGGER.error("Error: Rules Onboarding Schema file exception");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -834,7 +837,7 @@ public class Server extends AbstractVerticle {
                     .end(new JsonObject().put(STATUS, DUPLICATE_ADAPTOR).toString());
       }
 
-      if(!onboardingValidator.validate(jsonBody.encode())) {
+      if(!rulesOnboardingValidator.validate(jsonBody.encode())) {
             LOGGER.error("Error: Invalid Onboarding ETL Schema");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
                     .setStatusCode(400)
