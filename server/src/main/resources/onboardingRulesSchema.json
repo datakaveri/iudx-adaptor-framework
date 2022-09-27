@@ -1,0 +1,136 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#", 
+    "type": "object",
+    "additionalProperties": false,
+	"required": [
+		"name",
+		"adaptorType",
+		"inputSpec",
+		"publishSpec"
+	],
+	"properties": {
+		"name": {
+            "title": "Name", 
+			"type": "string",
+			"default": ""
+        },
+		"adaptorType": {
+            "title": "Adaptor Type", 
+			"type": "string",
+            "pattern": "^.*$"
+		},
+		"inputSpec": {
+            "title": "Input Spec", 
+			"type": "object",
+			"required": [
+				"type",
+				"uri",
+				"queueName",
+				"sourceId",
+				"parseSpec"
+			],
+			"properties": {
+				"type": {
+                    "title": "Type", 
+					"type": "string"
+                },
+				"uri": {
+                    "title": "Uri", 
+					"type": "string",
+					"default": ""
+                },
+				"queueName": {
+                    "title": "Queue Name", 
+					"type": "string",
+					"default": ""
+                },
+				"sourceId": {
+                    "title": "Source ID", 
+					"type": "string"
+                },
+				"parseSpec": {
+                    "title": "Parse Spec", 
+					"type": "object",
+					"required": [
+						"type",
+						"messageContainer",
+						"timestampPath",
+						"staticKey"
+					],
+					"properties": {
+						"type": {
+                            "title": "Type", 
+							"type": "string",
+							"default": ""
+						},
+						"messageContainer": {
+                          "title": "Message Container", 
+							"type": "string"
+						},
+						"timestampPath": {
+                            "title": "Timestamp Path", 
+							"type": "string"
+                        },
+						"staticKey": {
+                            "title": "Static Key", 
+							"type": "string"
+						}
+					}
+				}
+			}
+		},
+        "failureRecoverySpec": {
+            "title": "Failure Recovery Spec",
+            "type": "object",
+            "optional": true,
+            "properties": {
+              "type": {
+                "title": "Type",
+                "type": "string",
+                "optional": true
+              },
+              "initialBackoff": {
+                "title": "Initial Backoff",
+                "type": "integer"
+              },
+              "maxBackOff": {
+                "title": "Max Backoff",
+                "type": "integer"
+              },
+              "backoffMultiplier": {
+                "title": "Backoff Multiplier",
+                "type": "integer"
+              },
+              "resetBackpffThreshold": {
+                "title": "Reset Backoff Threshold",
+                "type": "integer"
+              },
+              "jitterFactor": {
+                "title": "Jitter Factor",
+                "type": "integer" 
+              }
+            }
+        },
+		"publishSpec": {
+            "title": "Publish Spec", 
+			"type": "object",
+			"required": [
+				"type",
+				"uri"
+			],
+			"properties": {
+				"type": {
+                    "title": "Type", 
+					"type": "string",
+					"default": ""
+                },
+				"uri": {
+                    "title": "Uri", 
+					"type": "string",
+					"default": ""
+                }
+			}
+		}
+	}
+}
+

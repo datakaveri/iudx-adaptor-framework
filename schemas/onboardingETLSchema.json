@@ -1,0 +1,189 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "adaptorType",
+    "inputSpec",
+    "parseSpec",
+    "deduplicationSpec",
+    "transformSpec",
+    "publishSpec"
+  ],
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "adaptorType": {
+      "title": "Adaptor Type",
+      "type": "string"
+    },
+    "schedulePattern": {
+      "title": "Schedule Pattern",
+      "type": "string",
+      "optional": true
+    },
+    "inputSpec": {
+      "title": "Input Spec",
+      "type": "object",
+      "required": [
+        "type",
+        "url",
+        "requestType",
+        "pollingInterval"
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "requestType": {
+          "title": "Request Type",
+          "type": "string"
+        },
+        "pollingInterval": {
+          "title": "Polling Interval",
+          "type": "integer"
+        },
+        "minioConfig": {
+          "title": "Minio Config",
+          "type": "object",
+          "optional": true,
+          "required": [
+            "url",
+            "bucket",
+            "stateName",
+            "accessKey",
+            "secretKey"
+          ],
+          "properties": {
+            "url": {
+              "title": "URL",
+              "type": "string"
+            },
+            "bucket": {
+              "title": "Bucket",
+              "type": "string"
+            },
+            "stateName": {
+              "title": "State Name",
+              "type": "string"
+            },
+            "accessKey": {
+              "title": "Access Key",
+              "type": "string"
+            },
+            "secretKey": {
+              "title": "Secret Key",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ,
+    "parseSpec": {
+      "title": "Parse Spec",
+      "type": "object",
+      "required": [
+        "type",
+        "messageContainer",
+        "containerPath",
+        "keyPath",
+        "timestampPath"
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "messageContainer": {
+          "title": "Message Container",
+          "type": "string"
+        },
+        "containerPath": {
+          "title": "Container Path",
+          "type": "string"
+        },
+        "keyPath": {
+          "title": "Key Path",
+          "type": "string"
+        },
+        "timestampPath": {
+          "title": "Timestamp Path",
+          "type": "string"
+        }
+      }
+    }
+  ,
+    "deduplicationSpec": {
+      "title": "Deduplication Spec",
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      }
+    }
+  ,
+    "transformSpec": {
+      "title": "Transform Spec",
+      "type": "object",
+      "required": [
+        "type",
+        "script"
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "script": {
+          "title": "Script",
+          "type": "string"
+        }
+      }
+    }
+  ,
+    "publishSpec": {
+      "title": "Publish Spec",
+      "type": "object",
+      "required": [
+        "type",
+        "uri",
+        "sinkName",
+        "tagName"
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        },
+        "sinkName": {
+          "title": "Sink Name",
+          "type": "string"
+        },
+        "tagName": {
+          "title": "Tag Name",
+          "type": "string"
+        }
+      }
+    }
+
+  }
+}
+

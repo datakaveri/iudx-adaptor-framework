@@ -1,0 +1,65 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/object1664262976.json",
+  "title": "Root",
+  "type": "object",
+  "required": [
+    "inputSpec"
+  ],
+  "properties": {
+    "inputSpec": {
+      "$id": "#root/inputSpec",
+      "title": "Inputspec",
+      "type": "object",
+      "required": [
+        "type",
+        "url",
+        "requestType",
+        "pollingInterval"
+      ],
+      "properties": {
+        "type": {
+          "$id": "#root/inputSpec/type",
+          "title": "Type",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "http"
+          ],
+          "pattern": "^.*$"
+        },
+        "url": {
+          "$id": "#root/inputSpec/url",
+          "title": "Url",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "http://127.0.0.1:8888/simpleA"
+          ],
+          "pattern": "^.*$"
+        },
+        "requestType": {
+          "$id": "#root/inputSpec/requestType",
+          "title": "Requesttype",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "GET"
+          ],
+          "pattern": "^.*$"
+        },
+        "pollingInterval": {
+          "$id": "#root/inputSpec/pollingInterval",
+          "title": "Pollinginterval",
+          "type": "integer",
+          "examples": [
+            1000
+          ],
+          "default": 0
+        }
+      }
+    }
+
+  }
+}

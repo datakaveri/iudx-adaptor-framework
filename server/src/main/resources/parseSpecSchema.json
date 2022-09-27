@@ -1,0 +1,160 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/object1664262783.json",
+  "title": "Root",
+  "type": "object",
+  "required": [
+    "parseSpec",
+    "inputData"
+  ],
+  "properties": {
+    "parseSpec": {
+      "$id": "#root/parseSpec",
+      "title": "Parsespec",
+      "type": "object",
+      "required": [
+        "timestampPath",
+        "messageContainer",
+        "keyPath",
+        "containerPath",
+        "inputTimeFormat",
+        "outputTimeFormat"
+      ],
+      "properties": {
+        "timestampPath": {
+          "$id": "#root/parseSpec/timestampPath",
+          "title": "Timestamppath",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "$.time"
+          ],
+          "pattern": "^.*$"
+        },
+        "messageContainer": {
+          "$id": "#root/parseSpec/messageContainer",
+          "title": "Messagecontainer",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "array"
+          ],
+          "pattern": "^.*$"
+        },
+        "keyPath": {
+          "$id": "#root/parseSpec/keyPath",
+          "title": "Keypath",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "$.deviceId"
+          ],
+          "pattern": "^.*$"
+        },
+        "containerPath": {
+          "$id": "#root/parseSpec/containerPath",
+          "title": "Containerpath",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "$.data"
+          ],
+          "pattern": "^.*$"
+        },
+        "inputTimeFormat": {
+          "$id": "#root/parseSpec/inputTimeFormat",
+          "title": "Inputtimeformat",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "yyyy-MM-dd'T'HH:mm:ssXXX"
+          ],
+          "pattern": "^.*$"
+        },
+        "outputTimeFormat": {
+          "$id": "#root/parseSpec/outputTimeFormat",
+          "title": "Outputtimeformat",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "yyyy-MM-dd'T'HH:mm:ssXXX"
+          ],
+          "pattern": "^.*$"
+        }
+      }
+    }
+  ,
+    "inputData": {
+      "$id": "#root/inputData",
+      "title": "Inputdata",
+      "type": "object",
+      "required": [
+        "outerkey",
+        "data"
+      ],
+      "properties": {
+        "outerkey": {
+          "$id": "#root/inputData/outerkey",
+          "title": "Outerkey",
+          "type": "string",
+          "default": "",
+          "examples": [
+            "outerkeyval"
+          ],
+          "pattern": "^.*$"
+        },
+        "data": {
+          "$id": "#root/inputData/data",
+          "title": "Data",
+          "type": "array",
+          "default": [],
+          "items":{
+            "$id": "#root/inputData/data/items",
+            "title": "Items",
+            "type": "object",
+            "required": [
+              "time",
+              "k1",
+              "deviceId"
+            ],
+            "properties": {
+              "time": {
+                "$id": "#root/inputData/data/items/time",
+                "title": "Time",
+                "type": "string",
+                "default": "",
+                "examples": [
+                  "20220602 14:29:10Z"
+                ],
+                "pattern": "^.*$"
+              },
+              "k1": {
+                "$id": "#root/inputData/data/items/k1",
+                "title": "K1",
+                "type": "string",
+                "default": "",
+                "examples": [
+                  "701"
+                ],
+                "pattern": "^.*$"
+              },
+              "deviceId": {
+                "$id": "#root/inputData/data/items/deviceId",
+                "title": "Deviceid",
+                "type": "string",
+                "default": "",
+                "examples": [
+                  "abc-123"
+                ],
+                "pattern": "^.*$"
+              }
+            }
+          }
+
+        }
+      }
+    }
+
+  }
+}

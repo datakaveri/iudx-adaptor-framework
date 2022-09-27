@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "required": [
+    "transformSpec",
+    "inputData"
+  ],
+  "properties": {
+    "transformSpec": {
+      "title": "Transform Spec",
+      "type": "object",
+      "required": [
+        "type",
+      ],
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+          },
+        "template": {
+          "title": "Template",
+          "type": "string",
+          "optional": true
+        },
+        "jsonPathSpec": {
+          "title": "JSON Path Spec",
+          "type": "array",
+          "optional": true,
+          "items":{
+            "title": "Items",
+            "type": "object",
+            "required": [
+              "outputKeyPath",
+              "inputValuePath"
+            ],
+            "properties": {
+              "outputKeyPath": {
+                "title": "Output Key Path",
+                "type": "string"
+              },
+              "inputValuePath": {
+                "title": "Input Value Path",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  ,
+    "inputData": {
+      "title": "Input Data",
+      "type": "object",
+      "required": [
+        "deviceId",
+        "k1",
+        "time"
+      ],
+      "properties": {
+        "deviceId": {
+          "title": "Device ID",
+          "type": "string"
+        },
+        "k1": {
+          "title": "K1",
+          "type": "string"
+        },
+        "time": {
+          "title": "Time",
+          "type": "string"        }
+      }
+    }
+  }
+}
