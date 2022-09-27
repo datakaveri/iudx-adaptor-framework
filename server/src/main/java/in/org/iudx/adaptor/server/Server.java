@@ -57,6 +57,9 @@ public class Server extends AbstractVerticle {
   private Validator validator;
   private Validator etlOnboardingValidator;
   private Validator rulesOnboardingValidator;
+  private Validator inputSpecValidator;
+  private Validator parseSpecValidator;
+  private Validator transformSpecValidator;
   private JobScheduler jobScheduler;
   private CodegenInitService codegenInit;
   private JsonObject authCred;
@@ -389,13 +392,36 @@ public class Server extends AbstractVerticle {
             .handler(routingContext -> {
               HttpServerResponse response = routingContext.response();
               JsonObject jsonBody = routingContext.getBodyAsJson();
-              String resp = ise.run(jsonBody.getJsonObject("inputSpec"));
-              JsonObject r = new JsonObject().put("result", resp)
+              LOGGER.debug(jsonBody);
+
+              try {
+                inputSpecValidator = new Validator("/inputSpecSchema.json");
+                
+                if(inputSpecValidator.validate(jsonBody.encode())) {
+                  LOGGER.debug("Info: Valid Input Spec Input");
+                  
+                  String resp = ise.run(jsonBody.getJsonObject("inputSpec"));
+
+                  JsonObject r = new JsonObject().put("result", resp)
                       .put("success", true)
                       .put("message", "Executed successfully");
-              response.setStatusCode(200)
+                
+                  response.setStatusCode(200)
                       .end(r.toString());
-            });
+
+                } else {
+                  LOGGER.error("Info: Invalid Input Spec Input");
+                  response.setStatusCode(401)
+                      .end("Invalid Input Spec Input");
+             
+                }
+                
+              } catch(Exception e) {
+                LOGGER.error("Error: Exception handled!");
+                response.setStatusCode(401)
+                      .end(e.toString());
+              }
+           });
 
     router.post(PARSE_SPEC_ROUTE)
             .handler(AuthHandler.create(databaseService))
@@ -403,14 +429,33 @@ public class Server extends AbstractVerticle {
               HttpServerResponse response = routingContext.response();
               JsonObject jsonBody = routingContext.getBodyAsJson();
               LOGGER.debug(jsonBody);
-              JsonObject parsespec = jsonBody.getJsonObject("parseSpec");
-              String inputData = jsonBody.getString("inputData");
-              String resp = pse.run(inputData, parsespec);
-              JsonObject r = new JsonObject().put("result", resp)
+             
+              try {
+                parseSpecValidator = new Validator("/parseSpecSchema.json");
+
+                
+                if(parseSpecValidator.validate(jsonBody.encode())) {
+                  LOGGER.debug("Info: Valid Parse Spec Input");
+                 
+                  JsonObject parsespec = jsonBody.getJsonObject("parseSpec");
+                  String inputData = jsonBody.getString("inputData");
+                  String resp = pse.run(inputData, parsespec);
+                  JsonObject r = new JsonObject().put("result", resp)
                       .put("success", true)
                       .put("message", "Executed successfully");
-              response.setStatusCode(200)
-                      .end(r.toString());
+                  response.setStatusCode(200)
+                      .end(r.toString()); 
+                } else {
+                  LOGGER.error("Info: Invalid Parse Spec Input");
+                  response.setStatusCode(401)
+                      .end("Invalid Parse Spec Input");
+             
+                } 
+              } catch(Exception e) {
+                LOGGER.error("Error: Exception handled!");
+                response.setStatusCode(401)
+                      .end(e.toString());
+              } 
             });
 
     router.post(TRANSFORM_SPEC_ROUTE)
@@ -419,15 +464,33 @@ public class Server extends AbstractVerticle {
               HttpServerResponse response = routingContext.response();
               JsonObject jsonBody = routingContext.getBodyAsJson();
               LOGGER.debug(jsonBody);
-              JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
-              String inputData = jsonBody.getString("inputData");
-              TransformSpecEndpoint tse = new TransformSpecEndpoint(transformSpec);
-              String resp = tse.run(inputData);
-              JsonObject r = new JsonObject().put("success", true)
+
+              try {
+                transformSpecValidator = new Validator("/transformSpecSchema.json");
+                
+                if(transformSpecValidator.validate(jsonBody.encode())) {
+                  LOGGER.debug("Info: Valid Transform Spec Input");
+                  
+                  JsonObject transformSpec = jsonBody.getJsonObject("transformSpec");
+                  String inputData = jsonBody.getString("inputData");
+                  TransformSpecEndpoint tse = new TransformSpecEndpoint(transformSpec);
+                  String resp = tse.run(inputData);
+                  JsonObject r = new JsonObject().put("success", true)
                       .put("message", "Successfully executed transform spec")
                       .put("result", resp);
-              response.setStatusCode(200)
+                  response.setStatusCode(200)
                       .end(r.toString());
+                } else {
+                  LOGGER.error("Info: Invalid Transform Spec Input");
+                  response.setStatusCode(401)
+                      .end("Invalid Transform Spec Input");
+             
+                } 
+              } catch(Exception e) {
+                LOGGER.error("Error: Exception handled!");
+                response.setStatusCode(401)
+                      .end(e.toString());
+              }
             });
 
     router.get(ADAPTOR_RULE_ROUTE)
@@ -808,7 +871,7 @@ public class Server extends AbstractVerticle {
 
     if(adaptorType.equals(ADAPTOR_ETL)) {
         try {
-            etlOnboardingValidator = new Validator("onboardingETLSchema.json");
+            etlOnboardingValidator = new Validator("/onboardingETLSchema.json");
         } catch (Exception e) {
             LOGGER.error("Error: ETL Onboarding Schema file exception");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)
@@ -829,7 +892,7 @@ public class Server extends AbstractVerticle {
 
     if(adaptorType.equals(ADAPTOR_RULE)) {
       try {
-          rulesOnboardingValidator = new Validator("onboardingRulesSchema.json");
+          rulesOnboardingValidator = new Validator("/onboardingRulesSchema.json");
       } catch (Exception e) {
             LOGGER.error("Error: Rules Onboarding Schema file exception");
             response.putHeader(HEADER_CONTENT_TYPE, MIME_APPLICATION_JSON)

@@ -16,8 +16,8 @@ req = {"parseSpec": parsespec, "inputData": json.dumps(data)}
 url = "http://localhost:8080/onboard/run-parse-spec"
 
 headers = {
-  'username': 'user',
-  'password': 'user-password',
+  'username': 'testuser',
+  'password': 'testuserpassword',
   'Content-Type': 'application/json'
 }
 

@@ -24,16 +24,16 @@ transformSpec = {
 				"inputValuePath": "$.deviceId",
 				"valueModifierScript": "value.split('-')[0]"
 			}
-		]    
-    }
+		]
+}
 
 req = {"transformSpec": transformSpec, "inputData": json.dumps(data)}
 
 url = "http://localhost:8080/onboard/run-transform-spec"
 
 headers = {
-  'username': 'user',
-  'password': 'user-password',
+  'username': 'testuser',
+  'password': 'testuserpassword',
   'Content-Type': 'application/json'
 }
 

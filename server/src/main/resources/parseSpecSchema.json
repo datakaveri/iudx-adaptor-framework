@@ -1,8 +1,5 @@
 {
-  "definitions": {},
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://example.com/object1664262783.json",
-  "title": "Root",
   "type": "object",
   "required": [
     "parseSpec",
@@ -10,8 +7,7 @@
   ],
   "properties": {
     "parseSpec": {
-      "$id": "#root/parseSpec",
-      "title": "Parsespec",
+      "title": "Parse Spec",
       "type": "object",
       "required": [
         "timestampPath",
@@ -23,70 +19,33 @@
       ],
       "properties": {
         "timestampPath": {
-          "$id": "#root/parseSpec/timestampPath",
-          "title": "Timestamppath",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "$.time"
-          ],
-          "pattern": "^.*$"
+          "title": "Timestamp Path",
+          "type": "string"
         },
         "messageContainer": {
-          "$id": "#root/parseSpec/messageContainer",
-          "title": "Messagecontainer",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "array"
-          ],
-          "pattern": "^.*$"
+          "title": "Message Container",
+          "type": "string"
         },
         "keyPath": {
-          "$id": "#root/parseSpec/keyPath",
-          "title": "Keypath",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "$.deviceId"
-          ],
-          "pattern": "^.*$"
+          "title": "Key Path",
+          "type": "string"
         },
         "containerPath": {
-          "$id": "#root/parseSpec/containerPath",
-          "title": "Containerpath",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "$.data"
-          ],
-          "pattern": "^.*$"
+          "title": "Container Path",
+          "type": "string"
         },
         "inputTimeFormat": {
-          "$id": "#root/parseSpec/inputTimeFormat",
-          "title": "Inputtimeformat",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "yyyy-MM-dd'T'HH:mm:ssXXX"
-          ],
-          "pattern": "^.*$"
+          "title": "Input Time Format",
+          "type": "string"
         },
         "outputTimeFormat": {
-          "$id": "#root/parseSpec/outputTimeFormat",
-          "title": "Outputtimeformat",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "yyyy-MM-dd'T'HH:mm:ssXXX"
-          ],
-          "pattern": "^.*$"
+          "title": "Output Time Format",
+          "type": "string"
         }
       }
     }
   ,
     "inputData": {
-      "$id": "#root/inputData",
       "title": "Inputdata",
       "type": "object",
       "required": [
@@ -95,22 +54,13 @@
       ],
       "properties": {
         "outerkey": {
-          "$id": "#root/inputData/outerkey",
-          "title": "Outerkey",
-          "type": "string",
-          "default": "",
-          "examples": [
-            "outerkeyval"
-          ],
-          "pattern": "^.*$"
+          "title": "Outer Key",
+          "type": "string"
         },
         "data": {
-          "$id": "#root/inputData/data",
           "title": "Data",
           "type": "array",
-          "default": [],
           "items":{
-            "$id": "#root/inputData/data/items",
             "title": "Items",
             "type": "object",
             "required": [
@@ -120,41 +70,21 @@
             ],
             "properties": {
               "time": {
-                "$id": "#root/inputData/data/items/time",
                 "title": "Time",
-                "type": "string",
-                "default": "",
-                "examples": [
-                  "20220602 14:29:10Z"
-                ],
-                "pattern": "^.*$"
+                "type": "string"
               },
               "k1": {
-                "$id": "#root/inputData/data/items/k1",
                 "title": "K1",
-                "type": "string",
-                "default": "",
-                "examples": [
-                  "701"
-                ],
-                "pattern": "^.*$"
+                "type": "string"
               },
               "deviceId": {
-                "$id": "#root/inputData/data/items/deviceId",
-                "title": "Deviceid",
-                "type": "string",
-                "default": "",
-                "examples": [
-                  "abc-123"
-                ],
-                "pattern": "^.*$"
+                "title": "Device ID",
+                "type": "string"
               }
             }
           }
-
         }
       }
     }
-
   }
 }
