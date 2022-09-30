@@ -1,27 +1,19 @@
 # IUDX Adaptor Framework
 
-A generic and pluggable data ingestion utility based on [Apache Flink](https://github.com/apache/flink).
+A generic and pluggable data ingress/egress utility supporting ETL and Rules Engine operations 
+based on [Apache Flink](https://github.com/apache/flink).
 
-## Motivation
-- Data exchanges are required to produce data in a standard format
-- Downstream datasources are diverse in terms of protocol (http, grpc, etc) and data serialization formats (json, xml, protobuf, etc)
-- Most of the downstream datasources can be modeled into fixed categories in the context of ingesting and parsing their data
-- Maintaining different scripts to ingest data is both inefficient and hard to maintain 
- 
- 
-
-The above necessitates the need for a tool which:
 - Ingests data from diverse sources, protocols and serialization formats
-- Ensures data deduplication and late message rejections to give out a stream of novel data
-- Transforms the data format into the formats required by the exchange
-- Publishes the transformed data into the exchange with flexibility in choosing the sink
+- Supports data-deduplication, watermarking, event timers and windowing
+- Pluggable sources and sinks for different modes of operations
+- Scriptable (JS) data transformations
+- Streaming SQL support for Rules Engine like applications
 - Supports a configuration file based specification and operation of the entire pipeline
+
 
 
 ## Overview
 The figure below shows an overview of the framework. 
-Note: Some features are work in progress.
-
 
 <p align="center">
 <img src="./docs/diagrams/Overview.png">
@@ -32,21 +24,22 @@ Note: Some features are work in progress.
 - Based on [Apache Flink](https://github.com/apache/flink)
 - Configuration file based specification of the pipeline
 - Pluggable for extending capabilities
-- [JSON Path](https://github.com/json-path/JsonPath) based parsing and key extraction for watermarking
+- [Calcite](https://calcite.apache.org/) based SQL engine acting as a rules engine
+- [RocksDB](http://rocksdb.org/) based streaming data storage for SQL queries
+- [Nashorn](https://github.com/openjdk/nashorn) based JS Scripting for data transformation
+- [JSON Path](https://github.com/json-path/JsonPath) based key-value access
 - [Jolt](https://github.com/bazaarvoice/jolt) based Json-Json transformation
 - [Quartz](http://www.quartz-scheduler.org/) based job scheduling
 - [Vert x](https://vertx.io/) based Api server with config based pipeline JAR generation, user and adaptor job management and monitoring
 - Docker development and deployment
 
 
-## Implementation
-The figure below shows an overview of the implementation of the framework and components involved.
+## Rules Engine
+In addition to stream ETL, the framework can also be used in a rules engine mode.
+We allow users to pass dynamic runtime SQL queries whcih can be run on buffered streaming data.
 <p align="center">
-<img src="./docs/diagrams/Components.png">
+<img src="./docs/diagrams/RulesArch.png">
 </p>
-
-The Generic layer is the standard Flink based pipeline which all adaptors are comprised off. The generic layer assumes the implementation of the interfaces which constitute the activity of the particular block. Further, the framework provides standard implementations of the interfaces for specification file based code-generation purposes.
-It maybe possible for a developer to pass their own implementation of the interfaces to obtain more control over the components of the pipeline in the Process stage (WIP).
 
 
 ## Usage
@@ -65,7 +58,7 @@ The framework provides Apis to manage the lifecycle of the adaptor pipeline and 
 Assuming the administrator of the framework has already provided the user with authentication credentials, 
 the Api of relevance to get started with are 
 
-1. **newAdaptor**: Submit the above pipeline spec and create a new adaptor 
+1. **newAdaptor**: Submit the above pipeline spec and create a new adaptor. This can be ETL or RULE based.
    ```
    POST /adaptor
    Header: {"username": "uname", "password": "password"}
@@ -107,6 +100,16 @@ the Api of relevance to get started with are
    Response: 200 (Deleted), 404 (No such adaptor), 401 (Unauthorized)
    ```
 
+6. **newRule**: Create a new SQL rule for an already running RULE adaptor
+   ```
+   POST /rule
+   Header: {"username": "uname", "password": "password"}
+   Body: Rule object
+   Content-Type: application/json
+   Response: 200 (Deleted), 404 (No such adaptor), 401 (Unauthorized)
+   ```
+   [Rule object body](./docs/rule_format.md)
+
 On submitting the adaptor pipeline spec file, the server will generate a JAR with all the dependencies and run the pipeline according to the configurations specified.
 
 The entire API specification can be found [here](./docs/openapi.yml).
@@ -122,10 +125,3 @@ The entire API specification can be found [here](./docs/openapi.yml).
    `./setup/start_local_dev_env.sh` 
    This brings up flink, rabbitmq, the apiserver and a mockserver.
 6. Use the apis to submit the above example config
-
-
-
-## Future Works
-1. Spec validation
-2. Local playground for local spec testing
-3. Support for diverse sources (AMQP, MQTT, GRPC) and sinks (Elasticsearch, Redis, Kafka)
