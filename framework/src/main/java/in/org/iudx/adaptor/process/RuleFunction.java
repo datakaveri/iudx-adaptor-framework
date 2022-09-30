@@ -110,8 +110,12 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
           int columnCount = rs.getMetaData().getColumnCount();
           JSONObject jsonObject = new JSONObject();
           for (int i = 1; i <= columnCount; i++) {
-            String column = rs.getMetaData().getColumnName(i);
-            jsonObject.put(column, rs.getObject(column));
+            try {
+              String column = rs.getMetaData().getColumnName(i);
+              jsonObject.put(column, rs.getObject(column));
+            } catch (SQLException e) {
+              // skip errors
+            }
           }
           if (jsonObject.length() > 0) {
             json.put(jsonObject);
