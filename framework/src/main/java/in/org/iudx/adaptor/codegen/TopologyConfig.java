@@ -23,6 +23,9 @@ public class TopologyConfig {
   public JSONObject ruleSourceParseSpec;
   public JSONObject inputSourceParseSpec;
 
+  public boolean hasTransformSpec;
+  public boolean hasDedupSpec;
+
   public TopologyConfig(String configString) throws Exception {
 
     config = new JSONObject(configString);
@@ -46,8 +49,16 @@ public class TopologyConfig {
 
     if (adaptorType == AdaptorType.ETL) {
       parseSpec = config.getJSONObject("parseSpec");
-      deduplicationSpec = config.getJSONObject("deduplicationSpec");
+    }
+
+    if (config.has("transformSpec")) {
       transformSpec = config.getJSONObject("transformSpec");
+      hasTransformSpec = true;
+    }
+
+    if (config.has("deduplicationSpec")) {
+      deduplicationSpec = config.getJSONObject("deduplicationSpec");
+      hasDedupSpec = true;
     }
 
     publishSpec = config.getJSONObject("publishSpec");

@@ -74,7 +74,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
                              KeyedBroadcastProcessFunction<String, Message, Rule, RuleResult>.ReadOnlyContext readOnlyContext,
                              Collector<RuleResult> collector) throws Exception {
     this.elementCounter.inc();
-    logger.debug("[event_key - " + message.key + "] Processing rule event");
+    logger.info("[event_key - " + message.key + "] Processing rule event");
     ReadOnlyBroadcastState<Integer, Rule> ruleState = readOnlyContext.getBroadcastState(
             RuleStateDescriptor.ruleMapStateDescriptor);
 
@@ -114,7 +114,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
               String column = rs.getMetaData().getColumnName(i);
               jsonObject.put(column, rs.getObject(column));
             } catch (SQLException e) {
-              // skip errors
+              logger.error("Failed with SQL error", e);
             }
           }
           if (jsonObject.length() > 0) {
@@ -139,13 +139,14 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
                                               RuleResult>.Context context,
                                       Collector<RuleResult> collector) throws Exception {
     this.ruleCounter.inc();
-    logger.debug("[rule_id - " + rule.ruleId + "] Processing rule broadcast");
+    logger.info("[rule_id - " + rule.ruleId + "] Processing rule");
     BroadcastState<Integer, Rule> broadcastState = context.getBroadcastState(
             RuleStateDescriptor.ruleMapStateDescriptor);
     if (rule.type == Rule.RuleType.RULE) {
       broadcastState.put(rule.ruleId, rule);
       updateExpiryTime(rule, broadcastState);
     } else if (rule.type == Rule.RuleType.DELETE) {
+      logger.info("[rule_id - " + rule.ruleId + "] Deleting rule");
       broadcastState.remove(rule.ruleId);
       if (rule.ruleId == EXPIRY_TIME_RULE_ID) {
         EXPIRY_TIME_RULE_ID = Integer.MIN_VALUE;

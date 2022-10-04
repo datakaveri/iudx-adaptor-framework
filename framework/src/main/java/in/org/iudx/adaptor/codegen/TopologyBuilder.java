@@ -105,11 +105,11 @@ public class TopologyBuilder {
             parseSpecBuilder(mainBuilder, tc.parseSpec);
         }
 
-        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL) {
+        if (tc.hasDedupSpec) {
             deduplicationSpecBuilder(mainBuilder, tc.deduplicationSpec);
         }
 
-        if (tc.adaptorType == TopologyConfig.AdaptorType.ETL) {
+        if (tc.hasTransformSpec) {
             transformSpecBuilder(mainBuilder, tc.transformSpec);
         }
 
@@ -447,18 +447,47 @@ public class TopologyBuilder {
     }
 
     private void buildTopologyForRules(Builder mainBuilder) {
-
         mainBuilder.addStatement("$T<$T> ruleBroadcastStream = rules.broadcast($T" +
-                ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class,
+                        ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class,
                 RuleStateDescriptor.class);
+        if (hasJSTransformer) {
+            mainBuilder.addStatement("$T<$T> ds = so" +
+                            ".keyBy(($T msg) -> msg.key)" +
+                            ".process(new $T(dedup))" +
+                            ".flatMap(new $T(transformSpec))" +
+                            ".assignTimestampsAndWatermarks(new $T())" +
+                            ".keyBy(($T msg) -> msg.key)" +
+                            ".connect(ruleBroadcastStream)" +
+                            ".process(new $T())" +
+                            ".setParallelism(1)",
+                    SingleOutputStreamOperator.class, RuleResult.class,
+                    Message.class, GenericProcessFunction.class,
+                    JSProcessFunction.class, MessageWatermarkStrategy.class,
+                    Message.class, RuleFunction.class);
 
-        mainBuilder.addStatement("$T<$T> ds = so.assignTimestampsAndWatermarks(new $T())" +
-                ".keyBy(($T msg) -> msg.key)" +
-                ".connect(ruleBroadcastStream)" +
-                ".process(new $T())" +
-                ".setParallelism(1)",
-                SingleOutputStreamOperator.class, RuleResult.class,
-                MessageWatermarkStrategy.class, Message.class, RuleFunction.class);
+        } else if (hasJSPathTransformer) {
+            mainBuilder.addStatement("$T<$T> ds = so" +
+                            ".keyBy(($T msg) -> msg.key)" +
+                            ".process(new $T(dedup))" +
+                            ".flatMap(new $T(transformSpec))" +
+                            ".assignTimestampsAndWatermarks(new $T())" +
+                            ".keyBy(($T msg) -> msg.key)" +
+                            ".connect(ruleBroadcastStream)" +
+                            ".process(new $T())" +
+                            ".setParallelism(1)",
+                    SingleOutputStreamOperator.class, RuleResult.class,
+                    Message.class, GenericProcessFunction.class,
+                    JSPathProcessFunction.class, MessageWatermarkStrategy.class,
+                    Message.class, RuleFunction.class);
+        } else {
+            mainBuilder.addStatement("$T<$T> ds = so.assignTimestampsAndWatermarks(new $T())" +
+                            ".keyBy(($T msg) -> msg.key)" +
+                            ".connect(ruleBroadcastStream)" +
+                            ".process(new $T())" +
+                            ".setParallelism(1)",
+                    SingleOutputStreamOperator.class, RuleResult.class,
+                    MessageWatermarkStrategy.class, Message.class, RuleFunction.class);
+        }
 
         mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
                 RMQGenericSink.class, TypeInformation.class, RuleResult.class);
