@@ -226,6 +226,17 @@
 			<artifactId>minio</artifactId>
 			<version>8.3.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.apache.calcite</groupId>
+			<artifactId>calcite-core</artifactId>
+			<version>1.26.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.calcite</groupId>
+			<artifactId>calcite-file</artifactId>
+			<version>1.26.0</version>
+		</dependency>
     </dependencies>
 
     <build>

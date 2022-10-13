@@ -6,18 +6,12 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.util.Pair;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Enumerator that reads from a Object List.
@@ -44,6 +38,11 @@ public class JsonEnumerator implements Enumerator<@Nullable Object[]> {
     final List<String> names = new ArrayList<>(jsonFieldMap.size());
 
     for (Object key : jsonFieldMap.keySet()) {
+      if (key.equals("observationDateTime")) {
+        names.add(key.toString());
+        types.add(typeFactory.createJavaType(Timestamp.class));
+        continue;
+      }
       final RelDataType type = typeFactory.createJavaType(jsonFieldMap.get(key).getClass());
       names.add(key.toString());
       types.add(type);

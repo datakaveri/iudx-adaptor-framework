@@ -92,6 +92,11 @@ public class TopologyBuilder {
             mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
         }
 
+        if (!tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
+            // 10 minutes for rules job
+            mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * 10)");
+        }
+
 
         if (tc.hasFailureRecovery) {
             failureRecoverySpecBuilder(mainBuilder, tc.failureRecoverySpec, tc.inputSpec);

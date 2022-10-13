@@ -92,6 +92,8 @@ public class Constants {
   public static final String PARSE_SPEC_ROUTE = "/onboard/run-parse-spec";
   public static final String TRANSFORM_SPEC_ROUTE = "/onboard/run-transform-spec";
 
+  public static final String SQL_QUERY_TEST_ROUTE = "/rules/test/query";
+
   /** Response messages */
   public static final String MESSAGE = "message";
   public static final String RESULTS = "results";

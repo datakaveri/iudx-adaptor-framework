@@ -6,6 +6,7 @@ import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
 import in.org.iudx.adaptor.sink.DumbRuleResultSink;
+import in.org.iudx.adaptor.sink.RMQGenericSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
 import in.org.iudx.adaptor.source.RMQPublisher;
@@ -49,21 +50,20 @@ public class RuleFunctionITTest {
     pub.initialize();
     pub.sendRuleMessage();
 
-    int numMsgs = 5;
-    for (int i = 0; i < numMsgs; i++) {
-      pub.sendMessage(i);
-    }
+//    int numMsgs = 5;
+//    for (int i = 0; i < numMsgs; i++) {
+//      pub.sendMessage(i);
+//    }
 
     String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime")
 //            .put("keyPath", "$.id")
             .put("staticKey", "ruleTest")
 //            .put("expiry", 200)
-            .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
-            .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
+            .toString();
 
     RMQConfig config = new RMQConfig();
-    config.setUri("amqp://guest:guest@localhost:5672");
-    config.setQueueName("adaptor-test");
+    config.setUri("amqps://237aaf15-3198-4972-8e66-12f0bb708ef9:titaniudx@databroker.iudx.org.in:24567/IUDX");
+    config.setQueueName("237aaf15-3198-4972-8e66-12f0bb708ef9/titan-itms");
     RMQGenericSource source = new RMQGenericSource<Message>(config,
             TypeInformation.of(Message.class), "test", parseSpecObj);
 
@@ -78,14 +78,18 @@ public class RuleFunctionITTest {
 
     BroadcastStream<Rule> ruleBroadcastStream = rules.broadcast(
             RuleStateDescriptor.ruleMapStateDescriptor);
+
+    
     SingleOutputStreamOperator<RuleResult> ds = so.assignTimestampsAndWatermarks(
-                    new MessageWatermarkStrategy()).keyBy((Message msg) -> msg.key)
-            .connect(ruleBroadcastStream).process(new RuleFunction()).setParallelism(1);
+                  new MessageWatermarkStrategy()).keyBy((Message msg) -> msg.key)
+          .connect(ruleBroadcastStream).process(new RuleFunction()).setParallelism(1);
+
 
     RMQConfig rmqConfig = new RMQConfig();
     rmqConfig.setUri("amqp://guest:guest@localhost:5672");
 
     ds.addSink(new DumbRuleResultSink());
+
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {
         env.execute("Simple Get");
