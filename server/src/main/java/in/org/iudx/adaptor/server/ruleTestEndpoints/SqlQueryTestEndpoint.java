@@ -3,7 +3,6 @@ package in.org.iudx.adaptor.server.ruleTestEndpoints;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.org.iudx.adaptor.sql.Schema;
 import in.org.iudx.adaptor.utils.JsonFlatten;
-import io.vertx.core.json.JsonArray;
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.schema.SchemaPlus;
 import org.json.JSONArray;
@@ -17,9 +16,11 @@ import java.util.List;
 import java.util.Properties;
 
 public class SqlQueryTestEndpoint {
-  public String runQuery(String query, String inputData) throws SQLException {
+  public String runQuery(String query, String inputData) throws SQLException,
+          ClassNotFoundException {
     Properties info = new Properties();
     info.setProperty("lex", "JAVA");
+    Class.forName("org.apache.calcite.jdbc.Driver");
     try (Connection connection = DriverManager.getConnection("jdbc:calcite:", info)) {
       CalciteConnection calciteConnection = connection.unwrap(CalciteConnection.class);
       SchemaPlus rootSchema = calciteConnection.getRootSchema();

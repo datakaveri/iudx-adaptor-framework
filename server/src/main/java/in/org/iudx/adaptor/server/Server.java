@@ -464,6 +464,8 @@ public class Server extends AbstractVerticle {
                         .put("message", "Query execution failed")
                         .put("errorStack", e.getMessage());
                 response.setStatusCode(200).end(r.toString());
+              } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
               }
             });
     /* Start server */
