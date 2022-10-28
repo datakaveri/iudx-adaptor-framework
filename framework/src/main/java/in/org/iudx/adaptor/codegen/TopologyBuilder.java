@@ -95,6 +95,8 @@ public class TopologyBuilder {
         if (!tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
             // 10 minutes for rules job
             mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * 10)");
+            mainBuilder.addStatement("env.getCheckpointConfig().setCheckpointTimeout(1000 * 60 * 15)");
+            mainBuilder.addStatement("env.getCheckpointConfig().setMaxConcurrentCheckpoints(1)");
         }
 
 

@@ -26,7 +26,7 @@ config:
           source: log
 
 nodeSelector:
-  node.kubernetes.io/instance-type: t3.medium
+  node.kubernetes.io/instance-type: t3a.medium
   target.application: adaptor-framework
 
 resources: 

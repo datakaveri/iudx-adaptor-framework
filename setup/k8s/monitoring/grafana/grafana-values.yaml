@@ -32,7 +32,7 @@ ingress:
       - adaptor-logs.iudx.io
 
 nodeSelector:
-  node.kubernetes.io/instance-type: t3.medium
+  node.kubernetes.io/instance-type: t3a.medium
 resources: 
   limits: 
     cpu: 600m

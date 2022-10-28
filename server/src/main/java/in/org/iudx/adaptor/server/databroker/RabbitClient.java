@@ -326,6 +326,7 @@ public class RabbitClient {
       JsonObject configProp = new JsonObject();
       JsonObject arguments = new JsonObject();
       arguments.put("x-queue-type", "classic");
+      arguments.put("x-message-ttl", 1000 * 60 * 1); // adding message ttl for output queues
       configProp.put(Constants.X_QUEUE_ARGUMENTS, arguments);
       configProp.put(Constants.X_QUEUE_TYPE, true);
       webClient.requestAsync(REQUEST_PUT, url, configProp).onComplete(ar -> {

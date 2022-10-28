@@ -58,8 +58,8 @@ metrics.reporters: prom
 metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
 metrics.reporter.prom.port: 9250
 
-kubernetes.jobmanager.node-selector: node.kubernetes.io/instance-type:t3.medium,target.application: adaptor-framework
-kubernetes.taskmanager.node-selector: node.kubernetes.io/instance-type: t3.medium,target.application: adaptor-framework
+kubernetes.jobmanager.node-selector: node.kubernetes.io/instance-type:t3a.medium,target.application: adaptor-framework
+kubernetes.taskmanager.node-selector: node.kubernetes.io/instance-type: t3a.medium,target.application: adaptor-framework
 
 kubernetes.namespace: adaptor-framework
 
