@@ -1115,9 +1115,11 @@ public class Server extends AbstractVerticle {
                     LOGGER.info("Success: Job submitted");
 
                     String newJobId = resHandler.result().getString(JOB_ID);
+                    String jobName = resHandler.result().getString(JOB_NAME);
                     String query = INSERT_JOB.replace("$1", newJobId)
-                            .replace("$2", RUNNING)
-                            .replace("$3", adaptorId);
+                            .replace("$2", jobName)
+                            .replace("$3", RUNNING)
+                            .replace("$4", adaptorId);
 
                     databaseService.updateComplex(query, updateHandler -> {
                       if (updateHandler.succeeded()) {

@@ -458,7 +458,10 @@ public class DatabaseServiceImpl implements DatabaseService {
       if (pgHandler.succeeded()) {
         RowSet<Row> result = pgHandler.result();
         for (Row row : result) {
-          response.add(row.toJson().getString("job_id"));
+          JsonObject object = new JsonObject();
+          object.put("jobId", row.toJson().getString("job_id"));
+          object.put("jobName", row.toJson().getString("job_name"));
+          response.add(object);
         }
         
         handler.handle(

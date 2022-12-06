@@ -229,6 +229,7 @@ CREATE TABLE public.codegen_status (
 CREATE TABLE public.flink_job (
 	id serial NOT NULL,
 	job_id varchar NOT NULL,
+  job_name varchar NOT NULL,
 	adaptor_id varchar NOT NULL,
 	"timestamp" timestamp(0) NOT NULL DEFAULT now(),
 	status varchar NOT NULL,

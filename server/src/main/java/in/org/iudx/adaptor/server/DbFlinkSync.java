@@ -49,11 +49,11 @@ public class DbFlinkSync {
    */
   public void syncJobDetails() {
     JsonObject requestBody = new JsonObject();
-    requestBody.put(URI, JOBS_API).put(ID, "");
+    requestBody.put(URI, JOBS_OVERVIEW_API);
     
     databaseService.syncAdaptorJob(SELECT_ALL_JOBS, handler -> {
       if (handler.succeeded()) {
-        JsonArray jobIds = handler.result().getJsonArray(JOBS);
+        JsonArray jobObjs = handler.result().getJsonArray(JOBS);
 
         flinkClient.getJobDetails(requestBody, flinkHandler -> {
           if (flinkHandler.succeeded()) {
@@ -63,7 +63,7 @@ public class DbFlinkSync {
               JsonObject eachFlinkJob = (JsonObject) each;
 
               if (!eachFlinkJob.getString(STATUS).equalsIgnoreCase(RUNNING)
-                  && jobIds.contains(eachFlinkJob.getString(ID))) {
+                  && jobObjs.contains(eachFlinkJob.getString(ID))) {
                 String query = UPDATE_JOB.replace("$1", eachFlinkJob.getString(ID))
                                          .replace("$2", eachFlinkJob.getString(STATUS).toLowerCase());
 

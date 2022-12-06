@@ -177,6 +177,7 @@ public class Constants {
   public static final String RULE_ID = "ruleId";
   public static final String JAR_ID = "jarId";
   public static final String JOB_ID = "jobId";
+  public static final String JOB_NAME = "jobName";
   public static final String COMPILING = "cg-compiling";
   public static final String SCHEDULED = "scheduled";
   public static final String COMPLETED = "cg-completed";
@@ -232,14 +233,18 @@ public class Constants {
       "  WHERE codegen_status.adaptor_id = adaptor.adaptor_id";
 
   public static final String INSERT_JOB =
-      "INSERT into flink_job(job_id, \"timestamp\",status,adaptor_id) values ('$1',now(),'$2','$3')";
-  public static final String SELECT_JOB ="SELECT job_id FROM flink_job WHERE adaptor_id='$1' AND status = '$2'";
-  public static final String SELECT_ALL_JOBS = "SELECT job_id FROM flink_job where status ='running'";
+      "INSERT into flink_job(job_id, job_name, \"timestamp\",status,adaptor_id) values ('$1', " +
+              "'$2',now(),'$3','$4')";
+  public static final String SELECT_JOB ="SELECT job_id, job_name FROM flink_job WHERE adaptor_id='$1' AND status = '$2'";
+  public static final String SELECT_ALL_JOBS = "SELECT job_id, job_name FROM flink_job where status ='running'";
   public static final String UPDATE_JOB = "update flink_job set status ='$2', timestamp = now() where job_id = '$1'";
+  public static final String UPDATE_JOB_STATUS_BY_JOB_ID = "update flink_job set status ='$2', timestamp = now() where job_id = '$1'";
+  public static final String UPDATE_JOB_STATUS_BY_JOB_NAME = "update flink_job set status ='$2', timestamp = now() where job_name = '$1'";
+  public static final String UPDATE_JOB_ID = "update flink_job set job_id ='$2', timestamp = now() where job_name = '$1'";
 
   public static final String GET_ALL_ADAPTOR =
       "WITH get_user_adaptor AS (\n" +
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, ad.adaptor_type\n," +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, fj.job_name, ad.data, ad.adaptor_type\n," +
       "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
       "    FROM adaptor AS ad\n" +
       "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
@@ -255,7 +260,7 @@ public class Constants {
 
   public static final String GET_ONE_ADAPTOR =
       "WITH get_user_adaptor AS (\n" +
-      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, ad.data, ad.adaptor_type\n," +
+      "  SELECT ad.adaptor_id, ad.jar_id, fj.job_id, fj.job_name, ad.data, ad.adaptor_type\n," +
       "    COALESCE(fj.timestamp, cg.timestamp) AS timestamp, COALESCE (fj.status, cg.status) AS status\n" +
       "    FROM adaptor AS ad\n" +
       "    INNER JOIN public.user AS _user ON ad.user_id = _user.id\n" +
