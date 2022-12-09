@@ -8,9 +8,30 @@ config:
             log: log
             stream: stream
             docker_time: time
-      - regex:
-          expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[(event_key - )(?P<event_key>.*?)\])? ?-? ?(\[(status_code - )(?P<status_code>\d{3})\])? ?-? ?(\[(summary - )(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
-          source: log
+            container_info: attrs.tag
+
+      - json:
+          expressions:
+            container_name: name
+            instance: id
+          source: container_info
+
+      - labels:
+          instance:
+          container_name:
+
+      - match:
+          selector: '{container_name=~"flink.*.*"}'
+          stages:
+            - json:
+                expressions:
+                  index: logEvent.action[2].metaClass.metaClass.metaClass.response.index._index
+                  error_type: logEvent.action[2].metaClass.metaClass.metaClass.response.index.error.type
+                  source: log
+            - regex:
+                expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[(event_key - )(?P<event_key>.*?)\])? ?-? ?(\[(status_code - )(?P<status_code>\d{3})\])? ?-? ?(\[(summary - )(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+                source: log
+
       - labels:
           context:
           adaptor_id:
