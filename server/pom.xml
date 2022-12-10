@@ -31,7 +31,7 @@
 		<vertx.version>4.1.5</vertx.version>
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<quartz.version>2.3.2</quartz.version>
-		<postgres.version>42.2.19</postgres.version>
+		<postgres.version>42.3.8</postgres.version>
     <latest.jolt.version>0.1.1</latest.jolt.version>
 		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
 	</properties>
