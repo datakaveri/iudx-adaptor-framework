@@ -8,10 +8,9 @@ config:
             log: log
             stream: stream
             docker_time: time
-            container_info: attrs.tag
 
       - match:
-          selector: '{container=~"flink.*.*"}'
+          selector: '{pod=~"flink.*.*"}'
           stages:
             - json:
                 expressions:
