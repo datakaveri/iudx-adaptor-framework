@@ -10,18 +10,8 @@ config:
             docker_time: time
             container_info: attrs.tag
 
-      - json:
-          expressions:
-            container_name: name
-            instance: id
-          source: container_info
-
-      - labels:
-          instance:
-          container_name:
-
       - match:
-          selector: '{container_name=~"flink.*.*"}'
+          selector: '{container=~"flink.*.*"}'
           stages:
             - json:
                 expressions:
