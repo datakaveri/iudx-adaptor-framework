@@ -26,6 +26,8 @@ public class TopologyConfig {
   public boolean hasTransformSpec;
   public boolean hasDedupSpec;
 
+  public long defaultStateExpiry;
+
   public TopologyConfig(String configString) throws Exception {
 
     config = new JSONObject(configString);
@@ -81,6 +83,10 @@ public class TopologyConfig {
 
       if (inputSpec.has("parseSpec")) {
         inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
+      }
+
+      if (inputSpec.has("expiry")) {
+        defaultStateExpiry = inputSpec.getLong("expiry");
       }
     }
   }

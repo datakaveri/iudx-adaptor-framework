@@ -187,6 +187,15 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     Optional<Long> cleanupEventTimeThreshold = cleanupEventTimeWindow.map(
             window -> timestamp - window);
 
+    if (cleanupEventTimeThreshold.isPresent()) {
+      logger.debug("Expiry time by rule window - " + rule.getWindowMillis() + " timestamp - " + cleanupEventTimeThreshold);
+      cleanupEventTimeThreshold.ifPresent(cleanupTime ->
+              removeElementFromState(cleanupTime, rule.getWindowMillis()));
+    } else {
+      long window = ctx.timestamp() - timestamp;
+      logger.debug("Expiry time by message window - " + window + " timestamp - " + timestamp);
+      removeElementFromState(timestamp, ctx.timestamp() - timestamp);
+    }
     cleanupEventTimeThreshold.ifPresent(cleanupTime ->
             removeElementFromState(cleanupTime, rule.getWindowMillis()));
   }
@@ -196,7 +205,7 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     Rule rule = ruleState.get(EXPIRY_TIME_RULE_ID);
 
     if (rule == null) {
-      return ctx.timestamp() + msg.getExpiry();
+      return ctx.timestamp() + (msg.getExpiry() * 60 * 1000);
     }
 
     return ctx.timestamp() + rule.getWindowMillis();
@@ -224,17 +233,21 @@ public class RuleFunction extends KeyedBroadcastProcessFunction<String, Message,
     logger.info("Cleanup expired list state elements");
     try {
       Iterator<LinkedHashMap<String, Object>> iterator = listState.get().iterator();
-      List<LinkedHashMap<String, Object>> dataList = IteratorUtils.toList(iterator);
-      logger.info("List state size before expiry - " + dataList.size());
+//      List<LinkedHashMap<String, Object>> dataList = IteratorUtils.toList(iterator);
+//      logger.info("List state size before expiry - " + dataList.size() + " has data" + iterator.hasNext());
+      ArrayList<LinkedHashMap<String, Object>> list = new ArrayList<>();
       while (iterator.hasNext()) {
         LinkedHashMap<String, Object> obj = iterator.next();
         Timestamp eventTimestamp = (Timestamp) obj.get("observationDateTime");
         long eventTime = eventTimestamp.toInstant().toEpochMilli();
+        logger.debug("List state item timestamp - " + eventTime + " threshold - " + threshold + "window - " + window);
         if (eventTime < threshold - window) {
-          iterator.remove();
+          logger.debug("Removing - " + eventTime + " threshold - " + threshold + "window - " + window);
+          continue;
         }
+        list.add(obj);
       }
-      List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
+//      List<LinkedHashMap<String, Object>> list = IteratorUtils.toList(iterator);
       listState.update(list);
       logger.info("List state size after expiry - " + list.size());
     } catch (Exception e) {

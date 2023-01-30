@@ -76,19 +76,19 @@ public class RuleFunctionITTest {
     DataStreamSource<Message> so = env.addSource(source);
     DataStreamSource<Rule> rules = env.addSource(ruleSource);
 
-    BroadcastStream<Rule> ruleBroadcastStream = rules.broadcast(
+    BroadcastStream<Rule> ruleBroadcastStream = rules.name("Rules Source").broadcast(
             RuleStateDescriptor.ruleMapStateDescriptor);
 
     
-    SingleOutputStreamOperator<RuleResult> ds = so.assignTimestampsAndWatermarks(
+    SingleOutputStreamOperator<RuleResult> ds = so.name("RMQ Data Source").assignTimestampsAndWatermarks(
                   new MessageWatermarkStrategy()).keyBy((Message msg) -> msg.key)
-          .connect(ruleBroadcastStream).process(new RuleFunction()).setParallelism(1);
+          .connect(ruleBroadcastStream).process(new RuleFunction()).name("Execute Rules").setParallelism(1);
 
 
     RMQConfig rmqConfig = new RMQConfig();
     rmqConfig.setUri("amqp://guest:guest@localhost:5672");
 
-    ds.addSink(new DumbRuleResultSink());
+    ds.addSink(new DumbRuleResultSink()).name("Rule Result Sink");
 
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {

@@ -93,11 +93,12 @@ public class TopologyBuilder {
         }
 
         if (!tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
-            // 10 minutes for rules job
-            mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * 10)");
-            mainBuilder.addStatement("env.getCheckpointConfig().setCheckpointTimeout(1000 * 60 * 15)");
+            mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * $L * 4)", tc.defaultStateExpiry);
+            mainBuilder.addStatement("env.getCheckpointConfig().setCheckpointTimeout(1000 * 60 * $L * 4)", tc.defaultStateExpiry);
             mainBuilder.addStatement("env.getCheckpointConfig().setMaxConcurrentCheckpoints(1)");
         }
+
+        mainBuilder.addStatement("env.getCheckpointConfig().setTolerableCheckpointFailureNumber(10)");
 
 
         if (tc.hasFailureRecovery) {
@@ -254,7 +255,7 @@ public class TopologyBuilder {
 
         if ("rmq".equals(inputSpec.getString("type"))) {
             if (inputSpec.has("expiry")) {
-                inputParseSpec.append("expiry", inputParseSpec.getLong("expiry"));
+                inputParseSpec.put("expiry", tc.defaultStateExpiry);
             }
             mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
             mainBuilder.addStatement("config.setUri($S)", inputSpec.getString("uri"));
@@ -454,11 +455,12 @@ public class TopologyBuilder {
     }
 
     private void buildTopologyForRules(Builder mainBuilder) {
-        mainBuilder.addStatement("$T<$T> ruleBroadcastStream = rules.broadcast($T" +
-                        ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class,
+        mainBuilder.addStatement("$T<$T> ruleBroadcastStream = rules.name($S).broadcast($T" +
+                        ".ruleMapStateDescriptor)", BroadcastStream.class, Rule.class, "Rules Source",
                 RuleStateDescriptor.class);
         if (hasJSTransformer) {
             mainBuilder.addStatement("$T<$T> ds = so" +
+                            ".name($S)" +
                             ".keyBy(($T msg) -> msg.key)" +
                             ".process(new $T(dedup))" +
                             ".flatMap(new $T(transformSpec))" +
@@ -466,14 +468,16 @@ public class TopologyBuilder {
                             ".keyBy(($T msg) -> msg.key)" +
                             ".connect(ruleBroadcastStream)" +
                             ".process(new $T())" +
+                            ".name($S)" +
                             ".setParallelism(1)",
-                    SingleOutputStreamOperator.class, RuleResult.class,
+                    SingleOutputStreamOperator.class, RuleResult.class, "Data Source",
                     Message.class, GenericProcessFunction.class,
                     JSProcessFunction.class, MessageWatermarkStrategy.class,
-                    Message.class, RuleFunction.class);
+                    Message.class, RuleFunction.class, "Rule Process Function");
 
         } else if (hasJSPathTransformer) {
             mainBuilder.addStatement("$T<$T> ds = so" +
+                            ".name($S)" +
                             ".keyBy(($T msg) -> msg.key)" +
                             ".process(new $T(dedup))" +
                             ".flatMap(new $T(transformSpec))" +
@@ -481,23 +485,27 @@ public class TopologyBuilder {
                             ".keyBy(($T msg) -> msg.key)" +
                             ".connect(ruleBroadcastStream)" +
                             ".process(new $T())" +
+                            ".name($S)" +
                             ".setParallelism(1)",
-                    SingleOutputStreamOperator.class, RuleResult.class,
+                    SingleOutputStreamOperator.class, RuleResult.class, "Data Source",
                     Message.class, GenericProcessFunction.class,
                     JSPathProcessFunction.class, MessageWatermarkStrategy.class,
-                    Message.class, RuleFunction.class);
+                    Message.class, RuleFunction.class, "Rule Process Function");
         } else {
             mainBuilder.addStatement("$T<$T> ds = so.assignTimestampsAndWatermarks(new $T())" +
+                            ".name($S)" +
                             ".keyBy(($T msg) -> msg.key)" +
                             ".connect(ruleBroadcastStream)" +
                             ".process(new $T())" +
+                            ".name($S)" +
                             ".setParallelism(1)",
                     SingleOutputStreamOperator.class, RuleResult.class,
-                    MessageWatermarkStrategy.class, Message.class, RuleFunction.class);
+                    MessageWatermarkStrategy.class, "Data Source",
+                    Message.class, RuleFunction.class, "Rule Process Function");
         }
 
-        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
-                RMQGenericSink.class, TypeInformation.class, RuleResult.class);
+        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class))).name($S)",
+                RMQGenericSink.class, TypeInformation.class, RuleResult.class, "Rule Result Sink");
 
         mainBuilder.beginControlFlow("try");
         mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");
