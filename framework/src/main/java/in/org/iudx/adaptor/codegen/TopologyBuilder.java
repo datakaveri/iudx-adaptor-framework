@@ -5,6 +5,7 @@ import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
 import in.org.iudx.adaptor.process.*;
+import in.org.iudx.adaptor.sink.PostgresSink;
 import in.org.iudx.adaptor.sink.RMQGenericSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
@@ -369,6 +370,16 @@ public class TopologyBuilder {
             }
 
         }
+
+        if ("postgres".equals(publishType)) {
+            mainBuilder.addStatement("$T postgresConfig = new $T()", PostgresConfig.class, PostgresConfig.class);
+
+            mainBuilder.addStatement("postgresConfig.setUrl($S)", publishSpec.getString("url"));
+            mainBuilder.addStatement("postgresConfig.setUsername($S)", publishSpec.getString("username"));
+            mainBuilder.addStatement("postgresConfig.setPassword($S)", publishSpec.getString("password"));
+            mainBuilder.addStatement("postgresConfig.setTableName($S)", publishSpec.getString("tableName"));
+            mainBuilder.addStatement("postgresConfig.setTableSchema($S)", publishSpec.getJSONObject("schema").toString());
+        }
     }
 
     private void buildTopologyForETL(Builder mainBuilder) {
@@ -443,8 +454,14 @@ public class TopologyBuilder {
 
         /* TODO: Loki config */
 
-        mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
-                RMQGenericSink.class, TypeInformation.class, Message.class);
+        String publishType = tc.publishSpec.getString("type");
+
+        if ("rmq".equals(publishType)) {
+            mainBuilder.addStatement("ds.addSink(new $T<>(rmqConfig, $T.of($T.class)))",
+                    RMQGenericSink.class, TypeInformation.class, Message.class);
+        } else if ("postgres".equals(publishType)) {
+            mainBuilder.addStatement("ds.addSink(new $T().getPostgresSink(postgresConfig))", PostgresSink.class);
+        }
 
         mainBuilder.beginControlFlow("try");
         mainBuilder.addStatement("env.getConfig().setGlobalJobParameters(parameters)");

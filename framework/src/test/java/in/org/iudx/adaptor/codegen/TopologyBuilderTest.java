@@ -129,4 +129,15 @@ public class TopologyBuilderTest {
    TopologyBuilder builder = new TopologyBuilder(top);
    builder.gencode();
   }
+
+  @Test
+  void pgSink() throws Exception {
+    TopologyConfig top = new TopologyConfig(
+            new String(
+                    Files.readAllBytes(
+                            Paths.get(
+                                    "src/test/java/in/org/iudx/adaptor/codegen/pgsink.json"))));
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+  }
 }
