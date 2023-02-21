@@ -10,9 +10,9 @@ import org.apache.flink.streaming.connectors.rabbitmq.RMQDeserializationSchema;
 public class RMQDeserializerFactory<T> {
 
   public static RMQDeserializationSchema getDeserializer(TypeInformation typeinfo,
-                                                         String appName, String parseSpec) {
+                                                         String appName, String routingKey, String parseSpec) {
     if (typeinfo.getTypeClass().equals(Message.class)) {
-      return new RMQMessageDeserializer(appName, parseSpec);
+      return new RMQMessageDeserializer(appName, routingKey, parseSpec);
     }
     if (typeinfo.getTypeClass().equals(Rule.class)) {
       return new RMQRuleDeserializer(appName, parseSpec);

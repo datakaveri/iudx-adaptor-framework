@@ -47,7 +47,7 @@ public class PostgresSink {
                     for (int i=0; i<columns.length(); i++) {
                         String column = columns.getString(i);
                         String columnType = schema.getString(column);
-                        if (!data.has(column)) {
+                        if (!data.has(column) || data.isNull(column)) {
                             statement.setNull(i +1, java.sql.Types.NULL);
                             continue;
                         }

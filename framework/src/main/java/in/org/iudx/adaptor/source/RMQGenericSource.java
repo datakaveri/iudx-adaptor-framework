@@ -27,7 +27,7 @@ public class RMQGenericSource<T> extends RMQSource<T> {
   public RMQGenericSource(RMQConfig rmqConfig, TypeInformation typeInformation,
                           String appName, String parseSpec) {
     super(rmqConfig.build(), rmqConfig.getQueueName(), false,
-            new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, parseSpec));
+            new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, rmqConfig.getRoutingKey(), parseSpec));
     this.rmqConfig = rmqConfig;
   }
 

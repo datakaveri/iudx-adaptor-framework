@@ -49,7 +49,11 @@ public class TopologyConfig {
     }
     inputSpec = config.getJSONObject("inputSpec");
 
-    if (adaptorType == AdaptorType.ETL) {
+    if (inputSpec.has("parseSpec")) {
+      inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
+    }
+
+    if (config.has("parseSpec")) {
       parseSpec = config.getJSONObject("parseSpec");
     }
 
@@ -79,10 +83,6 @@ public class TopologyConfig {
 
       if (ruleSourceSpec.has("parseSpec")) {
         ruleSourceParseSpec = ruleSourceSpec.getJSONObject("parseSpec");
-      }
-
-      if (inputSpec.has("parseSpec")) {
-        inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
       }
 
       if (inputSpec.has("expiry")) {

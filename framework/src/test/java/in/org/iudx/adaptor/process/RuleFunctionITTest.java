@@ -6,7 +6,6 @@ import in.org.iudx.adaptor.datatypes.Rule;
 import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
 import in.org.iudx.adaptor.sink.DumbRuleResultSink;
-import in.org.iudx.adaptor.sink.RMQGenericSink;
 import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
 import in.org.iudx.adaptor.source.RMQGenericSource;
 import in.org.iudx.adaptor.source.RMQPublisher;
@@ -62,8 +61,8 @@ public class RuleFunctionITTest {
             .toString();
 
     RMQConfig config = new RMQConfig();
-    config.setUri("amqps://237aaf15-3198-4972-8e66-12f0bb708ef9:titaniudx@databroker.iudx.org.in:24567/IUDX");
-    config.setQueueName("237aaf15-3198-4972-8e66-12f0bb708ef9/titan-itms");
+    config.setUri("amqp://guest:guest@localhost:5672");
+    config.setQueueName("test");
     RMQGenericSource source = new RMQGenericSource<Message>(config,
             TypeInformation.of(Message.class), "test", parseSpecObj);
 

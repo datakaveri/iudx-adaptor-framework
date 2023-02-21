@@ -90,7 +90,11 @@ public class TopologyBuilder {
 
         // setting checkpointing
         if (!tc.isBoundedJob && tc.adaptorType != TopologyConfig.AdaptorType.RULES) {
-            mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
+            if (tc.inputSpec.has("pollingInterval")) { 
+                mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
+            } else {
+                mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * 10)");
+            }
         }
 
         if (!tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
@@ -261,6 +265,9 @@ public class TopologyBuilder {
             mainBuilder.addStatement("$T config = new $T()", RMQConfig.class, RMQConfig.class);
             mainBuilder.addStatement("config.setUri($S)", inputSpec.getString("uri"));
             mainBuilder.addStatement("config.setQueueName($S)", inputSpec.getString("queueName"));
+            if (inputSpec.has("sourceId")) {
+                mainBuilder.addStatement("config.setRoutingKey($S)", inputSpec.getString("sourceId"));
+            }
 
             mainBuilder.addStatement("$T source = new $T<>(config, $T.of($T.class), $S, $S)",
                     RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,

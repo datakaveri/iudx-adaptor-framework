@@ -12,6 +12,8 @@ import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.datatypes.Message;
 import org.json.JSONObject;
 
+import java.util.Objects;
+
 
 public class RMQMessageDeserializer extends JsonPathParser<Message>
                                   implements RMQDeserializationSchema<Message> {
@@ -19,11 +21,13 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
   private String appName;
   transient CustomLogger logger;
   private long expiry = Integer.MIN_VALUE;
+  private String routingKey;
 
 
-  public RMQMessageDeserializer(String appName, String parseSpec) {
+  public RMQMessageDeserializer(String appName, String routingKey, String parseSpec) {
     super(parseSpec);
     this.appName = appName;
+    this.routingKey = routingKey;
     if (parseSpec != null && !parseSpec.isEmpty()) {
      JSONObject parseSpecObj = new JSONObject(parseSpec);
 
@@ -38,7 +42,14 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
                           RMQDeserializationSchema.RMQCollector<Message> collector) {
     try {
       Message msg = super.parse(new String(body)).setExpiry(expiry);
-      collector.collect(msg);
+      if (routingKey.isEmpty()) {
+        collector.collect(msg);
+      } else {
+        if (Objects.equals(envelope.getRoutingKey(), routingKey)) {
+          collector.collect(msg);
+        }
+      }
+
     } catch (Exception e) {
       logger.error(e);
     }

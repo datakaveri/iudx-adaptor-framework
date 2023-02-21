@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.process;
 
+import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,9 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 import static java.lang.Float.parseFloat;
 
@@ -109,5 +113,21 @@ public class JSEvalTest {
         System.out.println(obj.getClass().getName());
 
     }
-}
 
+    @Test
+    void jsonStringify() throws ScriptException {
+
+        String script = "String(value)";
+
+        Bindings engineScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        JSONArray arr = new JSONArray();
+        arr.add(72.855479);
+        arr.add(21.179428);
+
+        engineScope.put("value", arr);
+        Object obj = engine.eval(script, context);
+        System.out.println("Result is");
+        System.out.println(obj);
+        System.out.println(obj.getClass().getName());
+    }
+}
