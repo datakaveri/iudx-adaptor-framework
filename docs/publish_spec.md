@@ -35,6 +35,8 @@ The schema of the publishSpec is as shown below. **Bold** implies that the prope
       - string (text type columns)
       - int (integer)
       - float (floating point numbers)
+      - time (time string eg 22:10:44)
+      - point (location coordinates array)
 
 Example (Postgres):
 ```json

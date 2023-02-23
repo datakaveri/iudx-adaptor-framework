@@ -9,8 +9,11 @@ import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.math.BigDecimal;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class PostgresSink {
 
@@ -29,7 +32,15 @@ public class PostgresSink {
 
         generateQuery.deleteCharAt(generateQuery.length() - 1);
         generateQuery.append(") values (");
-        generateQuery.append("?,".repeat(columns.length()));
+        for (int i = 0; i < columns.length(); i++) {
+            String type = schema.getString(columns.getString(i));
+            if (Objects.equals(type, "point")) {
+                generateQuery.append("point(?, ?),");
+                continue;
+            }
+            generateQuery.append("?,");
+        }
+//        generateQuery.append("?,".repeat(columns.length()));
         generateQuery.deleteCharAt(generateQuery.length() - 1);
         generateQuery.append(")");
 
@@ -44,26 +55,37 @@ public class PostgresSink {
                     JSONObject data = new JSONObject(message.body);
                     JSONObject schema = new JSONObject(postgresConfig.getTableSchema());
                     JSONArray columns = schema.names();
+                    int parameterCount = 0;
                     for (int i=0; i<columns.length(); i++) {
+                        parameterCount++;
                         String column = columns.getString(i);
                         String columnType = schema.getString(column);
                         if (!data.has(column) || data.isNull(column)) {
-                            statement.setNull(i +1, java.sql.Types.NULL);
+                            statement.setNull(parameterCount, java.sql.Types.NULL);
                             continue;
                         }
                         switch (columnType) {
                             case "int":
-                                statement.setInt(i + 1, data.getInt(column));
+                                statement.setInt(parameterCount, data.getInt(column));
                                 break;
                             case "float":
-                                statement.setFloat(i +1, data.getFloat(column));
+                                statement.setFloat(parameterCount, data.getFloat(column));
                                 break;
                             case "string":
-                                statement.setString(i+1, data.getString(column));
+                                statement.setString(parameterCount, data.getString(column));
                                 break;
                             case "timestamp":
                                 LocalDateTime localDateTime = DateParserUtils.parseDateTime(data.getString(column));
-                                statement.setTimestamp(i+1, Timestamp.valueOf(localDateTime));
+                                statement.setTimestamp(parameterCount, Timestamp.valueOf(localDateTime));
+                                break;
+                            case "time":
+                                Time time = Time.valueOf(data.getString(column));
+                                statement.setTime(parameterCount, time);
+                                break;
+                            case "point":
+                                statement.setBigDecimal(parameterCount, (BigDecimal) data.getJSONArray(column).get(0));
+                                parameterCount++;
+                                statement.setBigDecimal(parameterCount, (BigDecimal) data.getJSONArray(column).get(1));
                                 break;
                         }
                     }
