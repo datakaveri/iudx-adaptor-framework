@@ -45,7 +45,7 @@ public class JSPathITTest {
         String transformSpec = "{\"template\":\"{'id': 'suratmunicipal.org/6db486cb4f720e8585ba1f45a931c63c25dbbbda/rs.iudx.org.in/surat-itms-realtime-info/surat-itms-live-eta'," +
                 "'actual_trip_start_time':'123','observationDateTime':'123','last_stop_arrival_time':'123','trip_id': '676'," +
                 "'route_id':'123','trip_direction':'123', 'vehicle_label': 'xxxyy','license_plate': 'xxxyy'," +
-                "'last_stop_id':'abc', 'location.type': 'Point', 'location.coordinates': '[1,1]', 'speed': -1, 'trip_delay': -1}\"," +
+                "'last_stop_id':'abc', 'location.type': 'Point', 'location.coordinates': [1,1], 'speed': -1, 'trip_delay': -1}\"," +
                 "\"jsonPathSpec\":[{\"inputValuePath\":\"$.id\",\"outputKeyPath\":\"$.id\"}," +
                 "{\"inputValuePath\":\"$.trip_id\",\"valueModifierScript\":\"parseInt(value, 10)\",\"outputKeyPath\":\"$.trip_id\"}," +
                 "{\"inputValuePath\":\"$.route_id\",\"outputKeyPath\":\"$.route_id\"}," +
@@ -56,8 +56,8 @@ public class JSPathITTest {
                 "{\"inputValuePath\":\"$.license_plate\",\"outputKeyPath\":\"$.license_plate\"}," +
                 "{\"inputValuePath\":\"$.last_stop_id\",\"valueModifierScript\":\"parseInt(value, 10)\",\"outputKeyPath\":\"$.last_stop_id\"}," +
                 "{\"inputValuePath\":\"$.location.type\",\"outputKeyPath\":\"$['location.type']\"}," +
-//                "{\"inputValuePath\":\"$.location.coordinates\",\"outputKeyPath\":\"$['location.coordinates']\"}," +
-                "{\"inputValuePath\":\"$.location.coordinates\",\"valueModifierScript\":\"String(value)\",\"outputKeyPath\":\"$['location.coordinates']\"}," +
+                "{\"inputValuePath\":\"$.location.coordinates\",\"outputKeyPath\":\"$['location.coordinates']\"}," +
+//                "{\"inputValuePath\":\"$.location.coordinates\",\"valueModifierScript\":\"String(value)\",\"outputKeyPath\":\"$['location.coordinates']\"}," +
                 "{\"inputValuePath\":\"$.speed\",\"valueModifierScript\":\"parseFloat(value)\",\"outputKeyPath\":\"$.speed\"}," +
                 "{\"inputValuePath\":\"$.observationDateTime\",\"outputKeyPath\":\"$.observationDateTime\"}," +
                 "{\"inputValuePath\":\"$.trip_delay\",\"valueModifierScript\":\"parseFloat(value)\",\"outputKeyPath\":\"$.trip_delay\"}]," +
