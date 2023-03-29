@@ -130,4 +130,19 @@ public class JSEvalTest {
         System.out.println(obj);
         System.out.println(obj.getClass().getName());
     }
+
+    @Test
+    void jsonTimeToDate() throws ScriptException {
+
+        String script = "new Date(new Date().toDateString() + ' ' + value + ' UTC').toISOString().replace('.000Z', '+05:30')";
+
+        Bindings engineScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
+        String data = "14:32:20";
+
+        engineScope.put("value", data);
+        Object obj = engine.eval(script, context);
+        System.out.println("Result is");
+        System.out.println(obj);
+        System.out.println(obj.getClass().getName());
+    }
 }
