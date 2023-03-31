@@ -18,6 +18,8 @@ public class TopologyConfig {
   public boolean isBoundedJob;
   public long pollingInterval;
 
+  public boolean enableCheckpointing;
+
   public AdaptorType adaptorType;
   public JSONObject ruleSourceSpec;
   public JSONObject ruleSourceParseSpec;
@@ -40,6 +42,12 @@ public class TopologyConfig {
       adaptorType = config.getEnum(AdaptorType.class, "adaptorType");
     } else {
       adaptorType = AdaptorType.ETL;
+    }
+
+    if (config.has("enableCheckpointing")) {
+      enableCheckpointing = config.getBoolean("enableCheckpointing");
+    } else {
+      enableCheckpointing = true;
     }
     
     // TODO: Run validations

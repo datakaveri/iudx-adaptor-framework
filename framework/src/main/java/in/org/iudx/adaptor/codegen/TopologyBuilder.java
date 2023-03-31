@@ -89,7 +89,7 @@ public class TopologyBuilder {
                         StreamExecutionEnvironment.class);
 
         // setting checkpointing
-        if (!tc.isBoundedJob && tc.adaptorType != TopologyConfig.AdaptorType.RULES) {
+        if (tc.enableCheckpointing && !tc.isBoundedJob && tc.adaptorType != TopologyConfig.AdaptorType.RULES) {
             if (tc.inputSpec.has("pollingInterval")) { 
                 mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
             } else {
@@ -97,7 +97,7 @@ public class TopologyBuilder {
             }
         }
 
-        if (!tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
+        if (tc.enableCheckpointing && !tc.isBoundedJob && tc.adaptorType == TopologyConfig.AdaptorType.RULES) {
             mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * $L * 4)", tc.defaultStateExpiry);
             mainBuilder.addStatement("env.getCheckpointConfig().setCheckpointTimeout(1000 * 60 * $L * 4)", tc.defaultStateExpiry);
             mainBuilder.addStatement("env.getCheckpointConfig().setMaxConcurrentCheckpoints(1)");
