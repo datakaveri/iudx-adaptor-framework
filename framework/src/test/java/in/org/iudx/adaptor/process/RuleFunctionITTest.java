@@ -49,21 +49,20 @@ public class RuleFunctionITTest {
     pub.initialize();
     pub.sendRuleMessage();
 
-    int numMsgs = 5;
-    for (int i = 0; i < numMsgs; i++) {
-      pub.sendMessage(i);
-    }
+//    int numMsgs = 5;
+//    for (int i = 0; i < numMsgs; i++) {
+//      pub.sendMessage(i);
+//    }
 
     String parseSpecObj = new JSONObject().put("timestampPath", "$.observationDateTime")
 //            .put("keyPath", "$.id")
             .put("staticKey", "ruleTest")
 //            .put("expiry", 200)
-            .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
-            .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
+            .toString();
 
     RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
-    config.setQueueName("adaptor-test");
+    config.setQueueName("test");
     RMQGenericSource source = new RMQGenericSource<Message>(config,
             TypeInformation.of(Message.class), "test", parseSpecObj);
 
@@ -76,16 +75,20 @@ public class RuleFunctionITTest {
     DataStreamSource<Message> so = env.addSource(source);
     DataStreamSource<Rule> rules = env.addSource(ruleSource);
 
-    BroadcastStream<Rule> ruleBroadcastStream = rules.broadcast(
+    BroadcastStream<Rule> ruleBroadcastStream = rules.name("Rules Source").broadcast(
             RuleStateDescriptor.ruleMapStateDescriptor);
-    SingleOutputStreamOperator<RuleResult> ds = so.assignTimestampsAndWatermarks(
-                    new MessageWatermarkStrategy()).keyBy((Message msg) -> msg.key)
-            .connect(ruleBroadcastStream).process(new RuleFunction()).setParallelism(1);
+
+    
+    SingleOutputStreamOperator<RuleResult> ds = so.name("RMQ Data Source").assignTimestampsAndWatermarks(
+                  new MessageWatermarkStrategy()).keyBy((Message msg) -> msg.key)
+          .connect(ruleBroadcastStream).process(new RuleFunction()).name("Execute Rules").setParallelism(1);
+
 
     RMQConfig rmqConfig = new RMQConfig();
     rmqConfig.setUri("amqp://guest:guest@localhost:5672");
 
-    ds.addSink(new DumbRuleResultSink());
+    ds.addSink(new DumbRuleResultSink()).name("Rule Result Sink");
+
     CompletableFuture<Void> handle = CompletableFuture.runAsync(() -> {
       try {
         env.execute("Simple Get");

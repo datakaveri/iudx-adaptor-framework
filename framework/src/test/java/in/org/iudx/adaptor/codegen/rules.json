@@ -5,6 +5,7 @@
     "type": "rmq",
     "uri": "amqp://guest:guest@rmq:5672",
     "queueName": "data",
+    "expiry": 2,
     "parseSpec": {
       "type": "json",
       "messageContainer": "single",

@@ -18,10 +18,17 @@ public class TopologyConfig {
   public boolean isBoundedJob;
   public long pollingInterval;
 
+  public boolean enableCheckpointing;
+
   public AdaptorType adaptorType;
   public JSONObject ruleSourceSpec;
   public JSONObject ruleSourceParseSpec;
   public JSONObject inputSourceParseSpec;
+
+  public boolean hasTransformSpec;
+  public boolean hasDedupSpec;
+
+  public long defaultStateExpiry;
 
   public TopologyConfig(String configString) throws Exception {
 
@@ -36,6 +43,12 @@ public class TopologyConfig {
     } else {
       adaptorType = AdaptorType.ETL;
     }
+
+    if (config.has("enableCheckpointing")) {
+      enableCheckpointing = config.getBoolean("enableCheckpointing");
+    } else {
+      enableCheckpointing = true;
+    }
     
     // TODO: Run validations
     if (config.has("failureRecoverySpec")) {
@@ -44,10 +57,22 @@ public class TopologyConfig {
     }
     inputSpec = config.getJSONObject("inputSpec");
 
-    if (adaptorType == AdaptorType.ETL) {
+    if (inputSpec.has("parseSpec")) {
+      inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
+    }
+
+    if (config.has("parseSpec")) {
       parseSpec = config.getJSONObject("parseSpec");
-      deduplicationSpec = config.getJSONObject("deduplicationSpec");
+    }
+
+    if (config.has("transformSpec")) {
       transformSpec = config.getJSONObject("transformSpec");
+      hasTransformSpec = true;
+    }
+
+    if (config.has("deduplicationSpec")) {
+      deduplicationSpec = config.getJSONObject("deduplicationSpec");
+      hasDedupSpec = true;
     }
 
     publishSpec = config.getJSONObject("publishSpec");
@@ -68,8 +93,8 @@ public class TopologyConfig {
         ruleSourceParseSpec = ruleSourceSpec.getJSONObject("parseSpec");
       }
 
-      if (inputSpec.has("parseSpec")) {
-        inputSourceParseSpec = inputSpec.getJSONObject("parseSpec");
+      if (inputSpec.has("expiry")) {
+        defaultStateExpiry = inputSpec.getLong("expiry");
       }
     }
   }

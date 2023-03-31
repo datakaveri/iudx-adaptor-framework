@@ -19,7 +19,7 @@ service:
   targetPort: http-metrics
 
 nodeSelector:
-  node.kubernetes.io/instance-type: t3.medium
+  node.kubernetes.io/instance-type: t3a.medium
 
 resources:
   limits:

@@ -22,7 +22,7 @@ services:
       PGADMIN_DEFAULT_EMAIL: "test@gmail.com"
       PGADMIN_DEFAULT_PASSWORD: "adaptor@pgadmin"
     ports:
-      - 16543:80
+      - 5050:80
     networks:
       - adaptor-net
     depends_on:

@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.datatypes;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
 import org.apache.flink.api.common.time.Time;
 
 import java.io.Serializable;
@@ -8,6 +9,7 @@ import java.util.Objects;
 public class Rule implements Serializable, AdaptorRecord {
 
   public Integer ruleId;
+  @JsonRawValue
   public String sqlQuery;
   public RuleType type;
   public String sinkExchangeKey;

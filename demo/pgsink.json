@@ -1,0 +1,56 @@
+{
+  "name": "pgsink-test",
+  "adaptorType": "ETL",
+  "inputSpec": {
+    "type": "http",
+    "url": "http://mockserver:8080/simpleB",
+    "requestType": "GET",
+    "pollingInterval": 500
+  },
+
+  "parseSpec": {
+    "type": "json",
+    "messageContainer": "array",
+    "containerPath": "$.data",
+    "keyPath": "$.deviceId",
+    "timestampPath": "$.time",
+    "inputTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+    "outputTimeFormat": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+  },
+
+  "deduplicationSpec": {
+    "type": "timeBased"
+  },
+
+  "transformSpec": {
+    "type": "jsPath",
+    "template": "{ 'observationDateTime': '2021', 'co2AvgOverTime': 100, 'id': 'abc'}",
+    "jsonPathSpec": [
+      {
+        "outputKeyPath": "$.observationDateTime",
+        "inputValuePath": "$.time"
+      },
+      {
+        "outputKeyPath": "$.co2AvgOverTime",
+        "inputValuePath": "$.k1"
+      },
+      {
+        "outputKeyPath": "$.id",
+        "inputValuePath": "$.deviceId",
+        "valueModifierScript": "value.split('-')[0]"
+      }
+    ]
+  },
+  "publishSpec": {
+    "type": "postgres",
+    "url": "jdbc:postgresql://postgres:5432/iudx-adaptor",
+    "username": "root",
+    "password": "adaptor@db",
+    "tableName": "test",
+    "schema": {
+      "observationDateTime": "timestamp",
+      "id": "string",
+      "co2AvgOverTime": "int"
+    }
+  }
+}

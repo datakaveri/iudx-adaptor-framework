@@ -8,9 +8,26 @@ config:
             log: log
             stream: stream
             docker_time: time
-      - regex:
-          expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[(event_key - )(?P<event_key>.*?)\])? ?-? ?(\[(status_code - )(?P<status_code>\d{3})\])? ?-? ?(\[(summary - )(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
-          source: log
+
+      - match:
+          selector: '{app="flink-cluster"}'
+          stages:
+            - regex:
+                expression: (?P<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})? ?\[?(?P<level>.*?)\]? (?P<context>.*?) \[(?P<adaptor_id>.*?)\] - (\[(event_key - )(?P<event_key>.*?)\])? ?-? ?(\[(status_code - )(?P<status_code>\d{3})\])? ?-? ?(\[(summary - )(?P<http_error_summary>.*?)\])?-?(?P<message>(?s:.*))$
+                source: log
+
+      - match:
+          selector: '{app="adaptor-server"}'
+          stages:
+            - json:
+                expressions:
+                  index: logEvent.action[2].metaClass.metaClass.metaClass.response.index._index
+                  error_type: logEvent.action[2].metaClass.metaClass.metaClass.response.index.error.type
+                  source: log
+            - labels:
+                index:
+                error_type:
+
       - labels:
           context:
           adaptor_id:
@@ -21,12 +38,14 @@ config:
           http_error_summary:
           message:
           event_key:
+          index:
+          error_type:
 
       - output:
           source: log
 
 nodeSelector:
-  node.kubernetes.io/instance-type: t3.medium
+  node.kubernetes.io/instance-type: t3a.medium
   target.application: adaptor-framework
 
 resources: 

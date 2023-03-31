@@ -10,6 +10,7 @@ import in.org.iudx.adaptor.server.flink.FlinkClientService;
 import in.org.iudx.adaptor.server.specEndpoints.InputSpecEndpoint;
 import in.org.iudx.adaptor.server.specEndpoints.ParseSpecEndpoint;
 import in.org.iudx.adaptor.server.specEndpoints.TransformSpecEndpoint;
+import in.org.iudx.adaptor.server.ruleTestEndpoints.SqlQueryTestEndpoint;
 import in.org.iudx.adaptor.server.util.*;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -33,6 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.FileSystems;
+import java.sql.SQLException;
 import java.util.Set;
 
 import static in.org.iudx.adaptor.server.util.Constants.*;
@@ -133,6 +135,8 @@ public class Server extends AbstractVerticle {
 
     InputSpecEndpoint ise = new InputSpecEndpoint();
     ParseSpecEndpoint pse = new ParseSpecEndpoint();
+
+    SqlQueryTestEndpoint sqlQueryTestEndpoint = new SqlQueryTestEndpoint();
 
 
     if (isSsl) {
@@ -438,6 +442,32 @@ public class Server extends AbstractVerticle {
             .handler(AuthHandler.create(databaseService))
             .handler(this::deleteRuleHandler);
 
+    router.post(SQL_QUERY_TEST_ROUTE)
+            .handler(AuthHandler.create(databaseService))
+            .handler(routingContext -> {
+              HttpServerResponse response = routingContext.response();
+              JsonObject jsonBody = routingContext.getBodyAsJson();
+              String query = jsonBody.getString("query");
+              String inputData = jsonBody.getString("inputData");
+              try {
+                String resp = sqlQueryTestEndpoint.runQuery(query, inputData);
+                JsonObject r = new JsonObject().put("result", resp)
+                        .put("success", true)
+                        .put("querySuccess", true)
+                        .put("message", "Executed successfully");
+                response.setStatusCode(200)
+                        .end(r.toString());
+              } catch (SQLException e) {
+                JsonObject r = new JsonObject()
+                        .put("success", true)
+                        .put("querySuccess", false)
+                        .put("message", "Query execution failed")
+                        .put("errorStack", e.getMessage());
+                response.setStatusCode(200).end(r.toString());
+              } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+              }
+            });
     /* Start server */
     server.requestHandler(router).listen(port);
 
