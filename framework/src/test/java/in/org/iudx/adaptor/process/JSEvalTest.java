@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.process;
 
+import com.github.sisyphsu.dateparser.DateParserUtils;
 import net.minidev.json.JSONArray;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,8 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.script.SimpleScriptContext;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -134,15 +137,19 @@ public class JSEvalTest {
     @Test
     void jsonTimeToDate() throws ScriptException {
 
-        String script = "new Date(new Date().toDateString() + ' ' + value + ' UTC').toISOString().replace('.000Z', '+05:30')";
+        String script = "new Date(new Date(new Date('2023-04-09T23:32:27.000Z').toLocaleString('en-US', {timeZone: 'Asia/Kolkata'})).toDateString() + ' ' + value + ' UTC').toISOString().replace('.000Z', '+05:30')";
+//        String script = "new Date('2023-04-09T23:32:27.000Z').toLocaleString('en-US', {timeZone: 'Asia/Kolkata'})";
 
         Bindings engineScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
-        String data = "14:32:20";
+        String data = "15:27:20";
 
         engineScope.put("value", data);
         Object obj = engine.eval(script, context);
         System.out.println("Result is");
         System.out.println(obj);
         System.out.println(obj.getClass().getName());
+
+        LocalDateTime localDateTime = DateParserUtils.parseDateTime(obj.toString());
+        System.out.println(Timestamp.valueOf(localDateTime));
     }
 }
