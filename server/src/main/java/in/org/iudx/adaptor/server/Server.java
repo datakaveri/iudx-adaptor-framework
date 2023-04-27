@@ -1195,7 +1195,7 @@ public class Server extends AbstractVerticle {
                   requestBody.put(URI, JOBS_API + jobId);
                   requestBody.put(JOB_ID, jobId);
                   requestBody.put(DATA, new JsonObject());
-                  requestBody.put(MODE, STOP);
+                  requestBody.put(MODE, CANCEL);
 
                   flinkClient.handleJob(requestBody, resHandler -> {
                     if (resHandler.succeeded()) {

@@ -449,13 +449,13 @@ public class TopologyBuilder {
 
             }
         }
-        if (tc.isBoundedJob) {
-            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
-                    DataStream.class, BoundedProcessFunction.class);
-        } else {
-            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
-                    DataStream.class, GenericProcessFunction.class);
-        }
+//        if (tc.isBoundedJob) {
+//            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
+//                    DataStream.class, BoundedProcessFunction.class);
+//        } else {
+//            mainBuilder.addStatement("$T<String> errorStream = ds.getSideOutput($T.errorStream)",
+//                    DataStream.class, GenericProcessFunction.class);
+//        }
 
 
 
