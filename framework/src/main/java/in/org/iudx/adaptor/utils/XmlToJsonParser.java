@@ -2,8 +2,9 @@ package in.org.iudx.adaptor.utils;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.json.JsonMapper;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 
 import java.io.IOException;
 
@@ -13,17 +14,31 @@ class Data {
   private String name;
 }
 
+class Traveler {
+  private Integer id;
+  private String name;
+  private String email;
+  private String adderes;
+  private String createdat;
+}
+
 public class XmlToJsonParser {
-  @Test
+//  @Test
   public void xmlToJson() throws IOException {
-    String xml = "<Data><id>1</id><name>John Doe</name></Data>";
+    XmlMapper mapper = new XmlMapper();
 
-    XmlMapper xmlMapper = new XmlMapper();
-    Data dataInstance = xmlMapper.readValue(xml.getBytes(), Data.class);
+    try(CloseableHttpClient client = HttpClients.createDefault()) {
+      HttpGet request = new HttpGet("http://restapi.adequateshop.com/api/Traveler/11133");
 
-    JsonMapper jsonMapper = new JsonMapper();
-    String json = jsonMapper.writeValueAsString(dataInstance);
+      Traveler response = client.execute(request, httpResponse -> mapper.readValue(httpResponse.getEntity().getContent(), Traveler.class));
 
-    Assertions.assertEquals("{\"id\":1,\"name\":\"John Doe\"}", json);
+      JsonMapper jsonMapper = new JsonMapper();
+      String json = jsonMapper.writeValueAsString(response);
+      System.out.println(json);
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
   }
 }
