@@ -132,7 +132,7 @@ public class HttpEntity {
      * - This is the method which deals with responses Raw
      */
     public String getSerializedMessage() {
-        if(apiConfig.responseType.equals(ContentType.APPLICATION_XML)) {
+        if(apiConfig.responseType.equals(ContentType.APPLICATION_XML.getMimeType())) {
           ClassicHttpRequest httpRequest = requestBuilder.build();
           try(ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
             org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();

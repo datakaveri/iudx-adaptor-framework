@@ -17,6 +17,7 @@ public class XmlToJsonParseTest {
       .setRequestType("GET");
 
     HttpEntity httpEntity = new HttpEntity(apiConfig, "unit_test");
+    LOGGER.info(ContentType.APPLICATION_XML.getMimeType());
     String res  = httpEntity.getSerializedMessage();
     LOGGER.info(res);
   }

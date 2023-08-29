@@ -29,7 +29,7 @@ public class ApiConfig implements Serializable {
     public long requestTimeout = 10;
     public long pollingInterval;
     public boolean hasScript = false;
-  public ContentType responseType = ContentType.APPLICATION_JSON;
+  public String responseType = ContentType.APPLICATION_JSON.getMimeType();
 
     public Map<String,String> headers_DEPRECATED = new HashMap<String,String>();
     public List<Header> headers = new ArrayList<Header>();
@@ -80,7 +80,7 @@ public class ApiConfig implements Serializable {
     }
 
     public ApiConfig setResponseType(ContentType contentType) {
-      this.responseType = contentType;
+      this.responseType = contentType.getMimeType();
       return this;
     }
 

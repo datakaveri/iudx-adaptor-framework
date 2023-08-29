@@ -19,7 +19,7 @@ public class TopologyBuilderTest {
   @Test
   void singleContainerTopology() throws Exception {
 
-    
+
     TopologyConfig top = new TopologyConfig(
             new String(
                     Files.readAllBytes(
@@ -34,7 +34,7 @@ public class TopologyBuilderTest {
   @Test
   void buildJSTopology() throws Exception {
 
-    
+
     TopologyConfig top = new TopologyConfig(
                           new String(
                             Files.readAllBytes(
@@ -49,7 +49,7 @@ public class TopologyBuilderTest {
   @Test
   void headersTop() throws Exception {
 
-    
+
     TopologyConfig top = new TopologyConfig(
                           new String(
                             Files.readAllBytes(
@@ -64,7 +64,7 @@ public class TopologyBuilderTest {
   @Test
   void urlScripts() throws Exception {
 
-    
+
     TopologyConfig top = new TopologyConfig(
                           new String(
                             Files.readAllBytes(
@@ -137,6 +137,19 @@ public class TopologyBuilderTest {
                     Files.readAllBytes(
                             Paths.get(
                                     "src/test/java/in/org/iudx/adaptor/codegen/pgsink.json"))));
+    TopologyBuilder builder = new TopologyBuilder(top);
+    builder.gencode();
+  }
+
+  @Test
+  void xmlToJsonParser() throws Exception {
+
+    TopologyConfig top = new TopologyConfig(
+      new String(
+        Files.readAllBytes(
+          Paths.get(
+            "src/test/java/in/org/iudx/adaptor/codegen/newSpec.json"))));
+
     TopologyBuilder builder = new TopologyBuilder(top);
     builder.gencode();
   }

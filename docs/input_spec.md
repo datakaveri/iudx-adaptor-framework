@@ -33,6 +33,9 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
       - If `{ "type": "http" }`
           - GET
           - POST
+  - **responseType**(String):
+      - "application/json"
+      - "application/xml"
   - **pollingInterval**(Long): Interval in *milliseconds*To be used mostly for short interval calls to
     the source. For
     scheduler (Long interval polling), use this field as `-1`.
@@ -62,7 +65,7 @@ The schema of the inputSpec is as shown below. **Bold** implies that the propert
 
 
 - **expiry**(Long): Fallback expiry time for each message. It is supported by all type of protocols. It is of type number in minutes. It is a mandatory for rule jobs
-  - Note: Each rule can have its own expiry time but in any case if there are no rules available then the above expiry time is used 
+  - Note: Each rule can have its own expiry time but in any case if there are no rules available then the above expiry time is used
 
 Example (ETL Job):
 
@@ -71,6 +74,7 @@ Example (ETL Job):
     "type": "http",
     "url": "https://rs.iudx.org.in/ngsi-ld/v1/entity/abc",
     "requestType": "GET",
+    "responseType": "application/xml",
     "pollingInterval": 10000,
     "headers": {
         "content-type": "application/json"
@@ -85,6 +89,7 @@ Example (ETL Scheduled Job):
   "type": "http",
   "url": "https://rs.iudx.org.in/ngsi-ld/v1/entity/abc",
   "requestType": "GET",
+  "responseType": "application/json",
   "pollingInterval": -1,
   "headers": {
     "content-type": "application/json"
@@ -116,4 +121,3 @@ Example (Rule Job)
   "expiry": 10
 }
 ```
- 
