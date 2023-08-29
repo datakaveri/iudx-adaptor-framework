@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.message.BasicHeader;
 
@@ -28,6 +29,7 @@ public class ApiConfig implements Serializable {
     public long requestTimeout = 10;
     public long pollingInterval;
     public boolean hasScript = false;
+  public ContentType responseType = ContentType.APPLICATION_JSON;
 
     public Map<String,String> headers_DEPRECATED = new HashMap<String,String>();
     public List<Header> headers = new ArrayList<Header>();
@@ -77,6 +79,10 @@ public class ApiConfig implements Serializable {
         return this;
     }
 
+    public ApiConfig setResponseType(ContentType contentType) {
+      this.responseType = contentType;
+      return this;
+    }
 
     public String[] getHeaderString_DEPRECATED() {
         List<String> headerList = new ArrayList<String>();

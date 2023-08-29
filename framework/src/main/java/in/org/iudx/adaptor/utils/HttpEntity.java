@@ -18,6 +18,8 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.util.Timeout;
+import org.json.JSONObject;
+import org.json.XML;
 
 /**
  * {@link HttpEntity} - Http requests/response handler
@@ -130,39 +132,59 @@ public class HttpEntity {
      * - This is the method which deals with responses Raw
      */
     public String getSerializedMessage() {
-        if (apiConfig.requestType.equals("POST")) {
+        if(apiConfig.responseType.equals(ContentType.APPLICATION_XML)) {
+          ClassicHttpRequest httpRequest = requestBuilder.build();
+          try(ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
+            org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
+
+            if (entity != null) {
+              byte[] bytesArray = EntityUtils.toByteArray(entity);
+              String responseBody = new String(bytesArray, StandardCharsets.UTF_8);
+
+              JSONObject jsonObject = XML.toJSONObject(responseBody);
+              return jsonObject.toString();
+            }
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+
+          return "";
+        } else {
+          if (apiConfig.requestType.equals("POST")) {
             String reqBody = "";
             if (this.body == null) {
-                if (apiConfig.body == null) {
-                    return "";
-                } else {
-                    reqBody = apiConfig.body;
-                }
-            } else {
+              if (apiConfig.body == null) {
+                return "";
+              } else {
                 reqBody = apiConfig.body;
+              }
+            } else {
+              reqBody = apiConfig.body;
             }
 
             requestBuilder.setEntity(reqBody, ContentType.APPLICATION_JSON);
-        }
-        ClassicHttpRequest httpRequest = requestBuilder.build();
-        try (ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
+          }
+
+          ClassicHttpRequest httpRequest = requestBuilder.build();
+          try (ClassicHttpResponse resp = httpClient.execute(httpRequest)) {
             org.apache.hc.core5.http.HttpEntity entity = resp.getEntity();
-            
+
             if (entity != null) {
-                byte[] bytesArray = EntityUtils.toByteArray(entity);
-                int contentLength = bytesArray.length;
-                String responseBody = new String(bytesArray, StandardCharsets.UTF_8);
-                logger.info("[status_code - " + resp.getCode() + "] - [summary - status response " + resp.getReasonPhrase() + "] API with response of size " + contentLength + " bytes");
-                if (resp.getCode() / 100 != 2) {
-                    logger.error("[status_code - " + resp.getCode() + "] - [summary - " + responseBody + "] Http request failed");
-                    return "";
-                }
-                return responseBody;
+              byte[] bytesArray = EntityUtils.toByteArray(entity);
+              int contentLength = bytesArray.length;
+              String responseBody = new String(bytesArray, StandardCharsets.UTF_8);
+              logger.info("[status_code - " + resp.getCode() + "] - [summary - status response " + resp.getReasonPhrase() + "] API with response of size " + contentLength + " bytes");
+              if (resp.getCode() / 100 != 2) {
+                logger.error("[status_code - " + resp.getCode() + "] - [summary - " + responseBody + "] Http request failed");
+                return "";
+              }
+              return responseBody;
             }
             return "";
-        } catch (Exception e) {
+          } catch (Exception e) {
             logger.error("Error http entity", e);
             return "";
+          }
         }
     }
 

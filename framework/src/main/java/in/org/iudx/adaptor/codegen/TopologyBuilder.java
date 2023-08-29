@@ -90,7 +90,7 @@ public class TopologyBuilder {
 
         // setting checkpointing
         if (tc.enableCheckpointing && !tc.isBoundedJob && tc.adaptorType != TopologyConfig.AdaptorType.RULES) {
-            if (tc.inputSpec.has("pollingInterval")) { 
+            if (tc.inputSpec.has("pollingInterval")) {
                 mainBuilder.addStatement("env.enableCheckpointing(1000 * 100 * $L)", tc.pollingInterval);
             } else {
                 mainBuilder.addStatement("env.enableCheckpointing(1000 * 60 * 10)");
@@ -214,10 +214,10 @@ public class TopologyBuilder {
         if ("http".equals(inputSpec.getString("type"))) {
             mainBuilder
                     .addStatement(
-                            "$T apiConfig = new $T().setUrl($S).setRequestType($S).setPollingInterval($L)",
+                            "$T apiConfig = new $T().setUrl($S).setRequestType($S).setPollingInterval($L).setResponseType($S)",
                             ApiConfig.class, ApiConfig.class,
                             inputSpec.getString("url"), inputSpec.getString("requestType"),
-                            inputSpec.getLong("pollingInterval"));
+                            inputSpec.getLong("pollingInterval"), inputSpec.getString("responseType"));
 
             if (inputSpec.has("headers")) {
                 JSONArray headers = inputSpec.getJSONArray("headers");
