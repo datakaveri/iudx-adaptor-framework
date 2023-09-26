@@ -3,6 +3,7 @@ package in.org.iudx.adaptor.process;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.source.JsonPathParser;
 import in.org.iudx.adaptor.source.RMQGenericSource;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -39,7 +40,12 @@ public class JSPathITTest {
         config.setUri("amqp://guest:guest@localhost:5672");
         config.setQueueName("test");
         config.setRoutingKey("routingKey");
-        RMQGenericSource source = new RMQGenericSource<>(config, TypeInformation.of(Message.class), "surat-itms-pg-data-onboard", "{\"messageContainer\":\"single\",\"timestampPath\":\"$.observationDateTime\",\"keyPath\":\"$.id\",\"type\":\"json\"}");
+
+        String parseSpecObj = "{\"messageContainer\":\"single\",\"timestampPath\":\"$.observationDateTime\",\"keyPath\":\"$.id\",\"type\":\"json\"}";
+
+        JsonPathParser<Message> parser = new JsonPathParser<>(parseSpecObj);
+
+        RMQGenericSource source = new RMQGenericSource<>(config, TypeInformation.of(Message.class), "surat-itms-pg-data-onboard", parser);
         DataStreamSource<Message> so = env.addSource(source);
         TimeBasedDeduplicator dedup = new TimeBasedDeduplicator();
         String transformSpec = "{\"template\":\"{'id': 'suratmunicipal.org/6db486cb4f720e8585ba1f45a931c63c25dbbbda/rs.iudx.org.in/surat-itms-realtime-info/surat-itms-live-eta'," +
@@ -81,4 +87,6 @@ public class JSPathITTest {
             handle.cancel(true); // this will interrupt the job execution thread, cancel and close the job
         }
     }
+
+
 }

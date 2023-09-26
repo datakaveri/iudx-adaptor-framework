@@ -269,17 +269,50 @@ public class TopologyBuilder {
                 mainBuilder.addStatement("config.setRoutingKey($S)", inputSpec.getString("sourceId"));
             }
 
-            mainBuilder.addStatement("$T source = new $T<>(config, $T.of($T.class), $S, $S)",
-                    RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
-                    Message.class, tc.name, inputParseSpec);
+            this.rmqSourceParseSpecBuilder(mainBuilder, inputParseSpec);
+        }
+    }
 
-            mainBuilder.addStatement(
-                    "$T<$T> so = env.addSource(source)",
-                    DataStreamSource.class, Message.class);
+    private void rmqSourceParseSpecBuilder(Builder mainBuilder, JSONObject parseSpec) {
+        String messageType = parseSpec.getString("type");
+        mainBuilder.addStatement("String rmqParseSpec = $S", parseSpec.toString());
+
+        if ("json".equals(messageType)) {
+            String containerType = parseSpec.getString("messageContainer");
+            if ("array".equals(containerType)) {
+                containerType = "array";
+                mainBuilder.addStatement("$T<$T<$T>> parser = new $T<$T<$T>>(rmqParseSpec)",
+                        JsonPathParser.class, List.class, Message.class,
+                        JsonPathParser.class, List.class, Message.class);
+
+                mainBuilder.addStatement("$T<$T<$T>> source = new $T<$T<$T>>(config, $T.of($T.class), $S, parser)",
+                        RMQGenericSource.class, List.class, Message.class, RMQGenericSource.class, List.class, Message.class,
+                        TypeInformation.class, Message.class, tc.name);
+
+                mainBuilder.addStatement(
+                        "$T<$T> so = env.addSource(source)",
+                        DataStreamSource.class, Message.class);
+
+            } else if ("single".equals(containerType)) {
+                containerType = "single";
+                mainBuilder.addStatement("$T<$T> parser = new $T<$T>(rmqParseSpec)",
+                        JsonPathParser.class, Message.class,
+                        JsonPathParser.class, Message.class);
+
+                mainBuilder.addStatement("$T<$T> source = new $T<$T>(config, $T.of($T.class), $S, parser)",
+                        RMQGenericSource.class, Message.class, RMQGenericSource.class, Message.class,
+                        TypeInformation.class, Message.class, tc.name);
+
+                mainBuilder.addStatement(
+                        "$T<$T> so = env.addSource(source)",
+                        DataStreamSource.class, Message.class);
+            }
         }
     }
 
     private void parseSpecBuilder(Builder mainBuilder, JSONObject parseSpec) {
+
+        // TODO bring http specific source builder out so that it can be reused for RMQ source as well
 
         String messageType = parseSpec.getString("type");
         mainBuilder.addStatement("String parseSpec = $S", parseSpec.toString());
@@ -309,6 +342,43 @@ public class TopologyBuilder {
         }
     }
 
+    private void ruleSourceParseSpecBuilder(Builder mainBuilder, JSONObject parseSpec) {
+        String messageType = parseSpec.getString("type");
+        mainBuilder.addStatement("String ruleParseSpec = $S", parseSpec.toString());
+
+        if ("json".equals(messageType)) {
+            String containerType = parseSpec.getString("messageContainer");
+            if ("array".equals(containerType)) {
+                containerType = "array";
+                mainBuilder.addStatement("$T<$T<$T>> parser = new $T<$T<$T>>(ruleParseSpec)",
+                        JsonPathParser.class, List.class, Message.class,
+                        JsonPathParser.class, List.class, Message.class);
+
+                mainBuilder.addStatement("$T<$T<$T>> ruleSource = new $T<$T<$T>>(ruleConfig, $T.of($T.class), $S, parser)",
+                        RMQGenericSource.class, List.class, Rule.class, RMQGenericSource.class, List.class, Rule.class,
+                        TypeInformation.class, Rule.class, tc.name);
+
+                mainBuilder.addStatement(
+                        "$T<$T> rules = env.addSource(ruleSource)",
+                        DataStreamSource.class, Rule.class);
+
+            } else if ("single".equals(containerType)) {
+                containerType = "single";
+                mainBuilder.addStatement("$T<$T> parser = new $T<$T>(rmqParseSpec)",
+                        JsonPathParser.class, Rule.class,
+                        JsonPathParser.class, Rule.class);
+
+                mainBuilder.addStatement("$T<$T> ruleSource = new $T<$T>(ruleConfig, $T.of($T.class), $S, parser)",
+                        RMQGenericSource.class, Rule.class, RMQGenericSource.class, Rule.class, TypeInformation.class,
+                        Rule.class, tc.name);
+
+                mainBuilder.addStatement(
+                        "$T<$T> rules = env.addSource(ruleSource)",
+                        DataStreamSource.class, Rule.class);
+            }
+        }
+    }
+
     private void ruleSourceSpecBuilder(Builder mainBuilder, JSONObject ruleSourceSpec,
                                        JSONObject ruleSourceParseSpec) {
         if ("rmq".equals(ruleSourceSpec.getString("type"))) {
@@ -317,13 +387,18 @@ public class TopologyBuilder {
             mainBuilder.addStatement("ruleConfig.setUri($S)", ruleSourceSpec.getString("uri"));
             mainBuilder.addStatement("ruleConfig.setQueueName($S)", ruleSourceSpec.getString("queueName"));
 
-            mainBuilder.addStatement("$T ruleSource = new $T<>(ruleConfig, $T.of($T.class), $S, $S)",
-                    RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
-                    Rule.class, tc.name, ruleSourceParseSpec);
+            if (ruleSourceParseSpec.isEmpty()) {
+                mainBuilder.addStatement("$T ruleSource = new $T<>(ruleConfig, $T.of($T.class), $S, $S)",
+                        RMQGenericSource.class, RMQGenericSource.class, TypeInformation.class,
+                        Rule.class, tc.name, ruleSourceParseSpec);
 
-            mainBuilder.addStatement(
-                    "$T<$T> rules = env.addSource(ruleSource)",
-                    DataStreamSource.class, Rule.class);
+                mainBuilder.addStatement(
+                        "$T<$T> rules = env.addSource(ruleSource)",
+                        DataStreamSource.class, Rule.class);
+            } else {
+                this.ruleSourceParseSpecBuilder(mainBuilder, ruleSourceParseSpec);
+            }
+
         }
     }
 

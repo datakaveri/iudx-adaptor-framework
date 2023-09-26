@@ -41,6 +41,9 @@ public class JsonPathParser<T> implements Parser<T> {
 
   private String staticKey = "";
 
+  private Long expiry;
+  private boolean hasMessageExpiry = false;
+
   private static final Logger LOGGER = LogManager.getLogger(JsonPathParser.class);
 
   public JsonPathParser(String parseSpecString) {
@@ -78,6 +81,11 @@ public class JsonPathParser<T> implements Parser<T> {
     if(!outputTimeFormat.isEmpty()) {
      toFormat = new SimpleDateFormat(outputTimeFormat); 
      toFormat.setTimeZone(TimeZone.getTimeZone("IST"));
+    }
+
+    if (parseSpec.has("expiry")) {
+      this.expiry = parseSpec.getLong("expiry");
+      this.hasMessageExpiry = true;
     }
 
     initialize();
@@ -153,6 +161,10 @@ public class JsonPathParser<T> implements Parser<T> {
         msg.setKey(ctx.read(keyPath).toString());
       }
       msg = parseTime(ctx, msg);
+
+      if (this.hasMessageExpiry) {
+        msg.setExpiry(this.expiry);
+      }
       return (T) msg;
     }
 
@@ -182,7 +194,13 @@ public class JsonPathParser<T> implements Parser<T> {
 
         String key = tmpctx.read(keyPath).toString();
         tmpmsg = parseTime(tmpctx, tmpmsg);
+
+//        System.out.println(key);
         tmpmsg.setKey(key);
+
+        if (this.hasMessageExpiry) {
+          tmpmsg.setExpiry(this.expiry);
+        }
         msgArray.add(tmpmsg);
       }
       return (T) msgArray;

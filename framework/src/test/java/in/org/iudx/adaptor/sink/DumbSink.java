@@ -32,6 +32,7 @@ public class DumbSink implements SinkFunction<Message> {
    */
   @Override
   public void invoke(Message msg, Context ctx) {
+    System.out.println("Dumb Sink");
     logger.info(msg.toString());
     logger.info((SerializationSchema<Message>) msg1 -> msg1.toString().getBytes());
   }

@@ -1,5 +1,6 @@
 package in.org.iudx.adaptor.source;
 
+import in.org.iudx.adaptor.codegen.Parser;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.logger.CustomLogger;
@@ -18,16 +19,16 @@ import org.apache.flink.streaming.connectors.rabbitmq.RMQSource;
  * Notes:
  * - ?This is serializable from flink examples
  */
-public class RMQGenericSource<T> extends RMQSource<T> {
+public class RMQGenericSource<PO> extends RMQSource<PO> {
 
   private static final long serialVersionUID = 1L;
   transient CustomLogger logger;
   private RMQConfig rmqConfig;
 
   public RMQGenericSource(RMQConfig rmqConfig, TypeInformation typeInformation,
-                          String appName, String parseSpec) {
+                          String appName, Parser<PO> parser) {
     super(rmqConfig.build(), rmqConfig.getQueueName(), false,
-            new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, rmqConfig.getRoutingKey(), parseSpec));
+            new RMQDeserializerFactory<>().getDeserializer(typeInformation, appName, rmqConfig.getRoutingKey(), parser));
     this.rmqConfig = rmqConfig;
   }
 
