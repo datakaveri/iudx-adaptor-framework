@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -49,21 +50,28 @@ public class RMQITTest {
   @Test
   void testA() throws Exception {
 
-    int numMsgs = 2;
-    pub.initialize();
-    for (int i = 0; i < numMsgs; i++) {
-      pub.sendMessage(i);
-    }
+//    int numMsgs = 2;
+//    pub.initialize();
+//    for (int i = 0; i < numMsgs; i++) {
+//      pub.sendMessage(i);
+//    }
 
-    String parseSpecObj = new JSONObject().put("timestampPath", "$.time").put("keyPath", "$.id")
-            .put("inputTimeFormat", "yyyy-MM-dd HH:mm:ss")
+    String parseSpecObj = new JSONObject()
+            .put("timestampPath", "$.observationDateTime")
+            .put("containerPath", "$")
+            .put("messageContainer", "array")
+            .put("keyPath", "$.id")
+            .put("inputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX")
             .put("outputTimeFormat", "yyyy-MM-dd'T'HH:mm:ssXXX").toString();
 
     RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
     config.setQueueName("adaptor-test");
+
+    JsonPathParser<Message> parser = new JsonPathParser<>(parseSpecObj);
+
     RMQGenericSource source = new RMQGenericSource<Message>(config,
-            TypeInformation.of(Message.class), "test", parseSpecObj);
+            TypeInformation.of(Message.class), "test", parser);
 
     DataStreamSource<Message> so = env.addSource(source);
     // so.assignTimestampsAndWatermarks(new MessageWatermarkStrategy());
@@ -102,8 +110,11 @@ public class RMQITTest {
     RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
     config.setQueueName("adaptor-test");
-    RMQGenericSource source = new RMQGenericSource<Message>(config,
-            TypeInformation.of(Message.class), "test", parseSpecObj);
+
+    JsonPathParser<List<Message>> parser = new JsonPathParser<List<Message>>(parseSpecObj);
+
+    RMQGenericSource source = new RMQGenericSource<List<Message>>(config,
+            TypeInformation.of(Message.class), "test", parser);
 
     DataStreamSource<Message> so = env.addSource(source);
 //    so.assignTimestampsAndWatermarks(WatermarkStrategy.forMonotonousTimestamps());

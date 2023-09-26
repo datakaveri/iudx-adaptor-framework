@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.nio.file.FileSystems;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Set;
 
 import static in.org.iudx.adaptor.server.util.Constants.*;
@@ -491,7 +492,7 @@ public class Server extends AbstractVerticle {
 
     LOGGER.debug("Info: Submitting jar to Flink cluster");
 
-    Set<FileUpload> uploads = routingContext.fileUploads();
+    List<FileUpload> uploads = routingContext.fileUploads();
     HttpServerResponse response = routingContext.response();
     JsonObject request = new JsonObject();
 
@@ -1194,7 +1195,7 @@ public class Server extends AbstractVerticle {
                   requestBody.put(URI, JOBS_API + jobId);
                   requestBody.put(JOB_ID, jobId);
                   requestBody.put(DATA, new JsonObject());
-                  requestBody.put(MODE, STOP);
+                  requestBody.put(MODE, CANCEL);
 
                   flinkClient.handleJob(requestBody, resHandler -> {
                     if (resHandler.succeeded()) {

@@ -8,10 +8,7 @@ import in.org.iudx.adaptor.datatypes.RuleResult;
 import in.org.iudx.adaptor.descriptors.RuleStateDescriptor;
 import in.org.iudx.adaptor.process.GenericProcessFunction;
 import in.org.iudx.adaptor.process.RuleFunction;
-import in.org.iudx.adaptor.source.HttpSource;
-import in.org.iudx.adaptor.source.MessageWatermarkStrategy;
-import in.org.iudx.adaptor.source.RMQGenericSource;
-import in.org.iudx.adaptor.source.RMQPublisher;
+import in.org.iudx.adaptor.source.*;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -88,8 +85,11 @@ class RMQSinkTest {
     RMQConfig config = new RMQConfig();
     config.setUri("amqp://guest:guest@localhost:5672");
     config.setQueueName("adaptor-test");
+
+    JsonPathParser<Message> parser = new JsonPathParser<>(parseSpecObj);
+
     RMQGenericSource source = new RMQGenericSource<Message>(config,
-            TypeInformation.of(Message.class), "test", parseSpecObj);
+            TypeInformation.of(Message.class), "test", parser);
 
     RMQConfig ruleConfig = new RMQConfig();
     ruleConfig.setUri("amqp://guest:guest@localhost:5672");

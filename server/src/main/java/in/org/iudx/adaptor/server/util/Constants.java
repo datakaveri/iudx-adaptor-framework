@@ -157,6 +157,7 @@ public class Constants {
   /* Modes */
   public static final String START = "start";
   public static final String STOP = "stop";
+  public static final String CANCEL = "cancel";
   public static final String RESUME = "resume";
   public static final ArrayList<String> MODES =
       new ArrayList<String>(Arrays.asList(START, STOP, RESUME));

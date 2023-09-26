@@ -1,6 +1,8 @@
 package in.org.iudx.adaptor.source;
 
 
+import in.org.iudx.adaptor.codegen.Parser;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQDeserializationSchema;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -12,10 +14,11 @@ import in.org.iudx.adaptor.logger.CustomLogger;
 import in.org.iudx.adaptor.datatypes.Message;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 
-public class RMQMessageDeserializer extends JsonPathParser<Message>
+public class RMQMessageDeserializer<PO>
                                   implements RMQDeserializationSchema<Message> {
 
   private String appName;
@@ -23,34 +26,59 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
   private long expiry = Integer.MIN_VALUE;
   private String routingKey;
 
+  private Parser<PO> parser;
 
-  public RMQMessageDeserializer(String appName, String routingKey, String parseSpec) {
-    super(parseSpec);
+
+  public RMQMessageDeserializer(String appName, String routingKey, Parser<PO> parser) {
+    this.parser = parser;
     this.appName = appName;
     this.routingKey = routingKey;
-    if (parseSpec != null && !parseSpec.isEmpty()) {
-     JSONObject parseSpecObj = new JSONObject(parseSpec);
-
-     if (parseSpecObj.has("expiry")) {
-      this.expiry = parseSpecObj.getLong("expiry");
-     }
-    }
   }
 
   @Override
   public void deserialize(Envelope envelope, BasicProperties properties, byte[] body,
                           RMQDeserializationSchema.RMQCollector<Message> collector) {
     try {
-      Message msg = super.parse(new String(body)).setExpiry(expiry);
-      if (routingKey.isEmpty()) {
-        collector.collect(msg);
-      } else {
-        if (Objects.equals(envelope.getRoutingKey(), routingKey)) {
-          collector.collect(msg);
+      PO msg = parser.parse(new String(body));
+
+      try {
+        /* Message array */
+        if (msg instanceof ArrayList) {
+          ArrayList<Message> message = (ArrayList<Message>) msg;
+          for (int i = 0; i < message.size(); i++) {
+            Message m = (Message) message.get(i);
+            logger.debug("[event_key - " + m.key + "] Emitting event from http source");
+            if (routingKey.isEmpty()) {
+              collector.collect(m);
+            } else {
+              if (Objects.equals(envelope.getRoutingKey(), routingKey)) {
+                collector.collect(m);
+              }
+            }
+          }
         }
+        /* Single object */
+        if (msg instanceof Message) {
+          Message m = (Message) msg;
+          logger.debug("[event_key - " + m.key + "] Emitting event from http source");
+          if (routingKey.isEmpty()) {
+            collector.collect(m);
+          } else {
+            if (Objects.equals(envelope.getRoutingKey(), routingKey)) {
+              collector.collect(m);
+            }
+          }
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+        // Do nothing
+        logger.error("[HttpSource] Error emitting source data", e);
       }
 
+
     } catch (Exception e) {
+      System.out.println("error here");
+      System.out.println(e.getStackTrace());
       logger.error(e);
     }
   }
@@ -62,6 +90,7 @@ public class RMQMessageDeserializer extends JsonPathParser<Message>
 
   @Override
   public void open(DeserializationSchema.InitializationContext context) {
+    logger = new CustomLogger(RMQMessageDeserializer.class, appName);
   }
 
   @Override

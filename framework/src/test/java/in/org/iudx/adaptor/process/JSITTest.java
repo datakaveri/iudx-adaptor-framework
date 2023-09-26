@@ -3,6 +3,7 @@ package in.org.iudx.adaptor.process;
 import in.org.iudx.adaptor.codegen.RMQConfig;
 import in.org.iudx.adaptor.datatypes.Message;
 import in.org.iudx.adaptor.sink.DumbSink;
+import in.org.iudx.adaptor.source.JsonPathParser;
 import in.org.iudx.adaptor.source.RMQGenericSource;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -38,7 +39,10 @@ public class JSITTest {
         config.setUri("amqp://localhost:24567/");
         config.setQueueName("queue");
         config.setRoutingKey("route-key");
-        RMQGenericSource source = new RMQGenericSource<>(config, TypeInformation.of(Message.class), "data", "{\"messageContainer\":\"single\",\"timestampPath\":\"$.observationDateTime\",\"keyPath\":\"$.id\",\"type\":\"json\"}");
+
+        JsonPathParser<Message> parser = new JsonPathParser<>("{\"messageContainer\":\"single\",\"timestampPath\":\"$.observationDateTime\",\"keyPath\":\"$.id\",\"type\":\"json\"}");
+
+        RMQGenericSource source = new RMQGenericSource<>(config, TypeInformation.of(Message.class), "data", parser);
         DataStreamSource<Message> so = env.addSource(source);
         TimeBasedDeduplicator dedup = new TimeBasedDeduplicator();
         String transformSpec = "{\n" +

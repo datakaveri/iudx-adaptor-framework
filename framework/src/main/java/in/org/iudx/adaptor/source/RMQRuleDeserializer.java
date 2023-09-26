@@ -1,6 +1,7 @@
 package in.org.iudx.adaptor.source;
 
 
+import in.org.iudx.adaptor.codegen.Parser;
 import org.apache.flink.streaming.connectors.rabbitmq.RMQDeserializationSchema;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -14,19 +15,19 @@ import in.org.iudx.adaptor.datatypes.Rule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-public class RMQRuleDeserializer extends JsonPathParser<Rule>
+public class RMQRuleDeserializer<PO>
                                 implements RMQDeserializationSchema<Rule> {
 
   private ObjectMapper mapper;
   private String appName;
   transient CustomLogger logger;
-  private String parseSpec;
+  private Parser<PO> parser;
 
 
-  public RMQRuleDeserializer(String appName, String parseSpec) {
-    super(parseSpec);
+  public RMQRuleDeserializer(String appName, Parser<PO> parser) {
+//    super(parseSpec);
     this.appName = appName;
-    this.parseSpec = parseSpec;
+    this.parser = parser;
   }
 
   @Override

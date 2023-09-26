@@ -68,24 +68,25 @@ public class FlinkClientServiceImpl implements FlinkClientService{
               response.withStatus(ERROR).withResult(jarId, POST, FAILED).getResponse()));
         }
       });
-    } else if(request.getString(MODE).equals(STOP)) {
-      JsonObject requestBody = new JsonObject().put(URI, JOBS_API + request.getString(JOB_ID));
+    } else if(request.getString(MODE).equals(CANCEL)) {
+      JsonObject requestBody = new JsonObject().put(URI, JOBS_API + request.getString(JOB_ID) + "?mode=" + CANCEL);
       
       httpGetAsync(requestBody, HttpMethod.PATCH).compose(getHandler -> {
-        Future<JsonObject>future = null;
+//        Future<JsonObject>future = null;
         JsonObject resStatus = new JsonObject();
+        return Future.succeededFuture(resStatus.put(STATUS, STOPPED));
         
-        String state = getHandler.getString("state").toLowerCase();
-        if(state !=null && state.equals(RUNNING)) {
-          httpPostAsync(request, HttpMethod.PATCH);
-          return Future.succeededFuture(resStatus.put(STATUS, STOPPED));
-        } else if(state !=null && !state.equals("errors")) {
-          resStatus.put(STATUS, state); 
-          future= Future.succeededFuture(resStatus);
-        }else {
-          future = Future.failedFuture(resStatus.put(STATUS, FAILED).toString());
-        }
-        return future;
+//        String state = getHandler.getString("state").toLowerCase();
+//        if(state !=null && state.equals(RUNNING)) {
+//          httpPostAsync(request, HttpMethod.PATCH);
+//
+//        } else if(state !=null && !state.equals("errors")) {
+//          resStatus.put(STATUS, state);
+//          future= Future.succeededFuture(resStatus);
+//        }else {
+//          future = Future.failedFuture(resStatus.put(STATUS, FAILED).toString());
+//        }
+//        return future;
       }).onComplete(resultHandler -> {
         if (resultHandler.succeeded() && !resultHandler.result().isEmpty()) {
           handler.handle(resultHandler);
@@ -358,7 +359,7 @@ public class FlinkClientServiceImpl implements FlinkClientService{
     client.request(method, options).send(reqHandler -> {
       if (reqHandler.succeeded()) {
         String contentType = reqHandler.result().getHeader(HEADER_CONTENT_TYPE);
-        if (reqHandler.result().statusCode() == 200 && !contentType.equals("text/plain")) {
+        if (reqHandler.result().statusCode() == 200 || reqHandler.result().statusCode() == 202 && !contentType.equals("text/plain")) {
           LOGGER.debug("Info: Flink request completed");
           promise.complete(reqHandler.result().bodyAsJsonObject());
           return;

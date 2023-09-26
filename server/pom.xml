@@ -21,19 +21,20 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<flink.version>1.15.1</flink.version>
+		<flink.version>1.16.1</flink.version>
 		<target.java.version>11</target.java.version>
 		<scala.binary.version>2.11</scala.binary.version>
 		<maven.compiler.source>${target.java.version}</maven.compiler.source>
 		<maven.compiler.target>${target.java.version}</maven.compiler.target>
-		<log4j.version>2.17.0</log4j.version>
+		<log4j.version>2.20.0</log4j.version>
 		<exec.mainClass>in.org.iudx.adaptor.deploy.Deployer</exec.mainClass>
-		<vertx.version>4.1.5</vertx.version>
+		<vertx.version>4.4.1</vertx.version>
 		<server.mainClass>in.org.iudx.adaptor.deploy.Deployer</server.mainClass>
 		<quartz.version>2.3.2</quartz.version>
-		<postgres.version>42.5.1</postgres.version>
-    <latest.jolt.version>0.1.1</latest.jolt.version>
+		<postgres.version>42.6.0</postgres.version>
+    	<jolt.version>0.1.7</jolt.version>
 		<apache-commons-lang3.version>3.12.0</apache-commons-lang3.version>
+		<junit.version>5.9.2</junit.version>
 	</properties>
 
 	<repositories>
@@ -59,20 +60,13 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative-boringssl-static</artifactId>
-            <version>2.0.29.Final</version>
+            <version>2.0.59.Final</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>20201115</version>
+            <version>20230227</version>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-slf4j-impl</artifactId>
-            <version>2.17.0</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-core</artifactId>
@@ -96,44 +90,43 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-slf4j-impl</artifactId>
+			<version>${log4j.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-            <version>2.17.0</version>
+            <version>${log4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-            <version>2.17.0</version>
+            <version>${log4j.version}</version>
 		</dependency>
 		<dependency>
 			<!-- API bridge between log4j 1 and 2; included for convenience -->
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-1.2-api</artifactId>
-			<version>2.17.0</version>
+			<version>${log4j.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.java-json-tools</groupId>
 			<artifactId>json-schema-validator</artifactId>
-			<version>2.2.12</version>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.7.0</version>
-			<scope>test</scope>
+			<version>2.2.14</version>
 		</dependency>
 
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-junit5</artifactId>
-      <version>${vertx.version}</version>
+      		<version>${vertx.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-rabbitmq-client</artifactId>
-      <version>${vertx.version}</version>
+			<version>${vertx.version}</version>
 		</dependency>
-
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -141,32 +134,37 @@
 			<version>${apache-commons-lang3.version}</version>
 		</dependency>
 
-
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpcore</artifactId>
-      <version>4.3-beta1</version>
-    </dependency>
-
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpcore</artifactId>
+			<version>4.3-beta1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-inline</artifactId>
-			<version>3.11.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-junit-jupiter</artifactId>
-			<version>3.11.1</version>
+			<version>5.2.0</version>
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-junit-jupiter</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.7.0</version>
+			<version>${junit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -182,17 +180,17 @@
         <dependency>
             <groupId>com.bazaarvoice.jolt</groupId>
             <artifactId>jolt-core</artifactId>
-            <version>${latest.jolt.version}</version>
+            <version>${jolt.version}</version>
         </dependency>
         <dependency>
             <groupId>com.bazaarvoice.jolt</groupId>
             <artifactId>json-utils</artifactId>
-            <version>${latest.jolt.version}</version>
+            <version>${jolt.version}</version>
         </dependency>
         <dependency>
             <groupId>com.jayway.jsonpath</groupId>
             <artifactId>json-path</artifactId>
-            <version>2.5.0</version>
+            <version>2.8.0</version>
         </dependency>
         <dependency>
         	<groupId>org.apache.maven.shared</groupId>
@@ -211,8 +209,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>2.0.2-beta</version>
+            <artifactId>mockito-core</artifactId>
+            <version>5.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -220,11 +218,10 @@
 			<artifactId>vertx-pg-client</artifactId>
 			<version>${vertx.version}</version>
 		</dependency>
-
 		<dependency>
 			<groupId>io.minio</groupId>
 			<artifactId>minio</artifactId>
-			<version>8.3.1</version>
+			<version>8.5.2</version>
 		</dependency>
 
 		<dependency>
@@ -241,6 +238,11 @@
 			<groupId>com.ongres.scram</groupId>
 			<artifactId>client</artifactId>
 			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.15</version>
 		</dependency>
     </dependencies>
 
